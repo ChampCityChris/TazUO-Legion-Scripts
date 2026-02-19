@@ -812,7 +812,7 @@ def _debug_log_path():
 
 # Write one timestamped debug line to disk (best-effort).
 def _write_debug_log(line):
-    if not DEBUG_LOG_ENABLED:
+    if not DEBUG_LOG_ENABLED or not DEBUG_TARGETING:
         return
     try:
         ts = time.strftime("%Y-%m-%d %H:%M:%S")
