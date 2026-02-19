@@ -143,6 +143,7 @@ def _import_doc(km, doc):
         name = str(r.get("name", "") or "").strip()
         buttons = _int_list(r.get("buttons", []), 2)
         default_mk = str(r.get("default_material_key", "") or "").strip().lower()
+        category = str(r.get("category", "") or "").strip()
         resources = r.get("resources", [])
         if not isinstance(resources, list):
             resources = []
@@ -158,6 +159,7 @@ def _import_doc(km, doc):
             "name": name,
             "item_id": item_id,
             "buttons": buttons,
+            "category": category,
             "default_material_key": default_mk,
             "resources": resources,
         }
@@ -222,4 +224,3 @@ def _run():
 
 
 _run()
-

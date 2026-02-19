@@ -521,6 +521,7 @@ def _build_auto_proposals(discoveries, primary_button):
                 "name": "",
                 "item_id": 0,
                 "buttons": pair,
+                "category": "",
                 "default_material_key": "",
                 "resources": [],
                 "approved": False,
@@ -918,7 +919,7 @@ def _run_mapping(config):
         "proposals": _build_auto_proposals(discoveries, primary_button),
         "notes": [
             "Set approved=true only for validated entries.",
-            "For item_keys fill: item_key, name, buttons, default_material_key.",
+            "For item_keys fill: item_key, name, buttons, category, default_material_key.",
             "For material_keys fill: material_key, material, material_buttons.",
         ],
     }

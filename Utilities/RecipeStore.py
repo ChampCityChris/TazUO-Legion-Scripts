@@ -3,7 +3,7 @@ import os
 import sqlite3
 
 DB_FILE = "craftables.db"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 RECIPES_JSON_FILE = "recipes.json"
 MATERIAL_KEYS_JSON_FILE = "material_keys.json"
 ITEM_KEYS_JSON_FILE = "item_keys.json"
@@ -131,11 +131,28 @@ def _ensure_schema(conn):
             item_id INTEGER NOT NULL DEFAULT 0,
             buttons_json TEXT NOT NULL DEFAULT '[]',
             default_material_key TEXT NOT NULL DEFAULT '',
+            category TEXT NOT NULL DEFAULT '',
             resources_json TEXT NOT NULL DEFAULT '[]',
             PRIMARY KEY(server, profession, item_key)
         );
+
+        CREATE TABLE IF NOT EXISTS item_categories (
+            server TEXT NOT NULL,
+            profession TEXT NOT NULL,
+            category TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY(server, profession, category)
+        );
         """
     )
+    # Backward-compatible migration for existing databases.
+    try:
+        cols = conn.execute("PRAGMA table_info(item_keys)").fetchall()
+        col_names = set(str(c[1] or "").lower() for c in cols)
+        if "category" not in col_names:
+            conn.execute("ALTER TABLE item_keys ADD COLUMN category TEXT NOT NULL DEFAULT ''")
+    except Exception:
+        pass
     conn.execute(
         "INSERT OR REPLACE INTO metadata(key, value) VALUES (?, ?)",
         ("schema_version", str(int(SCHEMA_VERSION))),
@@ -154,6 +171,7 @@ def _has_any_data(conn):
         _table_count(conn, "recipes") > 0
         or _table_count(conn, "material_keys") > 0
         or _table_count(conn, "item_keys") > 0
+        or _table_count(conn, "item_categories") > 0
     )
 
 
@@ -204,6 +222,7 @@ def _iter_item_keys(item_data):
                     int(ent.get("item_id", 0) or 0),
                     [int(x) for x in (ent.get("buttons", []) or []) if int(x) > 0][:2],
                     str(ent.get("default_material_key", "") or ""),
+                    str(ent.get("category", "") or ""),
                     list(ent.get("resources", []) or []),
                 )
 
@@ -260,12 +279,12 @@ def _bootstrap_from_split_json_if_empty(conn):
                 ),
             )
 
-        for server, profession, item_key, name, item_id, buttons, default_mk, resources in _iter_item_keys(item_raw):
+        for server, profession, item_key, name, item_id, buttons, default_mk, category, resources in _iter_item_keys(item_raw):
             conn.execute(
                 """
                 INSERT OR REPLACE INTO item_keys
-                (server, profession, item_key, name, item_id, buttons_json, default_material_key, resources_json)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (server, profession, item_key, name, item_id, buttons_json, default_material_key, category, resources_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     server,
@@ -275,6 +294,7 @@ def _bootstrap_from_split_json_if_empty(conn):
                     int(item_id or 0),
                     _safe_json_dumps(_as_int_list(buttons, 2), []),
                     default_mk,
+                    category,
                     _safe_json_dumps(_as_list(resources), []),
                 ),
             )
@@ -410,7 +430,7 @@ def load_key_maps():
             }
 
         cur = conn.execute(
-            "SELECT server, profession, item_key, name, item_id, buttons_json, default_material_key, resources_json FROM item_keys"
+            "SELECT server, profession, item_key, name, item_id, buttons_json, default_material_key, category, resources_json FROM item_keys"
         )
         for row in cur.fetchall():
             server = str(row[0] or "")
@@ -425,7 +445,8 @@ def load_key_maps():
                 "item_id": int(row[4] or 0),
                 "buttons": _safe_json_loads(row[5], []),
                 "default_material_key": str(row[6] or ""),
-                "resources": _safe_json_loads(row[7], []),
+                "category": str(row[7] or ""),
+                "resources": _safe_json_loads(row[8], []),
             }
         return out
     finally:
@@ -473,8 +494,8 @@ def save_key_maps(key_maps):
                             conn.execute(
                                 """
                                 INSERT OR REPLACE INTO item_keys
-                                (server, profession, item_key, name, item_id, buttons_json, default_material_key, resources_json)
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                (server, profession, item_key, name, item_id, buttons_json, default_material_key, category, resources_json)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """,
                                 (
                                     str(server or ""),
@@ -484,6 +505,7 @@ def save_key_maps(key_maps):
                                     int(ent.get("item_id", 0) or 0),
                                     _safe_json_dumps(_as_int_list(ent.get("buttons", []), 2), []),
                                     str(ent.get("default_material_key", "") or ""),
+                                    str(ent.get("category", "") or ""),
                                     _safe_json_dumps(_as_list(ent.get("resources", [])), []),
                                 ),
                             )
@@ -506,10 +528,12 @@ def health_summary(selected_server=None):
             "profession_nodes": 0,
             "material_keys_total": 0,
             "item_keys_total": 0,
+            "item_categories_total": 0,
             "selected_server": str(selected_server or ""),
             "selected_server_recipes": 0,
             "selected_server_material_keys": 0,
             "selected_server_item_keys": 0,
+            "selected_server_item_categories": 0,
         }
         cur = conn.execute("SELECT value FROM metadata WHERE key='schema_version'")
         row = cur.fetchone()
@@ -531,6 +555,8 @@ def health_summary(selected_server=None):
         out["material_keys_total"] = int((cur.fetchone() or [0])[0] or 0)
         cur = conn.execute("SELECT COUNT(1) FROM item_keys")
         out["item_keys_total"] = int((cur.fetchone() or [0])[0] or 0)
+        cur = conn.execute("SELECT COUNT(1) FROM item_categories")
+        out["item_categories_total"] = int((cur.fetchone() or [0])[0] or 0)
 
         cur = conn.execute(
             """
@@ -564,6 +590,8 @@ def health_summary(selected_server=None):
             out["selected_server_material_keys"] = int((cur.fetchone() or [0])[0] or 0)
             cur = conn.execute("SELECT COUNT(1) FROM item_keys WHERE server=?", (sel,))
             out["selected_server_item_keys"] = int((cur.fetchone() or [0])[0] or 0)
+            cur = conn.execute("SELECT COUNT(1) FROM item_categories WHERE server=?", (sel,))
+            out["selected_server_item_categories"] = int((cur.fetchone() or [0])[0] or 0)
         return out
     finally:
         conn.close()

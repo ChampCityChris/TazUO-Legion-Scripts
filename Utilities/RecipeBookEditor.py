@@ -369,7 +369,7 @@ def _get_item_key_map(server, profession, item_name):
     return dict(val) if isinstance(val, dict) else None
 
 
-def _upsert_key_maps(server, profession, item_name, item_id, buttons, material, material_key, material_buttons, resources=None):
+def _upsert_key_maps(server, profession, item_name, item_id, buttons, material, material_key, material_buttons, resources=None, category=None):
     data = _key_map_prof_node(server, profession, create=True)
     if not data:
         return False
@@ -391,6 +391,7 @@ def _upsert_key_maps(server, profession, item_name, item_id, buttons, material, 
             "item_id": int(item_id or 0),
             "buttons": ibtns,
             "default_material_key": mk,
+            "category": str(category or "").strip(),
             "resources": list(resources or []),
         }
     return _set_key_maps(km)

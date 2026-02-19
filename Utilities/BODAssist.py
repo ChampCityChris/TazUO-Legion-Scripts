@@ -219,6 +219,25 @@ TINKER_IRON_MATERIAL_BUTTONS = [7, 6]
 RECIPE_BOOK = []
 KEY_MAPS = {}
 
+# Category-level first-button overrides for craft paths.
+# Format: {server: {profession: {category: first_button_id}}}
+CATEGORY_PAGE_BUTTON_OVERRIDES = {
+    "UOAlive": {
+        "Tinker": {
+            "Wooden Items": 21,
+            "Tools": 41,
+            "Parts": 61,
+            "Utensils": 81,
+            "Miscellaneous": 101,
+            "Assemblies": 121,
+            "Traps": 141,
+            "Magic Jewelry": 161,
+            # Backward-compatible alias used in earlier data loads.
+            "Jewelry": 1,
+        },
+    },
+}
+
 RECIPE_STORE = None
 _util_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
 if _util_dir and _util_dir not in sys.path:
@@ -793,9 +812,47 @@ def _key_map_item_entry(recipe):
         node = (KEY_MAPS.get(srv, {}) or {}).get(prof, {}) or {}
         item_keys = node.get("item_keys", {}) if isinstance(node, dict) else {}
         ent = item_keys.get(nm, {}) if isinstance(item_keys, dict) else {}
-        return dict(ent) if isinstance(ent, dict) else None
+        if not isinstance(ent, dict):
+            return None
+        out = dict(ent)
+        out["buttons"] = _normalize_item_buttons_for_category(
+            srv,
+            prof,
+            str(out.get("category", "") or ""),
+            out.get("buttons", []),
+        )
+        return out
     except Exception:
         return None
+
+
+def _merge_item_key_map_into_recipe(recipe):
+    if not isinstance(recipe, dict):
+        return recipe
+    merged = dict(recipe)
+    ent = _key_map_item_entry(merged) or {}
+    if not ent:
+        return merged
+
+    server = _normalize_server_name(merged.get("server", SELECTED_SERVER) or SELECTED_SERVER)
+    profession = str(merged.get("profession", "") or "")
+    category = str(ent.get("category", "") or "")
+    mapped_buttons = _normalize_item_buttons_for_category(server, profession, category, ent.get("buttons", []))
+    if mapped_buttons:
+        merged["buttons"] = mapped_buttons
+    elif category:
+        merged["buttons"] = _normalize_item_buttons_for_category(
+            server, profession, category, merged.get("buttons", [])
+        ) or [int(x) for x in (merged.get("buttons", []) or []) if int(x) > 0]
+
+    if int(merged.get("item_id", 0) or 0) <= 0:
+        try:
+            merged["item_id"] = int(ent.get("item_id", 0) or 0)
+        except Exception:
+            pass
+    if not str(merged.get("material_key", "") or "").strip():
+        merged["material_key"] = str(ent.get("default_material_key", "") or "").strip()
+    return merged
 
 
 def _resource_item_defaults(material):
@@ -1017,6 +1074,41 @@ def _normalize_item_key_name(name):
     n = re.sub(r"\s+", " ", n)
     n = re.sub(r"[^a-z0-9 '\-]", "", n)
     return n.strip()
+
+
+def _category_first_button(server, profession, category):
+    srv = _normalize_server_name(server or DEFAULT_SERVER)
+    prof = str(profession or "").strip()
+    cat = str(category or "").strip()
+    if not (srv and prof and cat):
+        return 0
+    by_server = CATEGORY_PAGE_BUTTON_OVERRIDES.get(srv, {}) or {}
+    by_prof = by_server.get(prof, {}) if isinstance(by_server, dict) else {}
+    if not isinstance(by_prof, dict):
+        return 0
+    raw = by_prof.get(cat, None)
+    if raw is None:
+        cat_lower = cat.lower()
+        for k, v in by_prof.items():
+            if str(k or "").strip().lower() == cat_lower:
+                raw = v
+                break
+    try:
+        return int(raw or 0)
+    except Exception:
+        return 0
+
+
+def _normalize_item_buttons_for_category(server, profession, category, buttons):
+    cleaned = [int(x) for x in (buttons or []) if int(x) > 0][:2]
+    if not cleaned:
+        return []
+    page_btn = _category_first_button(server, profession, category)
+    if page_btn <= 0:
+        return cleaned
+    if len(cleaned) == 1:
+        return [int(page_btn), int(cleaned[0])]
+    return [int(page_btn), int(cleaned[1])]
 
 
 def _load_recipe_book_from_file():
@@ -3334,6 +3426,8 @@ def _parse_bod_deed(item):
         recipe = _find_recipe_for_text(txt, None, None)
     if not recipe and item_name:
         recipe = _find_recipe_for_item_name(item_name, None, None)
+    if recipe:
+        recipe = _merge_item_key_map_into_recipe(recipe)
 
     # Material is the strongest profession signal for non-ingot deeds.
     if material_needed in ("cloth", "leather"):
