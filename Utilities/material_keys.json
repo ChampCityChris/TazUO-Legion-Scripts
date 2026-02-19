@@ -1,0 +1,54 @@
+{
+  "UOAlive": {
+    "Blacksmith": {
+      "material_keys": {
+        "ingot_iron": {
+          "material": "ingot",
+          "material_buttons": [
+            7,
+            6
+          ]
+        },
+        "ingot_dull_copper": {
+          "material": "ingot",
+          "material_buttons": [
+            7,
+            26
+          ]
+        }
+      }
+    },
+    "Tailor": {
+      "material_keys": {
+        "cloth": {
+          "material": "cloth",
+          "material_buttons": []
+        },
+        "leather": {
+          "material": "leather",
+          "material_buttons": []
+        }
+      }
+    },
+    "Carpentry": {
+      "material_keys": {
+        "board": {
+          "material": "board",
+          "material_buttons": []
+        }
+      }
+    },
+    "Tinker": {
+      "material_keys": {
+        "ingot_iron": {
+          "material": "ingot",
+          "material_buttons": []
+        },
+        "boards": {
+          "material": "ingot",
+          "material_buttons": []
+        }
+      }
+    }
+  }
+}

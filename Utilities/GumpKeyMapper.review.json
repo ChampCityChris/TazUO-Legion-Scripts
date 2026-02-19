@@ -1,0 +1,192 @@
+{
+  "raw_snapshot": {
+    "lines": [
+      "<CENTER>TINKERING MENU</CENTER> <CENTER>CATEGORIES</CENTER> <CENTER>SELECTIONS</CENTER> <CENTER>NOTICES</CENTER> EXIT CANCEL MAKE REPAIR ITEM MARK ITEM ENHANCE ITEM ALTER ITEM (GARGOYLE) NON QUEST ITEM MAKE LAST 0/1 COMPLETED IRON (0) LAST TEN Jewelry Wooden Items Tools Parts Utensils Miscellaneous Assemblies Traps Magic Jewelry ring bracelet gargish necklace gargish bracelet gargish ring gargish earrings star sapphire ring star sapphire necklace (silver) star sapphire necklace (jewelled) star sapphire earrings NEXT PAGE PREV PAGE star sapphire necklace (golden) star sapphire bracelet emerald ring emerald necklace (silver) emerald necklace (jewelled) emerald earrings emerald necklace (golden) emerald bracelet sapphire ring sapphire necklace (silver) NEXT PAGE PREV PAGE sapphire necklace (jewelled) sapphire earrings sapphire necklace (golden) sapphire bracelet ruby ring ruby necklace (silver) ruby necklace (jewelled) ruby earrings ruby necklace (golden) ruby bracelet NEXT PAGE PREV PAGE citrine ring citrine necklace (silver) citrine necklace (jewelled) citrine earrings citrine necklace (golden) citrine bracelet amethyst ring amethyst necklace (silver) amethyst necklace (jewelled) amethyst earrings NEXT PAGE PREV PAGE amethyst necklace (golden) amethyst bracelet tourmaline ring tourmaline necklace (silver) tourmaline necklace (jewelled) tourmaline earrings tourmaline necklace (golden) tourmaline bracelet amber ring amber necklace (silver) NEXT PAGE PREV PAGE amber necklace (jewelled) amber earrings amber necklace (golden) amber bracelet diamond ring diamond necklace (silver) diamond necklace (jewelled) diamond earrings diamond necklace (golden) diamond bracelet NEXT PAGE PREV PAGE krampus minion earrings candied staff"
+    ]
+  },
+  "proposals": {
+    "material_keys": [],
+    "item_keys": [
+      {
+        "note": "Auto-discovered changed button path. Fill item fields and approve if valid.",
+        "approved": false,
+        "default_material_key": "",
+        "item_id": 0,
+        "name": "",
+        "buttons": [
+          2
+        ],
+        "resources": [],
+        "item_key": ""
+      },
+      {
+        "note": "Auto-discovered changed button path. Fill item fields and approve if valid.",
+        "approved": false,
+        "default_material_key": "",
+        "item_id": 0,
+        "name": "",
+        "buttons": [
+          3
+        ],
+        "resources": [],
+        "item_key": ""
+      },
+      {
+        "note": "Auto-discovered changed button path. Fill item fields and approve if valid.",
+        "approved": false,
+        "default_material_key": "",
+        "item_id": 0,
+        "name": "",
+        "buttons": [
+          7
+        ],
+        "resources": [],
+        "item_key": ""
+      },
+      {
+        "note": "Auto-discovered changed button path. Fill item fields and approve if valid.",
+        "approved": false,
+        "default_material_key": "",
+        "item_id": 0,
+        "name": "",
+        "buttons": [
+          10
+        ],
+        "resources": [],
+        "item_key": ""
+      }
+    ]
+  },
+  "notes": [
+    "Set approved=true only for validated entries.",
+    "For item_keys fill: item_key, name, buttons, default_material_key.",
+    "For material_keys fill: material_key, material, material_buttons."
+  ],
+  "metadata": {
+    "server": "UOAlive",
+    "profession": "Tinker",
+    "created_at": "2026-02-16 20:29:59",
+    "gump_id": 0,
+    "primary_button": 0,
+    "wait_after_click_s": 3.0,
+    "button_start": 1,
+    "button_end": 220
+  },
+  "discoveries": [
+    {
+      "removed_lines": [],
+      "button": 1,
+      "reply_ok": true,
+      "before_line_count": 1,
+      "after_line_count": 1,
+      "new_lines": [],
+      "changed": false,
+      "closed_gump": false,
+      "after_lines_sample": [
+        "<CENTER>TINKERING MENU</CENTER> <CENTER>CATEGORIES</CENTER> <CENTER>SELECTIONS</CENTER> <CENTER>NOTICES</CENTER> EXIT CANCEL MAKE REPAIR ITEM MARK ITEM ENHANCE ITEM ALTER ITEM (GARGOYLE) NON QUEST ITEM MAKE LAST 0/1 COMPLETED IRON (0) LAST TEN Jewelry Wooden Items Tools Parts Utensils Miscellaneous Assemblies Traps Magic Jewelry ring bracelet gargish necklace gargish bracelet gargish ring gargish earrings star sapphire ring star sapphire necklace (silver) star sapphire necklace (jewelled) star sapphire earrings NEXT PAGE PREV PAGE star sapphire necklace (golden) star sapphire bracelet emerald ring emerald necklace (silver) emerald necklace (jewelled) emerald earrings emerald necklace (golden) emerald bracelet sapphire ring sapphire necklace (silver) NEXT PAGE PREV PAGE sapphire necklace (jewelled) sapphire earrings sapphire necklace (golden) sapphire bracelet ruby ring ruby necklace (silver) ruby necklace (jewelled) ruby earrings ruby necklace (golden) ruby bracelet NEXT PAGE PREV PAGE citrine ring citrine necklace (silver) citrine necklace (jewelled) citrine earrings citrine necklace (golden) citrine bracelet amethyst ring amethyst necklace (silver) amethyst necklace (jewelled) amethyst earrings NEXT PAGE PREV PAGE amethyst necklace (golden) amethyst bracelet tourmaline ring tourmaline necklace (silver) tourmaline necklace (jewelled) tourmaline earrings tourmaline necklace (golden) tourmaline bracelet amber ring amber necklace (silver) NEXT PAGE PREV PAGE amber necklace (jewelled) amber earrings amber necklace (golden) amber bracelet diamond ring diamond necklace (silver) diamond necklace (jewelled) diamond earrings diamond necklace (golden) diamond bracelet NEXT PAGE PREV PAGE krampus minion earrings candied staff"
+      ]
+    },
+    {
+      "removed_lines": [
+        "<CENTER>TINKERING MENU</CENTER> <CENTER>CATEGORIES</CENTER> <CENTER>SELECTIONS</CENTER> <CENTER>NOTICES</CENTER> EXIT CANCEL MAKE REPAIR ITEM MARK ITEM ENHANCE ITEM ALTER ITEM (GARGOYLE) NON QUEST ITEM MAKE LAST 0/1 COMPLETED IRON (0) LAST TEN Jewelry Wooden Items Tools Parts Utensils Miscellaneous Assemblies Traps Magic Jewelry ring bracelet gargish necklace gargish bracelet gargish ring gargish earrings star sapphire ring star sapphire necklace (silver) star sapphire necklace (jewelled) star sapphire earrings NEXT PAGE PREV PAGE star sapphire necklace (golden) star sapphire bracelet emerald ring emerald necklace (silver) emerald necklace (jewelled) emerald earrings emerald necklace (golden) emerald bracelet sapphire ring sapphire necklace (silver) NEXT PAGE PREV PAGE sapphire necklace (jewelled) sapphire earrings sapphire necklace (golden) sapphire bracelet ruby ring ruby necklace (silver) ruby necklace (jewelled) ruby earrings ruby necklace (golden) ruby bracelet NEXT PAGE PREV PAGE citrine ring citrine necklace (silver) citrine necklace (jewelled) citrine earrings citrine necklace (golden) citrine bracelet amethyst ring amethyst necklace (silver) amethyst necklace (jewelled) amethyst earrings NEXT PAGE PREV PAGE amethyst necklace (golden) amethyst bracelet tourmaline ring tourmaline necklace (silver) tourmaline necklace (jewelled) tourmaline earrings tourmaline necklace (golden) tourmaline bracelet amber ring amber necklace (silver) NEXT PAGE PREV PAGE amber necklace (jewelled) amber earrings amber necklace (golden) amber bracelet diamond ring diamond necklace (silver) diamond necklace (jewelled) diamond earrings diamond necklace (golden) diamond bracelet NEXT PAGE PREV PAGE krampus minion earrings candied staff"
+      ],
+      "button": 2,
+      "reply_ok": true,
+      "before_line_count": 1,
+      "after_line_count": 1,
+      "new_lines": [
+        "<CENTER>TINKERING MENU</CENTER> <CENTER>CATEGORIES</CENTER> <CENTER>SELECTIONS</CENTER> <CENTER>NOTICES</CENTER> EXIT CANCEL MAKE REPAIR ITEM MARK ITEM ENHANCE ITEM ALTER ITEM (GARGOYLE) NON QUEST ITEM MAKE LAST 0/1 COMPLETED You do not have sufficient metal to make that. IRON (0) LAST TEN Jewelry Wooden Items Tools Parts Utensils Miscellaneous Assemblies Traps Magic Jewelry ring bracelet gargish necklace gargish bracelet gargish ring gargish earrings star sapphire ring star sapphire necklace (silver) star sapphire necklace (jewelled) star sapphire earrings NEXT PAGE PREV PAGE star sapphire necklace (golden) star sapphire bracelet emerald ring emerald necklace (silver) emerald necklace (jewelled) emerald earrings emerald necklace (golden) emerald bracelet sapphire ring sapphire necklace (silver) NEXT PAGE PREV PAGE sapphire necklace (jewelled) sapphire earrings sapphire necklace (golden) sapphire bracelet ruby ring ruby necklace (silver) ruby necklace (jewelled) ruby earrings ruby necklace (golden) ruby bracelet NEXT PAGE PREV PAGE citrine ring citrine necklace (silver) citrine necklace (jewelled) citrine earrings citrine necklace (golden) citrine bracelet amethyst ring amethyst necklace (silver) amethyst necklace (jewelled) amethyst earrings NEXT PAGE PREV PAGE amethyst necklace (golden) amethyst bracelet tourmaline ring tourmaline necklace (silver) tourmaline necklace (jewelled) tourmaline earrings tourmaline necklace (golden) tourmaline bracelet amber ring amber necklace (silver) NEXT PAGE PREV PAGE amber necklace (jewelled) amber earrings amber necklace (golden) amber bracelet diamond ring diamond necklace (silver) diamond necklace (jewelled) diamond earrings diamond necklace (golden) diamond bracelet NEXT PAGE PREV PAGE krampus minion earrings candied staff"
+      ],
+      "changed": true,
+      "closed_gump": false,
+      "after_lines_sample": [
+        "<CENTER>TINKERING MENU</CENTER> <CENTER>CATEGORIES</CENTER> <CENTER>SELECTIONS</CENTER> <CENTER>NOTICES</CENTER> EXIT CANCEL MAKE REPAIR ITEM MARK ITEM ENHANCE ITEM ALTER ITEM (GARGOYLE) NON QUEST ITEM MAKE LAST 0/1 COMPLETED You do not have sufficient metal to make that. IRON (0) LAST TEN Jewelry Wooden Items Tools Parts Utensils Miscellaneous Assemblies Traps Magic Jewelry ring bracelet gargish necklace gargish bracelet gargish ring gargish earrings star sapphire ring star sapphire necklace (silver) star sapphire necklace (jewelled) star sapphire earrings NEXT PAGE PREV PAGE star sapphire necklace (golden) star sapphire bracelet emerald ring emerald necklace (silver) emerald necklace (jewelled) emerald earrings emerald necklace (golden) emerald bracelet sapphire ring sapphire necklace (silver) NEXT PAGE PREV PAGE sapphire necklace (jewelled) sapphire earrings sapphire necklace (golden) sapphire bracelet ruby ring ruby necklace (silver) ruby necklace (jewelled) ruby earrings ruby necklace (golden) ruby bracelet NEXT PAGE PREV PAGE citrine ring citrine necklace (silver) citrine necklace (jewelled) citrine earrings citrine necklace (golden) citrine bracelet amethyst ring amethyst necklace (silver) amethyst necklace (jewelled) amethyst earrings NEXT PAGE PREV PAGE amethyst necklace (golden) amethyst bracelet tourmaline ring tourmaline necklace (silver) tourmaline necklace (jewelled) tourmaline earrings tourmaline necklace (golden) tourmaline bracelet amber ring amber necklace (silver) NEXT PAGE PREV PAGE amber necklace (jewelled) amber earrings amber necklace (golden) amber bracelet diamond ring diamond necklace (silver) diamond necklace (jewelled) diamond earrings diamond necklace (golden) diamond bracelet NEXT PAGE PREV PAGE krampus minion earrings candied staff"
+      ]
+    },
+    {
+      "removed_lines": [
+        "<CENTER>TINKERING MENU</CENTER> <CENTER>CATEGORIES</CENTER> <CENTER>SELECTIONS</CENTER> <CENTER>NOTICES</CENTER> EXIT CANCEL MAKE REPAIR ITEM MARK ITEM ENHANCE ITEM ALTER ITEM (GARGOYLE) NON QUEST ITEM MAKE LAST 0/1 COMPLETED You do not have sufficient metal to make that. IRON (0) LAST TEN Jewelry Wooden Items Tools Parts Utensils Miscellaneous Assemblies Traps Magic Jewelry ring bracelet gargish necklace gargish bracelet gargish ring gargish earrings star sapphire ring star sapphire necklace (silver) star sapphire necklace (jewelled) star sapphire earrings NEXT PAGE PREV PAGE star sapphire necklace (golden) star sapphire bracelet emerald ring emerald necklace (silver) emerald necklace (jewelled) emerald earrings emerald necklace (golden) emerald bracelet sapphire ring sapphire necklace (silver) NEXT PAGE PREV PAGE sapphire necklace (jewelled) sapphire earrings sapphire necklace (golden) sapphire bracelet ruby ring ruby necklace (silver) ruby necklace (jewelled) ruby earrings ruby necklace (golden) ruby bracelet NEXT PAGE PREV PAGE citrine ring citrine necklace (silver) citrine necklace (jewelled) citrine earrings citrine necklace (golden) citrine bracelet amethyst ring amethyst necklace (silver) amethyst necklace (jewelled) amethyst earrings NEXT PAGE PREV PAGE amethyst necklace (golden) amethyst bracelet tourmaline ring tourmaline necklace (silver) tourmaline necklace (jewelled) tourmaline earrings tourmaline necklace (golden) tourmaline bracelet amber ring amber necklace (silver) NEXT PAGE PREV PAGE amber necklace (jewelled) amber earrings amber necklace (golden) amber bracelet diamond ring diamond necklace (silver) diamond necklace (jewelled) diamond earrings diamond necklace (golden) diamond bracelet NEXT PAGE PREV PAGE krampus minion earrings candied staff"
+      ],
+      "button": 3,
+      "reply_ok": true,
+      "before_line_count": 1,
+      "after_line_count": 1,
+      "new_lines": [
+        "ITEM <CENTER>MATERIALS</CENTER> <CENTER>OTHER</CENTER> <CENTER>TINKERING MENU</CENTER> MAKE NOW MAKE NUMBER MAKE MAX BACK ring This item may hold its maker's mark Tinkering 65.0 Success Chance: 70.0% Exceptional Chance: 25.0% * The item retains the color of this material * Ingots 3"
+      ],
+      "changed": true,
+      "closed_gump": false,
+      "after_lines_sample": [
+        "ITEM <CENTER>MATERIALS</CENTER> <CENTER>OTHER</CENTER> <CENTER>TINKERING MENU</CENTER> MAKE NOW MAKE NUMBER MAKE MAX BACK ring This item may hold its maker's mark Tinkering 65.0 Success Chance: 70.0% Exceptional Chance: 25.0% * The item retains the color of this material * Ingots 3"
+      ]
+    },
+    {
+      "closed_gump": false,
+      "reply_ok": false,
+      "changed": false,
+      "note": "Skipped by profession rule for Tinker.",
+      "skipped": true,
+      "button": 4
+    },
+    {
+      "closed_gump": false,
+      "reply_ok": false,
+      "changed": false,
+      "note": "Skipped by profession rule for Tinker.",
+      "skipped": true,
+      "button": 5
+    },
+    {
+      "closed_gump": false,
+      "reply_ok": false,
+      "changed": false,
+      "note": "Skipped by profession rule for Tinker.",
+      "skipped": true,
+      "button": 6
+    },
+    {
+      "removed_lines": [
+        "<CENTER>TINKERING MENU</CENTER> <CENTER>CATEGORIES</CENTER> <CENTER>SELECTIONS</CENTER> <CENTER>NOTICES</CENTER> EXIT CANCEL MAKE REPAIR ITEM MARK ITEM ENHANCE ITEM ALTER ITEM (GARGOYLE) NON QUEST ITEM MAKE LAST 0/1 COMPLETED IRON (0) LAST TEN Jewelry Wooden Items Tools Parts Utensils Miscellaneous Assemblies Traps Magic Jewelry ring bracelet gargish necklace gargish bracelet gargish ring gargish earrings star sapphire ring star sapphire necklace (silver) star sapphire necklace (jewelled) star sapphire earrings NEXT PAGE PREV PAGE star sapphire necklace (golden) star sapphire bracelet emerald ring emerald necklace (silver) emerald necklace (jewelled) emerald earrings emerald necklace (golden) emerald bracelet sapphire ring sapphire necklace (silver) NEXT PAGE PREV PAGE sapphire necklace (jewelled) sapphire earrings sapphire necklace (golden) sapphire bracelet ruby ring ruby necklace (silver) ruby necklace (jewelled) ruby earrings ruby necklace (golden) ruby bracelet NEXT PAGE PREV PAGE citrine ring citrine necklace (silver) citrine necklace (jewelled) citrine earrings citrine necklace (golden) citrine bracelet amethyst ring amethyst necklace (silver) amethyst necklace (jewelled) amethyst earrings NEXT PAGE PREV PAGE amethyst necklace (golden) amethyst bracelet tourmaline ring tourmaline necklace (silver) tourmaline necklace (jewelled) tourmaline earrings tourmaline necklace (golden) tourmaline bracelet amber ring amber necklace (silver) NEXT PAGE PREV PAGE amber necklace (jewelled) amber earrings amber necklace (golden) amber bracelet diamond ring diamond necklace (silver) diamond necklace (jewelled) diamond earrings diamond necklace (golden) diamond bracelet NEXT PAGE PREV PAGE krampus minion earrings candied staff"
+      ],
+      "button": 7,
+      "reply_ok": true,
+      "before_line_count": 1,
+      "after_line_count": 1,
+      "new_lines": [
+        "<CENTER>TINKERING MENU</CENTER> <CENTER>CATEGORIES</CENTER> <CENTER>SELECTIONS</CENTER> <CENTER>NOTICES</CENTER> EXIT CANCEL MAKE REPAIR ITEM MARK ITEM ENHANCE ITEM ALTER ITEM (GARGOYLE) NON QUEST ITEM MAKE LAST 0/1 COMPLETED IRON (0) LAST TEN Jewelry Wooden Items Tools Parts Utensils Miscellaneous Assemblies Traps Magic Jewelry DO NOT COLOR IRON (0) DULL COPPER (0) SHADOW IRON (0) COPPER (0) BRONZE (0) GOLD (0) AGAPITE (0) VERITE (0) VALORITE (0)"
+      ],
+      "changed": true,
+      "closed_gump": false,
+      "after_lines_sample": [
+        "<CENTER>TINKERING MENU</CENTER> <CENTER>CATEGORIES</CENTER> <CENTER>SELECTIONS</CENTER> <CENTER>NOTICES</CENTER> EXIT CANCEL MAKE REPAIR ITEM MARK ITEM ENHANCE ITEM ALTER ITEM (GARGOYLE) NON QUEST ITEM MAKE LAST 0/1 COMPLETED IRON (0) LAST TEN Jewelry Wooden Items Tools Parts Utensils Miscellaneous Assemblies Traps Magic Jewelry DO NOT COLOR IRON (0) DULL COPPER (0) SHADOW IRON (0) COPPER (0) BRONZE (0) GOLD (0) AGAPITE (0) VERITE (0) VALORITE (0)"
+      ]
+    },
+    {
+      "closed_gump": false,
+      "reply_ok": false,
+      "changed": false,
+      "note": "Skipped by profession rule for Tinker.",
+      "skipped": true,
+      "button": 8
+    },
+    {
+      "closed_gump": false,
+      "reply_ok": false,
+      "changed": false,
+      "note": "Skipped by profession rule for Tinker.",
+      "skipped": true,
+      "button": 9
+    },
+    {
+      "removed_lines": [],
+      "button": 10,
+      "note": "Button appears to close or leave crafting gump. Auto-skipping in this run.",
+      "before_line_count": 1,
+      "after_line_count": 0,
+      "new_lines": [],
+      "changed": true,
+      "closed_gump": true,
+      "after_lines_sample": []
+    }
+  ]
+}

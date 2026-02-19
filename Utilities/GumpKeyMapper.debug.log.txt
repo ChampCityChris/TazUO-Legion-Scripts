@@ -1,0 +1,87 @@
+[2026-02-16 20:06:53] Mapper: opening Tinker crafting gump via tool...
+[2026-02-16 20:06:56] Mapper: opened Tinker gump via expected id 0xD466EA9C.
+[2026-02-16 20:06:56] Mapper: gump 0xD466EA9C detected. snapshot_lines=1
+[2026-02-16 20:07:08] Mapper: anchor match failed for Tinker; falling back to gump 0x7E9DC90F (text_len=7659).
+[2026-02-16 20:07:12] Mapper: button 8 closed gump; reopening and continuing.
+[2026-02-16 20:07:25] Mapper: failed to open Tinker gump via tool 0x40AC2BA5.
+[2026-02-16 20:07:25] Mapper: failed to recover crafting gump; stopping scan.
+[2026-02-16 20:07:25] Mapper: diagnostic open_gumps=[]
+[2026-02-16 20:07:25] Mapper: diagnostic has_gump(Blacksmith,0xD466EA9C)=False
+[2026-02-16 20:07:25] Mapper: diagnostic has_gump(Tailor,0xD466EA9C)=False
+[2026-02-16 20:07:25] Mapper: diagnostic has_gump(Carpentry,0xD466EA9C)=False
+[2026-02-16 20:07:25] Mapper: diagnostic has_gump(Tinker,0xD466EA9C)=False
+[2026-02-16 20:07:25] Mapper: diagnostic has_gump(Bowcraft,0xD466EA9C)=False
+[2026-02-16 20:07:25] Mapper: wrote review file: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\GumpKeyMapper.review.json
+[2026-02-16 20:07:25] Mapper: discoveries=8
+[2026-02-16 20:13:26] Mapper: opening Bowcraft crafting gump via tool...
+[2026-02-16 20:13:26] Mapper: no Bowcraft tool found in backpack/subcontainers.
+[2026-02-16 20:13:26] Mapper: fallback: searching already-open Bowcraft gump.
+[2026-02-16 20:13:26] Mapper: no matching crafting gump found. Open the gump and rerun.
+[2026-02-16 20:13:26] Mapper: diagnostic open_gumps=[]
+[2026-02-16 20:13:26] Mapper: diagnostic has_gump(Blacksmith,0xD466EA9C)=False
+[2026-02-16 20:13:26] Mapper: diagnostic has_gump(Tailor,0xD466EA9C)=False
+[2026-02-16 20:13:26] Mapper: diagnostic has_gump(Carpentry,0xD466EA9C)=False
+[2026-02-16 20:13:26] Mapper: diagnostic has_gump(Tinker,0xD466EA9C)=False
+[2026-02-16 20:13:26] Mapper: diagnostic has_gump(Bowcraft,0xD466EA9C)=False
+[2026-02-16 20:14:07] Mapper: opening Tinker crafting gump via tool...
+[2026-02-16 20:14:10] Mapper: opened Tinker gump via expected id 0xD466EA9C.
+[2026-02-16 20:14:10] Mapper: gump 0xD466EA9C detected. snapshot_lines=1
+[2026-02-16 20:14:19] Mapper: active gump drifted (have=0x4CD8C002, expected=0xD466EA9C); recovering.
+[2026-02-16 20:14:22] Mapper: opened Tinker gump via expected id 0xD466EA9C.
+[2026-02-16 20:14:28] Mapper: button 9 closed gump; reopening and continuing.
+[2026-02-16 20:14:54] Mapper: failed to open Tinker gump via tool 0x40AC2BA5.
+[2026-02-16 20:14:54] Mapper: failed to recover crafting gump; stopping scan.
+[2026-02-16 20:14:54] Mapper: diagnostic open_gumps=[]
+[2026-02-16 20:14:54] Mapper: diagnostic has_gump(Blacksmith,0xD466EA9C)=False
+[2026-02-16 20:14:54] Mapper: diagnostic has_gump(Tailor,0xD466EA9C)=False
+[2026-02-16 20:14:54] Mapper: diagnostic has_gump(Carpentry,0xD466EA9C)=False
+[2026-02-16 20:14:54] Mapper: diagnostic has_gump(Tinker,0xD466EA9C)=False
+[2026-02-16 20:14:54] Mapper: diagnostic has_gump(Bowcraft,0xD466EA9C)=False
+[2026-02-16 20:14:54] Mapper: wrote review file: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\GumpKeyMapper.review.json
+[2026-02-16 20:14:54] Mapper: discoveries=9
+[2026-02-16 20:17:55] Mapper: stop requested during setup wait.
+[2026-02-16 20:18:34] Mapper: opening Tinker crafting gump via tool...
+[2026-02-16 20:18:34] Mapper: detected Tinker sub-gump; sending button 0 to return to main.
+[2026-02-16 20:18:41] Mapper: opened Tinker gump via expected id 0xD466EA9C.
+[2026-02-16 20:18:41] Mapper: gump 0xD466EA9C detected. snapshot_lines=1
+[2026-02-16 20:18:50] Mapper: active gump drifted (have=0x4CD8C002, expected=0xD466EA9C); recovering.
+[2026-02-16 20:18:53] Mapper: opened Tinker gump via expected id 0xD466EA9C.
+[2026-02-16 20:18:59] Mapper: button 9 closed gump; reopening and continuing.
+[2026-02-16 20:19:06] Mapper: failed to open Tinker gump via tool 0x40AC2BA5.
+[2026-02-16 20:19:06] Mapper: failed to recover crafting gump; stopping scan early to avoid disconnect risk.
+[2026-02-16 20:19:06] Mapper: wrote review file: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\GumpKeyMapper.review.json
+[2026-02-16 20:19:06] Mapper: discoveries=9
+[2026-02-16 20:21:54] Mapper: opening Tinker crafting gump via tool...
+[2026-02-16 20:21:54] Mapper: detected Tinker sub-gump; sending button 0 to return to main.
+[2026-02-16 20:22:01] Mapper: opened Tinker gump via expected id 0xD466EA9C.
+[2026-02-16 20:22:01] Mapper: gump 0xD466EA9C detected. snapshot_lines=1
+[2026-02-16 20:22:10] Mapper: active gump drifted (have=0x4CD8C002, expected=0xD466EA9C); recovering.
+[2026-02-16 20:22:19] Mapper: button 10 closed gump; reopening and continuing.
+[2026-02-16 20:22:22] Mapper: failed to recover crafting gump; stopping scan early to avoid disconnect risk.
+[2026-02-16 20:22:22] Mapper: wrote review file: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\GumpKeyMapper.review.json
+[2026-02-16 20:22:22] Mapper: discoveries=10
+[2026-02-16 20:25:59] Mapper: opening Tinker crafting gump via tool...
+[2026-02-16 20:25:59] Mapper: detected Tinker sub-gump; sending button 0 to return to main.
+[2026-02-16 20:26:06] Mapper: opened Tinker gump via expected id 0xD466EA9C.
+[2026-02-16 20:26:06] Mapper: gump 0xD466EA9C detected. snapshot_lines=1
+[2026-02-16 20:26:15] Mapper: active gump drifted (have=0x4CD8C002, expected=0xD466EA9C); recovering.
+[2026-02-16 20:26:18] Mapper: recovery succeeded on attempt 1.
+[2026-02-16 20:26:25] Mapper: button 10 closed gump; reopening and continuing.
+[2026-02-16 20:26:28] Mapper: recovery attempt 1/8 failed; backing off 2.5s.
+[2026-02-16 20:26:33] Mapper: recovery attempt 2/8 failed; backing off 2.5s.
+[2026-02-16 20:26:39] Mapper: recovery attempt 3/8 failed; backing off 2.5s.
+[2026-02-16 20:26:44] Mapper: recovery attempt 4/8 failed; backing off 2.5s.
+[2026-02-16 20:26:44] Mapper: failed to recover crafting gump; stopping scan early to avoid disconnect risk.
+[2026-02-16 20:26:44] Mapper: wrote review file: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\GumpKeyMapper.review.json
+[2026-02-16 20:26:44] Mapper: discoveries=10
+[2026-02-16 20:29:28] Mapper: opening Tinker crafting gump via tool...
+[2026-02-16 20:29:28] Mapper: detected Tinker sub-gump; sending button 0 to return to main.
+[2026-02-16 20:29:35] Mapper: opened Tinker gump via expected id 0xD466EA9C.
+[2026-02-16 20:29:35] Mapper: gump 0xD466EA9C detected. snapshot_lines=1
+[2026-02-16 20:29:44] Mapper: active gump drifted (have=0x4CD8C002, expected=0xD466EA9C); recovering.
+[2026-02-16 20:29:47] Mapper: opened Tinker gump via expected id 0xD466EA9C.
+[2026-02-16 20:29:54] Mapper: button 10 closed gump; reopening and continuing.
+[2026-02-16 20:29:58] Mapper: failed to open Tinker gump via tool 0x40AC2BA5.
+[2026-02-16 20:29:59] Mapper: failed to recover crafting gump; stopping scan early to avoid disconnect risk.
+[2026-02-16 20:29:59] Mapper: wrote review file: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\GumpKeyMapper.review.json
+[2026-02-16 20:29:59] Mapper: discoveries=10
