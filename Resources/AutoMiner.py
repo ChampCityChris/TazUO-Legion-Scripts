@@ -346,7 +346,7 @@ class TileJournalResult:
         self.dig_some = bool(dig_some)
         self.fail_skill = bool(fail_skill)
         self.cant_mine = bool(cant_mine)
-        self.any_msg = self.cannot_see or self.dig_some or self.no_ore_hit or self.fail_skill
+        self.any_msg = self.cannot_see or self.dig_some or self.no_ore_hit or self.fail_skill or self.cant_mine
 
 
 # Pass-level counters used to decide whether to move to the next rune.
@@ -812,7 +812,7 @@ def _debug_log_path():
 
 # Write one timestamped debug line to disk (best-effort).
 def _write_debug_log(line):
-    if not DEBUG_LOG_ENABLED or not DEBUG_TARGETING:
+    if not DEBUG_LOG_ENABLED:
         return
     try:
         ts = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -1683,10 +1683,15 @@ def _target_mine_tile(dx, dy, tile):
             _debug(
                 f"MineTarget: rel=({dx},{dy}) graphic=0x{int(tile.Graphic):04X} land={use_land} has_target={API.HasTarget()}"
             )
-        API.TargetTileRel(dx, dy, int(tile.Graphic))
+        if use_land:
+            API.TargetLandRel(dx, dy)
+            method = "TargetLandRel"
+        else:
+            API.TargetTileRel(dx, dy, int(tile.Graphic))
+            method = "TargetTileRel"
         _sleep(0.2)
         if DEBUG_TARGETING:
-            _debug(f"MineTarget: method=TargetTileRel has_target={API.HasTarget()}")
+            _debug(f"MineTarget: method={method} has_target={API.HasTarget()}")
         if not API.HasTarget():
             return True
     if API.HasTarget():
@@ -1701,7 +1706,7 @@ def _prepare_tile_attempt(px, py, dx, dy, mine_tools, tool_use_delay_s=0.2):
     ty = py + dy
     _pause_if_needed()
     API.ClearJournal()
-    API.UseObject(mine_tools)
+    API.UseObject(mine_tools.Serial)
     _sleep(tool_use_delay_s)
     curx = int(API.Player.X)
     cury = int(API.Player.Y)
@@ -2029,10 +2034,10 @@ def _mine_pass_dynamic_timed(mine_tools, px, py, offsets, tool_use_delay_s, fail
         attempt, journal_texts, target_result = _attempt_tile(
             px, py, dx, dy, mine_tools, counters, tool_use_delay_s, failover_delay_s, journal_wait_s
         )
-        if _handle_tile_timeout(attempt, target_result):
-            continue
         if _journal_contains_any(journal_texts, TOOL_WORN_TEXTS):
             return "tool_worn"
+        if _handle_tile_timeout(attempt, target_result):
+            continue
         primary = _classify_mining_journal(journal_texts)
         _apply_primary_journal_outcome(attempt, primary, target_result, counters)
     return _finalize_pass_result(counters, len(offsets))
@@ -2065,10 +2070,14 @@ def _handle_tool_worn_path():
 
 # Recovery path when the current spot is considered depleted.
 def _handle_no_ore_path():
-    if _recall_home_and_unload():
+    if not _recall_home_and_unload():
+        _diag_warn("Recall-home unload failed on depleted spot; advancing rune with backoff.", phase="TRAVEL")
         _advance_mining_spot()
-        _sleep(1.0)
-        _recall_mining_spot()
+        _sleep(4.0)
+        return
+    _advance_mining_spot()
+    _sleep(1.0)
+    _recall_mining_spot()
 
 
 # Single-loop mining tick: callbacks, checks, mining pass, and recovery handling.
@@ -2099,9 +2108,9 @@ def _tick_mining_cycle(mine_tools):
     return mine_tools
 
 
-_create_control_gump()
 _load_config()
 _load_log_config()
+_create_control_gump()
 _rebuild_control_gump()
 
 MineTools = _get_mine_tool()
