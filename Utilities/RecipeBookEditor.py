@@ -4,6 +4,7 @@ import ast
 import os
 import re
 import sys
+import sqlite3
 
 """
 RecipeBookEditor
@@ -24,6 +25,7 @@ ingot:0x1BF2:60:400:0;gem:0x0F26:10:80;super_gem:0x1234:10:80
 
 REQUEST_KEY = "recipe_editor_request"
 RESULT_KEY = "recipe_editor_result"
+DEBUG_LOG_FILE = "RecipeBookEditor.debug.log"
 
 SERVER_OPTIONS = ["OSI", "UOAlive", "Sosaria Reforged", "InsaneUO"]
 DEFAULT_SERVER = "UOAlive"
@@ -36,6 +38,34 @@ MATERIAL_BASE_OPTIONS = ["ingot", "cloth", "leather", "board", "feather", "scale
 EDITOR_BG_GUMP_ART_ID = 271
 MATERIAL_KEY_DEFAULT_OPTIONS = ["ingot_iron", "cloth", "leather", "board", "feather"]
 MATERIAL_KEY_ADD_LABEL = "Add New..."
+RESOURCE_NONE_LABEL = "<none>"
+RESOURCE_SLOT_COUNT = 5
+ITEM_NONE_LABEL = "<none>"
+RESOURCE_FALLBACK_OPTIONS = [
+    "Ingot",
+    "Board",
+    "Feather",
+    "Ruby",
+    "Diamond",
+    "Sapphire",
+    "Citrine",
+    "Tourmaline",
+    "Amber",
+    "Star Sapphire",
+    "Amethyst",
+    "Emerald",
+    "Dark Sapphire",
+    "Turquoise",
+    "Perfect Emerald",
+    "Ecru Citrine",
+    "Fire Ruby",
+    "Leather",
+    "Cloth",
+    "Blank Scroll",
+    "Nox Crystal",
+    "Spider Silk",
+    "Mandrake",
+]
 MATERIAL_KEY_OPTIONS_BY_PROFESSION = {
     "Blacksmith": [
         "ingot_iron",
@@ -96,19 +126,40 @@ EDITOR_LAST_TYPE_IDX = -1
 EDITOR_LAST_MATERIAL_KEY_IDX = -1
 EDITOR_LAST_PROFESSION_IDX = -1
 EDITOR_LAST_MODE_IDX = -1
+SCRIPT_EXIT_REQUESTED = False
 
 RECIPE_STORE = None
-_util_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
+_script_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
+_util_dir = _script_dir
+if os.path.basename(str(_util_dir or "")).lower() != "utilities":
+    _cand = os.path.join(_script_dir, "Utilities")
+    if os.path.isdir(_cand):
+        _util_dir = _cand
 if _util_dir and _util_dir not in sys.path:
-    sys.path.append(_util_dir)
+    sys.path.insert(0, _util_dir)
 try:
     import RecipeStore as RECIPE_STORE
+    try:
+        RECIPE_STORE.set_base_dir(_util_dir)
+    except Exception:
+        pass
 except Exception:
     RECIPE_STORE = None
 
 
 def _say(msg, hue=17):
     API.SysMsg(msg, hue)
+
+
+def _write_debug_log(msg):
+    try:
+        from datetime import datetime
+        ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        path = os.path.join(_util_dir, DEBUG_LOG_FILE)
+        with open(path, "a", encoding="utf-8") as f:
+            f.write("[{0}] {1}\n".format(ts, str(msg)))
+    except Exception:
+        pass
 
 
 def _parse_int_list(text):
@@ -223,6 +274,244 @@ def _resources_to_text(resources):
     return ";".join(parts)
 
 
+def _load_resource_name_options():
+    candidates = []
+    try:
+        candidates.append(os.path.join(_util_dir, "craftables.db"))
+    except Exception:
+        pass
+    try:
+        candidates.append(os.path.join(_script_dir, "craftables.db"))
+    except Exception:
+        pass
+    try:
+        candidates.append(os.path.join(os.getcwd(), "craftables.db"))
+    except Exception:
+        pass
+    seen = set()
+    out = []
+    for p in candidates:
+        t = str(p or "").strip()
+        if not t:
+            continue
+        k = t.lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        if not os.path.exists(t):
+            continue
+        conn = None
+        try:
+            conn = sqlite3.connect(t, timeout=0.35)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute(
+                """
+                SELECT name
+                FROM resources
+                WHERE trim(coalesce(name, '')) <> ''
+                ORDER BY name COLLATE NOCASE
+                """
+            )
+            rows = cur.fetchall()
+            out = [str(r["name"] or "").strip() for r in rows if str(r["name"] or "").strip()]
+            if out:
+                break
+        except Exception:
+            out = []
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+    if not out:
+        out = list(RESOURCE_FALLBACK_OPTIONS)
+    seen_names = set()
+    deduped = []
+    for n in out:
+        t = str(n or "").strip()
+        if not t:
+            continue
+        lk = t.lower()
+        if lk in seen_names:
+            continue
+        seen_names.add(lk)
+        deduped.append(t)
+    return deduped
+
+
+def _resource_option_index(options, name):
+    target = str(name or "").strip().lower()
+    if not target:
+        return -1
+    for i, opt in enumerate(list(options or [])):
+        if str(opt or "").strip().lower() == target:
+            return int(i)
+    return -1
+
+
+def _load_item_name_options(server, profession):
+    srv = _normalize_server_name(server or DEFAULT_SERVER)
+    prof = _normalize_profession_name(profession or "")
+    if not prof:
+        return []
+
+    candidates = []
+    try:
+        candidates.append(os.path.join(_util_dir, "craftables.db"))
+    except Exception:
+        pass
+    try:
+        candidates.append(os.path.join(_script_dir, "craftables.db"))
+    except Exception:
+        pass
+    try:
+        candidates.append(os.path.join(os.getcwd(), "craftables.db"))
+    except Exception:
+        pass
+
+    seen_paths = set()
+    out = []
+    for p in candidates:
+        t = str(p or "").strip()
+        if not t:
+            continue
+        lk = t.lower()
+        if lk in seen_paths:
+            continue
+        seen_paths.add(lk)
+        if not os.path.exists(t):
+            continue
+        conn = None
+        try:
+            conn = sqlite3.connect(t, timeout=0.35)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute(
+                """
+                SELECT name
+                FROM item_keys
+                WHERE lower(coalesce(server,''))=lower(?)
+                  AND lower(coalesce(profession,''))=lower(?)
+                  AND trim(coalesce(name,''))<>''
+                ORDER BY name COLLATE NOCASE
+                """,
+                (srv, prof),
+            )
+            rows = cur.fetchall()
+            out = [str(r["name"] or "").strip() for r in rows if str(r["name"] or "").strip()]
+            if out:
+                break
+        except Exception:
+            out = []
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+    if not out:
+        # Fallback to key-map cache if DB lookup is unavailable.
+        try:
+            km = _get_key_maps()
+            node = km.get(srv, {}).get(prof, {}) if isinstance(km, dict) else {}
+            ik = node.get("item_keys", {}) if isinstance(node, dict) else {}
+            if isinstance(ik, dict):
+                for ent in ik.values():
+                    nm = str((ent or {}).get("name", "") if isinstance(ent, dict) else "").strip()
+                    if nm:
+                        out.append(nm)
+        except Exception:
+            pass
+
+    seen_names = set()
+    deduped = []
+    for n in out:
+        t = str(n or "").strip()
+        if not t:
+            continue
+        k = t.lower()
+        if k in seen_names:
+            continue
+        seen_names.add(k)
+        deduped.append(t)
+    return deduped
+
+
+def _selected_item_name_from_inputs(inputs):
+    f = inputs or {}
+    dd = f.get("name")
+    opts = list(f.get("name_options", []) or [])
+    idx = -1
+    try:
+        idx = int(dd.GetSelectedIndex()) if dd else -1
+    except Exception:
+        idx = -1
+    if 0 <= idx < len(opts):
+        val = str(opts[idx] or "").strip()
+        if val.lower() == str(ITEM_NONE_LABEL).lower():
+            return ""
+        return val
+    try:
+        return str((dd.Text if dd else "") or "").strip()
+    except Exception:
+        return ""
+
+
+def _normalize_resource_rows(resources):
+    out = []
+    for r in list(resources or []):
+        if not isinstance(r, dict):
+            continue
+        mat = str(r.get("material", "") or "").strip().lower()
+        try:
+            qty = int(r.get("per_item", 0) or 0)
+        except Exception:
+            qty = 0
+        if not mat or qty <= 0:
+            continue
+        out.append({"material": mat, "per_item": int(qty)})
+        if len(out) >= int(RESOURCE_SLOT_COUNT):
+            break
+    return out
+
+
+def _collect_resource_rows_from_controls(inputs):
+    out = []
+    for row in list((inputs or {}).get("resource_rows", []) or []):
+        if not isinstance(row, dict):
+            continue
+        dd = row.get("resource")
+        qty_tb = row.get("qty")
+        opts = list(row.get("options", []) or [])
+        idx = -1
+        try:
+            idx = int(dd.GetSelectedIndex()) if dd else -1
+        except Exception:
+            idx = -1
+        if idx < 0 or idx >= len(opts):
+            continue
+        name = str(opts[idx] or "").strip()
+        if not name or name.lower() == str(RESOURCE_NONE_LABEL).strip().lower():
+            continue
+        qty_text = str((qty_tb.Text if qty_tb else "") or "").strip()
+        qty = 0
+        try:
+            qty = int(qty_text)
+        except Exception:
+            qty = 0
+        if qty <= 0:
+            continue
+        out.append({"material": name.lower(), "per_item": int(qty)})
+        if len(out) >= int(RESOURCE_SLOT_COUNT):
+            break
+    return out
+
+
 def _read_recipe_book():
     if RECIPE_STORE is None:
         return []
@@ -238,7 +527,16 @@ def _write_recipe_book(rows):
         _say("Recipe DB unavailable.", 33)
         return False
     try:
-        return bool(RECIPE_STORE.save_recipes(list(rows or [])))
+        ok = bool(RECIPE_STORE.save_recipes(list(rows or [])))
+        if not ok:
+            err = ""
+            try:
+                err = str(RECIPE_STORE.last_init_error() or "")
+            except Exception:
+                err = ""
+            if err:
+                _say(f"Recipe DB write blocked: {err}", 33)
+        return ok
     except Exception as ex:
         _say(f"Recipe DB write failed: {ex}", 33)
         return False
@@ -310,7 +608,16 @@ def _set_key_maps(key_maps):
         _say("Key-map DB unavailable.", 33)
         return False
     try:
-        return bool(RECIPE_STORE.save_key_maps(dict(key_maps or {})))
+        ok = bool(RECIPE_STORE.save_key_maps(dict(key_maps or {})))
+        if not ok:
+            err = ""
+            try:
+                err = str(RECIPE_STORE.last_init_error() or "")
+            except Exception:
+                err = ""
+            if err:
+                _say(f"Key-map DB write blocked: {err}", 33)
+        return ok
     except Exception as ex:
         _say(f"Key-map DB write failed: {ex}", 33)
         return False
@@ -418,7 +725,14 @@ def _upsert_recipe(row):
 
 
 def _get_persistent_json(key):
-    raw = API.GetPersistentVar(key, "", API.PersistentVar.Char)
+    raw = ""
+    try:
+        raw = API.GetPersistentVar(str(key), "", API.PersistentVar.Char)
+    except Exception:
+        try:
+            raw = API.GetPersistentVar(str(key), "")
+        except Exception:
+            raw = ""
     if not raw:
         return None
     try:
@@ -431,10 +745,20 @@ def _get_persistent_json(key):
 
 
 def _set_persistent_json(key, obj):
+    payload = json.dumps(obj or {})
     try:
-        API.SavePersistentVar(key, json.dumps(obj or {}), API.PersistentVar.Char)
-    except Exception:
-        pass
+        API.SavePersistentVar(str(key), payload, API.PersistentVar.Char)
+        return True
+    except Exception as ex1:
+        try:
+            API.SavePersistentVar(str(key), payload)
+            _write_debug_log("Persistent write fallback succeeded key={0} err={1}".format(str(key), str(ex1)))
+            return True
+        except Exception as ex2:
+            _write_debug_log(
+                "Persistent write failed key={0} err1={1} err2={2}".format(str(key), str(ex1), str(ex2))
+            )
+            return False
 
 
 def _parse_materials_text(text):
@@ -505,25 +829,13 @@ def _tooltip_lines(text):
 
 
 def _add_editor_background(g, w, h):
-    # Prefer gump art background when available; fallback to color box.
-    try:
-        pic = API.CreateGumpPic(int(EDITOR_BG_GUMP_ART_ID))
-        try:
-            pic.SetPos(0, 0)
-        except Exception:
-            pass
-        try:
-            # Some API builds allow sizing image controls.
-            pic.SetRect(0, 0, int(w), int(h))
-        except Exception:
-            pass
-        g.Add(pic)
-        return
-    except Exception:
-        pass
-    bg = API.CreateGumpColorBox(0.8, "#1B1B1B")
+    # Match the viewer visual language.
+    bg = API.CreateGumpColorBox(0.78, "#111923")
     bg.SetRect(0, 0, w, h)
     g.Add(bg)
+    panel = API.CreateGumpColorBox(0.40, "#1B2A3A")
+    panel.SetRect(8, 8, w - 16, h - 16)
+    g.Add(panel)
 
 
 def _collect_material_key_options(profession=""):
@@ -594,13 +906,14 @@ def _find_material_buttons_for_key(profession, material_key, server=""):
 
 
 def _close_editor():
-    global EDITOR_GUMP, EDITOR_LAST_TYPE_IDX, EDITOR_LAST_MATERIAL_KEY_IDX, EDITOR_LAST_PROFESSION_IDX, EDITOR_LAST_MODE_IDX
+    global EDITOR_GUMP, EDITOR_INPUTS, EDITOR_LAST_TYPE_IDX, EDITOR_LAST_MATERIAL_KEY_IDX, EDITOR_LAST_PROFESSION_IDX, EDITOR_LAST_MODE_IDX
     if EDITOR_GUMP:
         try:
             EDITOR_GUMP.Dispose()
         except Exception:
             pass
     EDITOR_GUMP = None
+    EDITOR_INPUTS = {}
     EDITOR_LAST_TYPE_IDX = -1
     EDITOR_LAST_MATERIAL_KEY_IDX = -1
     EDITOR_LAST_PROFESSION_IDX = -1
@@ -643,7 +956,7 @@ def _capture_editor_state():
         pidx = 0
     out["profession"] = PROFESSION_OPTIONS[pidx]
     out["material"] = str(f.get("material_hidden", "ingot") or "ingot")
-    out["name"] = str((f.get("name").Text if f.get("name") else "") or "")
+    out["name"] = _selected_item_name_from_inputs(f)
     out["buttons"] = [int(x) for x in _parse_int_list(
         "{0},{1}".format(
             str((f.get("button_1").Text if f.get("button_1") else "") or ""),
@@ -677,14 +990,15 @@ def _capture_editor_state():
     out["exceptional"] = bool(f.get("exceptional_hidden", False))
     out["raw_text"] = str((f.get("raw_text_hidden") if f.get("raw_text_hidden") else "") or "")
     out["item_name"] = str((f.get("item_name_hidden") if f.get("item_name_hidden") else "") or "")
-    out["resources_text"] = str((f.get("resources_text").Text if f.get("resources_text") else "") or "")
+    out["resources"] = _collect_resource_rows_from_controls(f)
+    out["resources_text"] = _resources_to_text(out.get("resources", []))
     out["start_at"] = str((f.get("start_at").Text if f.get("start_at") else "") or "")
     out["stop_at"] = str((f.get("stop_at").Text if f.get("stop_at") else "") or "")
     return out
 
 
 def _save_and_exit():
-    global EDITOR_INPUTS
+    global EDITOR_INPUTS, SCRIPT_EXIT_REQUESTED
     f = EDITOR_INPUTS or {}
     mode_dd = f.get("editor_mode")
     prof_dd = f.get("profession")
@@ -704,7 +1018,7 @@ def _save_and_exit():
         type_idx = 0
     editor_mode = EDITOR_MODE_OPTIONS[mode_idx]
 
-    name = str((f.get("name").Text if f.get("name") else "") or "").strip()
+    name = _selected_item_name_from_inputs(f).strip()
     if not name:
         _say("Recipe name is required.", 33)
         return
@@ -717,6 +1031,7 @@ def _save_and_exit():
         buttons.append(int(b1[0]))
     if b2:
         buttons.append(int(b2[0]))
+    user_entered_two_buttons = bool(len(buttons) >= 2)
     if not buttons:
         _say("Enter at least one crafting button id.", 33)
         return
@@ -741,7 +1056,9 @@ def _save_and_exit():
     materials = _parse_materials_text(materials_text)
     if not materials:
         materials = [{"material": material, "item_id": 0, "min_in_pack": 0, "pull_amount": 0, "hue": None}]
-    resources = _parse_resources_text(str((f.get("resources_text").Text if f.get("resources_text") else "") or ""))
+    resources = _collect_resource_rows_from_controls(f)
+    if not resources:
+        resources = _parse_resources_text(str((f.get("resources_text").Text if f.get("resources_text") else "") or ""))
 
     row = {
         "name": name,
@@ -794,15 +1111,17 @@ def _save_and_exit():
             _say("Failed to save key maps.", 33)
             return
         _say(f"Key maps saved: {PROFESSION_OPTIONS[prof_idx]} {name} ({SERVER_OPTIONS[srv_idx]})")
-        _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "saved", "editor_mode": editor_mode, "key_maps_saved": True})
+        ok = _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "saved", "editor_mode": editor_mode, "key_maps_saved": True})
+        _write_debug_log("Save ack (key_maps_saved) nonce={0} ok={1}".format(int(REQUEST_NONCE), bool(ok)))
         _close_editor()
+        SCRIPT_EXIT_REQUESTED = True
         return
 
     # bind_deed mode: prefer key-map values when present.
     item_map = _get_item_key_map(SERVER_OPTIONS[srv_idx], PROFESSION_OPTIONS[prof_idx], name)
     if item_map:
         map_buttons = [int(x) for x in (item_map.get("buttons", []) or []) if int(x) > 0][:2]
-        if map_buttons:
+        if map_buttons and not user_entered_two_buttons:
             row["buttons"] = map_buttons
         if int(row.get("item_id", 0) or 0) <= 0:
             row["item_id"] = int(item_map.get("item_id", 0) or 0)
@@ -816,17 +1135,45 @@ def _save_and_exit():
             row["material_buttons"] = map_mbtns
         row["material"] = str(mat_map.get("material", row.get("material", material)) or row.get("material", material)).strip().lower()
 
+    # In bind_deed mode, keep key maps synchronized with the confirmed recipe path.
+    existing_category = str(item_map.get("category", "") or "").strip() if isinstance(item_map, dict) else ""
+    existing_resources = list(item_map.get("resources", []) or []) if isinstance(item_map, dict) else []
+    resources_to_save = list(resources or []) if list(resources or []) else list(existing_resources or [])
+    if not _upsert_key_maps(
+        SERVER_OPTIONS[srv_idx],
+        PROFESSION_OPTIONS[prof_idx],
+        name,
+        int(row.get("item_id", 0) or 0),
+        list(row.get("buttons", []) or []),
+        str(row.get("material", material) or material),
+        str(row.get("material_key", mk_text) or mk_text),
+        list(row.get("material_buttons", []) or []),
+        resources_to_save,
+        existing_category,
+    ):
+        _say("Failed to save key maps.", 33)
+        return
+
     if not _upsert_recipe(row):
         _say("Failed to save recipe.", 33)
         return
     _say(f"Recipe saved: {row['recipe_type']} {row['profession']} {row['name']} ({row['server']})")
-    _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "saved", "recipe": row, "editor_mode": editor_mode})
+    ok = _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "saved", "recipe": row, "editor_mode": editor_mode})
+    _write_debug_log(
+        "Save ack nonce={0} ok={1} name={2} profession={3}".format(
+            int(REQUEST_NONCE), bool(ok), str(row.get("name", "") or ""), str(row.get("profession", "") or "")
+        )
+    )
     _close_editor()
+    SCRIPT_EXIT_REQUESTED = True
 
 
 def _cancel_and_exit():
-    _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "cancel"})
+    global SCRIPT_EXIT_REQUESTED
+    ok = _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "cancel"})
+    _write_debug_log("Cancel ack nonce={0} ok={1}".format(int(REQUEST_NONCE), bool(ok)))
     _close_editor()
+    SCRIPT_EXIT_REQUESTED = True
 
 
 def _prefill_from_request():
@@ -834,26 +1181,30 @@ def _prefill_from_request():
     req = _get_persistent_json(REQUEST_KEY) or {}
     payload = req.get("payload", {}) if isinstance(req, dict) else {}
     REQUEST_NONCE = int(req.get("nonce", 0) or 0) if isinstance(req, dict) else 0
+    _write_debug_log("Prefill request nonce={0} has_payload={1}".format(int(REQUEST_NONCE), bool(isinstance(payload, dict) and payload)))
     return payload if isinstance(payload, dict) else {}
 
 
 def _open_editor(pre_override=None):
-    global EDITOR_GUMP, EDITOR_INPUTS, EDITOR_LAST_TYPE_IDX, EDITOR_LAST_MATERIAL_KEY_IDX, EDITOR_LAST_PROFESSION_IDX, EDITOR_LAST_MODE_IDX
+    global EDITOR_GUMP, EDITOR_INPUTS, EDITOR_LAST_TYPE_IDX, EDITOR_LAST_MATERIAL_KEY_IDX, EDITOR_LAST_PROFESSION_IDX, EDITOR_LAST_MODE_IDX, SCRIPT_EXIT_REQUESTED
     _close_editor()
+    SCRIPT_EXIT_REQUESTED = False
     pre = pre_override if isinstance(pre_override, dict) else _prefill_from_request()
-    _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "opened"})
+    ok = _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "opened"})
+    _write_debug_log("Open ack nonce={0} ok={1}".format(int(REQUEST_NONCE), bool(ok)))
     g = API.CreateGump(True, True, False)
     w = 760
-    h = 690
-    g.SetRect(740, 180, w, h)
+    h = 720
+    g.SetRect(560, 120, w, h)
     _add_editor_background(g, w, h)
 
-    title = API.CreateGumpTTFLabel("Recipe Book Editor", 15, "#000000", "alagard", "center", w)
-    title.SetPos(0, 58)
+    label_color = "#E7F0FA"
+    title = API.CreateGumpTTFLabel("Recipe Book (Editor)", 16, "#FFFFFF", "alagard", "center", w)
+    title.SetPos(0, 12)
     g.Add(title)
 
-    y = 109
-    x_off = 70
+    y = 46
+    x_off = 24
     # Optional BOD context block (when launched from BODAssist learn mode).
     deed_serial = int(pre.get("deed_serial", 0) or 0)
     req = int(pre.get("required", 0) or 0)
@@ -905,7 +1256,7 @@ def _open_editor(pre_override=None):
         else:
             y += 14
 
-    l_mode = API.CreateGumpTTFLabel("Mode", 12, "#000000", "alagard", "left", 60)
+    l_mode = API.CreateGumpTTFLabel("Mode", 12, label_color, "alagard", "left", 60)
     l_mode.SetPos(10 + x_off, y)
     g.Add(l_mode)
     d_mode = API.CreateDropDown(160, list(EDITOR_MODE_LABELS), mode_idx)
@@ -913,7 +1264,7 @@ def _open_editor(pre_override=None):
     g.Add(d_mode)
 
     y += 34
-    l0 = API.CreateGumpTTFLabel("Type", 12, "#000000", "alagard", "left", 60)
+    l0 = API.CreateGumpTTFLabel("Type", 12, label_color, "alagard", "left", 60)
     l0.SetPos(10 + x_off, y)
     g.Add(l0)
     type_idx = 0
@@ -925,7 +1276,7 @@ def _open_editor(pre_override=None):
     d0.SetPos(60 + x_off, y - 2)
     g.Add(d0)
 
-    l0b = API.CreateGumpTTFLabel("Server", 12, "#000000", "alagard", "left", 70)
+    l0b = API.CreateGumpTTFLabel("Server", 12, label_color, "alagard", "left", 70)
     l0b.SetPos(220 + x_off, y)
     g.Add(l0b)
     srv = _normalize_server_name(pre.get("server", DEFAULT_SERVER))
@@ -938,7 +1289,7 @@ def _open_editor(pre_override=None):
     g.Add(d0b)
 
     y += 38
-    l1 = API.CreateGumpTTFLabel("Profession", 12, "#000000", "alagard", "left", 90)
+    l1 = API.CreateGumpTTFLabel("Profession", 12, label_color, "alagard", "left", 90)
     l1.SetPos(10 + x_off, y)
     g.Add(l1)
     prof = _normalize_profession_name(pre.get("profession", "Blacksmith")) or "Blacksmith"
@@ -951,29 +1302,73 @@ def _open_editor(pre_override=None):
     g.Add(d1)
 
     y += 38
-    l3 = API.CreateGumpTTFLabel("Item Name", 12, "#000000", "alagard", "left", 90)
+    l3 = API.CreateGumpTTFLabel("Item Name", 12, label_color, "alagard", "left", 90)
     l3.SetPos(10 + x_off, y)
     g.Add(l3)
-    t_name = API.CreateGumpTextBox(str(pre.get("name", pre.get("item_name", "")) or ""), 500, 18, False)
-    t_name.SetPos(100 + x_off, y - 2)
-    g.Add(t_name)
+    current_item_name = str(pre.get("name", pre.get("item_name", "")) or "").strip()
+    name_options = _load_item_name_options(srv, prof)
+    if current_item_name and _resource_option_index(name_options, current_item_name) < 0:
+        name_options.append(current_item_name)
+    if not name_options:
+        name_options = [str(ITEM_NONE_LABEL)]
+    name_idx = _resource_option_index(name_options, current_item_name)
+    if name_idx < 0:
+        name_idx = 0
+    d_name = API.CreateDropDown(500, list(name_options), int(name_idx))
+    d_name.SetPos(100 + x_off, y - 2)
+    g.Add(d_name)
 
-    t_resources = None
-    if mode_text == "recipe_builder":
-        y += 38
-        l3b = API.CreateGumpTTFLabel("Resources per item (base:qty;...)", 12, "#000000", "alagard", "left", 260)
-        l3b.SetPos(10 + x_off, y)
-        g.Add(l3b)
-        item_map_for_resources = _get_item_key_map(srv, prof, str(pre.get("name", pre.get("item_name", "")) or ""))
-        resources_text = str(pre.get("resources_text", "") or "").strip()
-        if not resources_text and isinstance(item_map_for_resources, dict):
-            resources_text = _resources_to_text(item_map_for_resources.get("resources", []))
-        t_resources = API.CreateGumpTextBox(resources_text, 300, 18, False)
-        t_resources.SetPos(300 + x_off, y - 2)
-        g.Add(t_resources)
+    resource_rows = []
+    y += 38
+    l3b = API.CreateGumpTTFLabel("Item Resource Costs (max 5)", 12, label_color, "alagard", "left", 220)
+    l3b.SetPos(10 + x_off, y)
+    g.Add(l3b)
+    item_name_for_resources = str(name_options[name_idx] if 0 <= int(name_idx) < len(name_options) else current_item_name).strip()
+    if item_name_for_resources.lower() == str(ITEM_NONE_LABEL).lower():
+        item_name_for_resources = ""
+    item_map_for_resources = _get_item_key_map(srv, prof, item_name_for_resources)
+    pre_resources = _normalize_resource_rows(pre.get("resources", []))
+    if not pre_resources:
+        pre_resources = _normalize_resource_rows(_parse_resources_text(str(pre.get("resources_text", "") or "").strip()))
+    if not pre_resources and isinstance(item_map_for_resources, dict):
+        pre_resources = _normalize_resource_rows(item_map_for_resources.get("resources", []))
+    resource_options = _load_resource_name_options()
+    resource_options = list(resource_options or [])
+    if not resource_options:
+        resource_options = list(RESOURCE_FALLBACK_OPTIONS)
+    option_values = [str(RESOURCE_NONE_LABEL)]
+    option_values.extend([str(x or "").strip() for x in resource_options if str(x or "").strip()])
+    for rr in pre_resources:
+        mat_name = str(rr.get("material", "") or "").strip()
+        if mat_name and _resource_option_index(option_values, mat_name) < 0:
+            option_values.append(mat_name)
+    for idx_row in range(int(RESOURCE_SLOT_COUNT)):
+        ry = y + 24 + (idx_row * 24)
+        slot_lbl = API.CreateGumpTTFLabel(str(int(idx_row + 1)) + ".", 11, label_color, "alagard", "left", 16)
+        slot_lbl.SetPos(10 + x_off, ry)
+        g.Add(slot_lbl)
+        selected_name = ""
+        qty_text = ""
+        if idx_row < len(pre_resources):
+            selected_name = str(pre_resources[idx_row].get("material", "") or "").strip()
+            try:
+                qty_text = str(int(pre_resources[idx_row].get("per_item", 0) or 0))
+            except Exception:
+                qty_text = ""
+        opt_idx = _resource_option_index(option_values, selected_name)
+        if opt_idx < 0:
+            opt_idx = 0
+        dd_res = API.CreateDropDown(220, list(option_values), int(opt_idx))
+        dd_res.SetPos(32 + x_off, ry - 2)
+        g.Add(dd_res)
+        t_qty = API.CreateGumpTextBox(str(qty_text or ""), 72, 18, False)
+        t_qty.SetPos(264 + x_off, ry - 2)
+        g.Add(t_qty)
+        resource_rows.append({"resource": dd_res, "qty": t_qty, "options": list(option_values)})
+    y += 24 + (int(RESOURCE_SLOT_COUNT) * 24) + 8
 
     y += 38
-    l4 = API.CreateGumpTTFLabel("Crafting Gump Button Combination", 12, "#000000", "alagard", "left", 220)
+    l4 = API.CreateGumpTTFLabel("Crafting Gump Button Combination", 12, label_color, "alagard", "left", 220)
     l4.SetPos(10 + x_off, y)
     g.Add(l4)
     pre_buttons = pre.get("buttons", [])
@@ -995,14 +1390,14 @@ def _open_editor(pre_override=None):
     t_stop = None
     if RECIPE_TYPE_OPTIONS[type_idx] == "training":
         y += 38
-        l6 = API.CreateGumpTTFLabel("Training Starts At:", 12, "#000000", "alagard", "left", 120)
+        l6 = API.CreateGumpTTFLabel("Training Starts At:", 12, label_color, "alagard", "left", 120)
         l6.SetPos(10 + x_off, y)
         g.Add(l6)
         t_start = API.CreateGumpTextBox(str(pre.get("start_at", "") or ""), 80, 18, False)
         t_start.SetPos(130 + x_off, y - 2)
         g.Add(t_start)
 
-        l6b = API.CreateGumpTTFLabel("Training Stops At:", 12, "#000000", "alagard", "left", 120)
+        l6b = API.CreateGumpTTFLabel("Training Stops At:", 12, label_color, "alagard", "left", 120)
         l6b.SetPos(250 + x_off, y)
         g.Add(l6b)
         t_stop = API.CreateGumpTextBox(str(pre.get("stop_at", "") or ""), 80, 18, False)
@@ -1010,7 +1405,7 @@ def _open_editor(pre_override=None):
         g.Add(t_stop)
 
     y += 38
-    l7 = API.CreateGumpTTFLabel("Material Key", 12, "#000000", "alagard", "left", 90)
+    l7 = API.CreateGumpTTFLabel("Material Key", 12, label_color, "alagard", "left", 90)
     l7.SetPos(10 + x_off, y)
     g.Add(l7)
     mk_current = str(pre.get("material_key", "") or "").strip().lower()
@@ -1038,7 +1433,7 @@ def _open_editor(pre_override=None):
     g.Add(d_mk)
     t_mk_new = None
     if mk_idx == len(mk_labels) - 1:
-        l7b = API.CreateGumpTTFLabel("New Material Key:", 12, "#000000", "alagard", "left", 120)
+        l7b = API.CreateGumpTTFLabel("New Material Key:", 12, label_color, "alagard", "left", 120)
         l7b.SetPos(300 + x_off, y)
         g.Add(l7b)
         t_mk_new = API.CreateGumpTextBox(str(pre.get("material_key_new", mk_current) or ""), 190, 18, False)
@@ -1049,7 +1444,7 @@ def _open_editor(pre_override=None):
     if mk_idx == len(mk_labels) - 1:
         y += 24
 
-    l8 = API.CreateGumpTTFLabel("Crafting Gump Material Button Combination:", 12, "#000000", "alagard", "left", 360)
+    l8 = API.CreateGumpTTFLabel("Crafting Gump Material Button Combination:", 12, label_color, "alagard", "left", 360)
     l8.SetPos(10 + x_off, y)
     g.Add(l8)
     selected_mk = ""
@@ -1082,7 +1477,7 @@ def _open_editor(pre_override=None):
     g.Add(t_mb2)
 
     y += 44
-    save_bg = API.CreateGumpColorBox(0.55, "#000000")
+    save_bg = API.CreateGumpColorBox(0.55, "#1B2A3A")
     save_bg.SetRect(180 + x_off, y, 110, 20)
     g.Add(save_bg)
     save_btn = API.CreateSimpleButton("Save Recipe", 110, 20)
@@ -1090,7 +1485,7 @@ def _open_editor(pre_override=None):
     g.Add(save_btn)
     API.AddControlOnClick(save_btn, _save_and_exit)
 
-    cancel_bg = API.CreateGumpColorBox(0.55, "#000000")
+    cancel_bg = API.CreateGumpColorBox(0.55, "#1B2A3A")
     cancel_bg.SetRect(300 + x_off, y, 80, 20)
     g.Add(cancel_bg)
     cancel_btn = API.CreateSimpleButton("Cancel", 80, 20)
@@ -1110,7 +1505,8 @@ def _open_editor(pre_override=None):
         "server": d0b,
         "profession": d1,
         "material_hidden": str(pre.get("material", "ingot") or "ingot"),
-        "name": t_name,
+        "name": d_name,
+        "name_options": list(name_options),
         "button_1": t_btn1,
         "button_2": t_btn2,
         "start_at": t_start,
@@ -1128,21 +1524,19 @@ def _open_editor(pre_override=None):
         "exceptional_hidden": bool(pre.get("exceptional", False)),
         "raw_text_hidden": str(pre.get("raw_text", "") or ""),
         "item_name_hidden": str(pre.get("item_name", "") or ""),
-        "resources_text": t_resources,
+        "resource_rows": resource_rows,
+        "resources_text": None,  # legacy fallback path
     }
 
 
 def _main():
-    if RECIPE_STORE is not None:
-        try:
-            RECIPE_STORE.init_store()
-        except Exception as ex:
-            _say(f"Recipe DB init failed: {ex}", 33)
-    else:
-        _say("Recipe DB module unavailable.", 33)
+    global SCRIPT_EXIT_REQUESTED
+    # Keep launch responsive; DB access is handled lazily by read/write helpers.
     _open_editor()
-    while EDITOR_GUMP is not None:
+    while not SCRIPT_EXIT_REQUESTED and EDITOR_GUMP is not None:
         API.ProcessCallbacks()
+        if SCRIPT_EXIT_REQUESTED or EDITOR_GUMP is None:
+            break
         try:
             f = EDITOR_INPUTS or {}
             dd_mode = f.get("editor_mode")
@@ -1175,6 +1569,7 @@ def _main():
             _open_editor(state)
             continue
         API.Pause(0.1)
+    _write_debug_log("Main exit requested={0} gump_alive={1}".format(bool(SCRIPT_EXIT_REQUESTED), bool(EDITOR_GUMP is not None)))
 
 
 _main()

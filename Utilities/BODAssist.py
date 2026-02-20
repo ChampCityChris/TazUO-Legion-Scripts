@@ -121,6 +121,7 @@ DEFAULT_SERVER = "UOAlive"
 RECIPE_TYPE_OPTIONS = ["bod", "training"]
 RECIPE_EDITOR_REQUEST_KEY = "recipe_editor_request"
 RECIPE_EDITOR_RESULT_KEY = "recipe_editor_result"
+RECIPE_EDITOR_WAIT_FAILSAFE_S = 180.0
 RECIPE_EDITOR_SCRIPT_CANDIDATES = [
     "RecipeBookEditor.py",
     "RecipeBookEditor",
@@ -239,11 +240,20 @@ CATEGORY_PAGE_BUTTON_OVERRIDES = {
 }
 
 RECIPE_STORE = None
-_util_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
+_script_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
+_util_dir = _script_dir
+if os.path.basename(str(_util_dir or "")).lower() != "utilities":
+    _cand = os.path.join(_script_dir, "Utilities")
+    if os.path.isdir(_cand):
+        _util_dir = _cand
 if _util_dir and _util_dir not in sys.path:
-    sys.path.append(_util_dir)
+    sys.path.insert(0, _util_dir)
 try:
     import RecipeStore as RECIPE_STORE
+    try:
+        RECIPE_STORE.set_base_dir(_util_dir)
+    except Exception:
+        pass
 except Exception:
     RECIPE_STORE = None
 LEARN_MODE = True
@@ -391,6 +401,7 @@ FATAL_STOP_REASON = ""
 ACTIVE_CRAFT_GUMP_ID = 0
 ACTIVE_CRAFT_PROFESSION = ""
 RESTOCK_BLOCK_UNTIL = {}
+CALLBACK_ERR_LAST_AT = 0.0
 
 
 def _debug_log_path():
@@ -504,7 +515,7 @@ def _should_stop():
 
 
 def _process_callbacks_safe():
-    global FORCE_STOP
+    global FORCE_STOP, CALLBACK_ERR_LAST_AT
     try:
         API.ProcessCallbacks()
         return True
@@ -513,6 +524,10 @@ def _process_callbacks_safe():
         if _should_stop() or "ThreadInterrupted" in msg or "interrupted" in msg.lower():
             FORCE_STOP = True
             return False
+        now = _now_s()
+        if (now - float(CALLBACK_ERR_LAST_AT or 0.0)) >= 1.0:
+            CALLBACK_ERR_LAST_AT = now
+            _write_debug_log(f"Callback error: {msg}")
         return True
 
 
@@ -953,7 +968,7 @@ def _wanted_hue_for_item(recipe, item_id):
     return hue
 
 
-def _manual_learn_recipe_for_deed(parsed, wait_s=180.0):
+def _manual_learn_recipe_for_deed(parsed, wait_s=-1.0):
     _say("Manual recipe required. Opening RecipeBookEditor.", 33)
     out = _launch_recipe_editor({
         "editor_mode": "bind_deed",
@@ -973,6 +988,28 @@ def _manual_learn_recipe_for_deed(parsed, wait_s=180.0):
         "exceptional": bool(parsed.get("exceptional", False)),
         "raw_text": str(parsed.get("raw_text", "") or ""),
     }, wait_s=wait_s)
+    # Always refresh runtime caches from DB after editor returns so we can
+    # recover even when save-ack handoff is missed.
+    _reload_recipe_cache_from_store("post_recipe_editor")
+
+    deed_key = str(parsed.get("deed_key", "") or "").strip()
+    profession = str(parsed.get("profession", "") or "").strip()
+    item_name = str(parsed.get("item_name", "") or "").strip()
+    raw_text = str(parsed.get("raw_text", "") or "")
+
+    learned = None
+    if deed_key:
+        learned = _find_recipe_for_deed_key(deed_key, profession or None)
+    if not learned and item_name:
+        learned = _find_recipe_for_item_name(item_name, profession or None, None)
+    if not learned and raw_text:
+        learned = _find_recipe_for_text(raw_text, profession or None, None)
+    if learned:
+        _write_debug_log(
+            f"Manual learn: recovered mapping from refreshed cache for '{item_name or deed_key}'."
+        )
+        return _merge_item_key_map_into_recipe(dict(learned))
+
     return out if out else None
 
 
@@ -1133,6 +1170,36 @@ def _load_key_maps_from_file():
         return {}
 
 
+def _reload_recipe_cache_from_store(reason=""):
+    global RECIPE_BOOK, KEY_MAPS
+    if RECIPE_STORE is None:
+        return False
+    changed = False
+    try:
+        book = _load_recipe_book_from_file()
+        if isinstance(book, list):
+            RECIPE_BOOK = list(book)
+            changed = True
+    except Exception:
+        pass
+    try:
+        key_maps = _load_key_maps_from_file()
+        if isinstance(key_maps, dict):
+            KEY_MAPS = dict(key_maps)
+            changed = True
+    except Exception:
+        pass
+    if changed:
+        _write_debug_log(
+            "Recipe cache reload ({0}): recipes={1} key_servers={2}".format(
+                str(reason or "manual"),
+                int(len(RECIPE_BOOK)),
+                int(len(KEY_MAPS)),
+            )
+        )
+    return changed
+
+
 def _save_recipe_book_to_file():
     if RECIPE_STORE is None:
         return
@@ -1175,28 +1242,57 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
     _set_persistent_json(RECIPE_EDITOR_REQUEST_KEY, req)
     _set_persistent_json(RECIPE_EDITOR_RESULT_KEY, {"nonce": nonce, "status": "pending"})
     launched = False
+    play_sent = False
+    script_candidates = []
+    try:
+        abs_editor = os.path.normpath(os.path.join(_util_dir, "RecipeBookEditor.py"))
+        if abs_editor:
+            script_candidates.append(abs_editor)
+    except Exception:
+        pass
     for script_name in RECIPE_EDITOR_SCRIPT_CANDIDATES:
+        s = str(script_name or "").strip()
+        if s and s not in script_candidates:
+            script_candidates.append(s)
+
+    for script_name in script_candidates:
         try:
             API.PlayScript(str(script_name))
+            play_sent = True
+        except Exception as ex:
+            _write_debug_log(f"RecipeEditor PlayScript failed [{script_name}]: {ex}")
+            continue
+        try:
             # Handshake from editor confirms actual launch.
             ack_wait = 0.0
-            while ack_wait < 1.2:
+            while ack_wait < 2.5:
+                if not _process_callbacks_safe():
+                    break
                 _sleep(0.1)
                 ack_wait += 0.1
                 res = _get_persistent_json(RECIPE_EDITOR_RESULT_KEY) or {}
-                try:
-                    if int(res.get("nonce", 0) or 0) != nonce:
-                        continue
-                except Exception:
+                status = str(res.get("status", "") or "").strip().lower()
+                if status not in ("opened", "saved", "cancel"):
                     continue
-                if str(res.get("status", "") or "").strip().lower() == "opened":
-                    launched = True
-                    break
+                try:
+                    got_nonce = int(res.get("nonce", 0) or 0)
+                except Exception:
+                    got_nonce = 0
+                if got_nonce != nonce:
+                    _write_debug_log(
+                        f"RecipeEditor ack nonce mismatch: requested={nonce} got={got_nonce} status={status}"
+                    )
+                    continue
+                launched = True
+                break
             if launched:
                 break
-        except Exception:
+            _write_debug_log(f"RecipeEditor no ack after PlayScript [{script_name}]")
             continue
-    if not launched:
+        except Exception as ex:
+            _write_debug_log(f"RecipeEditor handshake failed [{script_name}]: {ex}")
+            continue
+    if not launched and not play_sent:
         # Fallback: run editor script directly in-process if Script Manager launch is unavailable.
         roots = []
         try:
@@ -1241,31 +1337,70 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
                 if int(res.get("nonce", 0) or 0) == nonce and str(res.get("status", "") or "").strip().lower() in ("opened", "saved", "cancel"):
                     launched = True
                     break
-            except Exception:
+            except Exception as ex:
+                _write_debug_log(f"RecipeEditor fallback exec failed [{p}]: {ex}")
                 continue
         if not launched:
             _say("RecipeBookEditor fallback lookup failed: " + " | ".join(candidate_paths[:6]), 33)
     if not launched:
-        _say("Could not launch RecipeBookEditor.py (check script path/name in Script Manager).", 33)
+        init_err = ""
+        try:
+            if RECIPE_STORE is not None and hasattr(RECIPE_STORE, "last_init_error"):
+                init_err = str(RECIPE_STORE.last_init_error() or "")
+        except Exception:
+            init_err = ""
+        if init_err:
+            _say(f"Could not launch RecipeBookEditor.py (DB: {init_err}).", 33)
+        elif play_sent:
+            _say("Could not launch RecipeBookEditor.py (PlayScript sent but no editor ack).", 33)
+        else:
+            _say("Could not launch RecipeBookEditor.py (check script path/name in Script Manager).", 33)
         return None
-    if float(wait_s) <= 0:
+    if float(wait_s) == 0.0:
         return None
+    if float(wait_s) < 0:
+        _say("RecipeBookEditor opened. Waiting for Save/Cancel...", 88)
+        wait_limit = None
+    else:
+        wait_limit = float(wait_s)
     waited = 0.0
     step = 0.1
-    while waited < float(wait_s):
+    last_probe_s = -1.0
+    while True:
+        if wait_limit is None and waited >= float(RECIPE_EDITOR_WAIT_FAILSAFE_S):
+            _write_debug_log(
+                f"RecipeEditor wait fail-safe timeout ({float(RECIPE_EDITOR_WAIT_FAILSAFE_S):.0f}s); continuing."
+            )
+            break
+        if wait_limit is not None and waited >= wait_limit:
+            break
         if _should_stop():
+            _write_debug_log("RecipeEditor wait aborted: stop requested.")
             break
         if not _process_callbacks_safe():
+            _write_debug_log("RecipeEditor wait aborted: callback processing failed.")
             break
         _sleep(step)
         waited += step
         res = _get_persistent_json(RECIPE_EDITOR_RESULT_KEY) or {}
-        try:
-            if int(res.get("nonce", 0) or 0) != nonce:
-                continue
-        except Exception:
-            continue
         status = str(res.get("status", "") or "").strip().lower()
+        if (waited - float(last_probe_s)) >= 2.0:
+            try:
+                dbg_nonce = int(res.get("nonce", 0) or 0)
+            except Exception:
+                dbg_nonce = 0
+            _write_debug_log(
+                "RecipeEditor wait probe: requested={0} got={1} status={2} waited={3:.1f}s".format(
+                    int(nonce), int(dbg_nonce), str(status or "<empty>"), float(waited)
+                )
+            )
+            last_probe_s = float(waited)
+        try:
+            got_nonce = int(res.get("nonce", 0) or 0)
+        except Exception:
+            got_nonce = 0
+        if got_nonce != nonce:
+            continue
         if status in ("saved", "cancel"):
             if status == "saved":
                 out = _normalize_recipe_entry(res.get("recipe", {}))
@@ -1339,22 +1474,27 @@ def _load_config():
         ENABLED_BOD_TYPES = {k: True for k in BOD_TYPE_ORDER}
 
     # DB-backed recipe book overrides persistent config when present.
+    _write_debug_log("Config: recipe DB stage begin.")
     if RECIPE_STORE is not None:
-        try:
-            RECIPE_STORE.init_store()
-        except Exception as ex:
-            _say(f"Recipe DB init failed: {ex}", 33)
+        _write_debug_log("Config: startup DB init skipped (lazy-load mode).")
     else:
         _say("Recipe DB module unavailable.", 33)
+    _write_debug_log("Config: recipe load begin.")
     file_book = _load_recipe_book_from_file()
     if isinstance(file_book, list):
         # Respect empty recipe files so users can intentionally start fresh.
         RECIPE_BOOK = list(file_book)
     else:
-        # Ensure file exists so users can edit it manually.
-        _save_recipe_book_to_file()
+        RECIPE_BOOK = []
+        _write_debug_log("Config: recipe load unavailable; continuing with empty recipe book.")
+    _write_debug_log("Config: key-map load begin.")
     KEY_MAPS = dict(_load_key_maps_from_file() or {})
     _refresh_recall_buttons()
+    try:
+        km_ct = len(KEY_MAPS)
+    except Exception:
+        km_ct = 0
+    _write_debug_log(f"Config: recipe DB stage end. recipes={len(RECIPE_BOOK)} key_servers={km_ct}")
 
 
 def _save_config():
@@ -1375,7 +1515,6 @@ def _save_config():
         "selected_server": str(SELECTED_SERVER or DEFAULT_SERVER),
     }
     API.SavePersistentVar(DATA_KEY, json.dumps(data), API.PersistentVar.Char)
-    _save_recipe_book_to_file()
 
 
 def _set_runebook():
@@ -2381,11 +2520,6 @@ def _run_db_diag():
     _say("DBDiag: starting.")
     if RECIPE_STORE is None:
         _say("DBDiag: RecipeStore module unavailable.", 33)
-        return
-    try:
-        RECIPE_STORE.init_store()
-    except Exception as ex:
-        _say(f"DBDiag: init failed: {ex}", 33)
         return
 
     sel_server = _normalize_server_name(SELECTED_SERVER)
@@ -4000,9 +4134,15 @@ def _craft_recipe_once(recipe, exceptional_required, open_gid=None):
         return False, gid
 
     recipe_item_id = int(recipe.get("item_id", 0) or 0)
+    craft_buttons = [int(x) for x in (recipe.get("buttons", []) or []) if int(x) > 0]
+    if not craft_buttons:
+        LAST_CRAFT_ERROR = "recipe_buttons_missing"
+        _say(f"Recipe mapping for {recipe.get('name','item')} has no craft buttons.", 33)
+        return False, gid
+    _diag_step("D10A", "CRAFT", f"craft_once buttons={craft_buttons}", DIAG_HUE_CRAFT)
     baseline = _count_in(API.Backpack, recipe_item_id) if recipe_item_id > 0 else 0
     before_serials = set(int(getattr(it, "Serial", 0) or 0) for it in _items_in(API.Backpack, False))
-    _click_recipe_buttons(gid, recipe["buttons"])
+    _click_recipe_buttons(gid, craft_buttons)
     waited = 0.0
     while waited < BOD_CRAFT_TIMEOUT_S:
         if _should_stop():
@@ -4771,8 +4911,17 @@ def _rebuild_gump():
 
 
 def _main():
+    try:
+        sr = bool(getattr(API, "StopRequested", False))
+    except Exception:
+        sr = False
+    _write_debug_log(f"Startup state: stop_requested={sr}, force_stop={bool(FORCE_STOP)}, util_dir={_util_dir}")
+    _write_debug_log("Startup: _load_config begin.")
     _load_config()
+    _write_debug_log("Startup: _load_config end.")
+    _write_debug_log("Startup: _create_control_gump begin.")
     _create_control_gump()
+    _write_debug_log("Startup: _create_control_gump end.")
     _say("BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.")
     while not _should_stop():
         try:
@@ -4782,17 +4931,22 @@ def _main():
         except Exception as ex:
             msg = str(ex or "")
             if _should_stop() or "ThreadInterrupted" in msg or "interrupted" in msg.lower():
+                _write_debug_log(f"Runtime loop interrupted: {msg}")
                 break
             _say(f"BODAssist runtime paused after callback error: {msg}", 33)
             _set_running(False)
             _sleep(0.3)
+    _write_debug_log(f"Runtime loop exit: stop={_should_stop()} force_stop={bool(FORCE_STOP)}")
 
 
 try:
+    _write_debug_log("Startup: entering _main.")
     _main()
 except Exception as ex:
     msg = str(ex or "")
     if "ThreadInterrupted" in msg or "interrupted" in msg.lower() or _should_stop():
+        _write_debug_log(f"Startup interrupted: {msg}")
         pass
     else:
+        _write_debug_log(f"Startup fatal exception: {msg}")
         raise

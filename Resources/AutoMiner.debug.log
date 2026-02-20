@@ -980,4 +980,1919 @@
 [2026-02-19 11:25:51] [RUN] Restocking ingots from drop container.
 [2026-02-19 11:25:54] [RUN] Ensuring at least two shovels.
 [2026-02-19 11:25:55] [RUN] Recalling to mining rune 60.
-                                                  
+                                                  [2026-02-19 13:18:53] [RUN] AutoMiner loaded. Press Start on the gump to begin.
+[2026-02-19 13:19:05] [RUN] Mining: ON
+[2026-02-19 13:19:05] [RUN] Mining started...
+[2026-02-19 13:19:05] [RUN] Tooling check complete.
+[2026-02-19 13:19:05] [RUN] Recalling to first mining spot.
+[2026-02-19 13:19:05] [RUN] Recalling to mining rune 51.
+[2026-02-19 13:19:32] [RUN] Overweight detected.
+[2026-02-19 13:19:32] [RUN] Overweight: recall to unload.
+[2026-02-19 13:19:32] [RUN] Recalling home to unload.
+[2026-02-19 13:19:39] [RUN] Unloading resources to containers.
+[2026-02-19 13:19:39] [RUN] Unload: 12 items in backpack.
+[2026-02-19 13:19:47] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:19:50] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:19:53] [RUN] Tinker gump not found.
+[2026-02-19 13:19:59] [RUN] Recalling to mining rune 52.
+[2026-02-19 13:21:30] [RUN] Overweight detected.
+[2026-02-19 13:21:30] [RUN] Overweight: recall to unload.
+[2026-02-19 13:21:30] [RUN] Recalling home to unload.
+[2026-02-19 13:21:37] [RUN] Unloading resources to containers.
+[2026-02-19 13:21:37] [RUN] Unload: 13 items in backpack.
+[2026-02-19 13:21:43] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:21:47] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:21:48] [RUN] Recalling to mining rune 53.
+[2026-02-19 13:22:05] [RUN] No ore here... move.
+[2026-02-19 13:22:08] [RUN] Recalling home to unload.
+[2026-02-19 13:22:15] [RUN] Unloading resources to containers.
+[2026-02-19 13:22:15] [RUN] Unload: 9 items in backpack.
+[2026-02-19 13:22:17] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:22:20] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:22:21] [RUN] Recalling to mining rune 54.
+[2026-02-19 13:23:48] [RUN] Overweight detected.
+[2026-02-19 13:23:48] [RUN] Overweight: recall to unload.
+[2026-02-19 13:23:48] [RUN] Recalling home to unload.
+[2026-02-19 13:23:55] [RUN] Unloading resources to containers.
+[2026-02-19 13:23:55] [RUN] Unload: 13 items in backpack.
+[2026-02-19 13:24:01] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:24:04] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:24:06] [RUN] Recalling to mining rune 55.
+[2026-02-19 13:25:28] [RUN] Overweight detected.
+[2026-02-19 13:25:28] [RUN] Overweight: recall to unload.
+[2026-02-19 13:25:28] [RUN] Recalling home to unload.
+[2026-02-19 13:25:35] [RUN] Unloading resources to containers.
+[2026-02-19 13:25:35] [RUN] Unload: 13 items in backpack.
+[2026-02-19 13:25:42] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:25:46] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:25:47] [RUN] Recalling to mining rune 56.
+[2026-02-19 13:26:04] [RUN] No ore here... move.
+[2026-02-19 13:26:07] [RUN] Recalling home to unload.
+[2026-02-19 13:26:14] [RUN] Unloading resources to containers.
+[2026-02-19 13:26:14] [RUN] Unload: 8 items in backpack.
+[2026-02-19 13:26:16] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:26:19] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:26:20] [RUN] Recalling to mining rune 57.
+[2026-02-19 13:26:38] [RUN] No ore here... move.
+[2026-02-19 13:26:41] [RUN] Recalling home to unload.
+[2026-02-19 13:26:48] [RUN] Unloading resources to containers.
+[2026-02-19 13:26:48] [RUN] Unload: 8 items in backpack.
+[2026-02-19 13:26:49] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:26:53] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:26:54] [RUN] Recalling to mining rune 58.
+[2026-02-19 13:28:10] [RUN] No ore here... move.
+[2026-02-19 13:28:13] [RUN] Recalling home to unload.
+[2026-02-19 13:28:20] [RUN] Unloading resources to containers.
+[2026-02-19 13:28:20] [RUN] Unload: 11 items in backpack.
+[2026-02-19 13:28:25] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:28:28] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:28:29] [RUN] Recalling to mining rune 59.
+[2026-02-19 13:29:55] [RUN] Overweight detected.
+[2026-02-19 13:29:55] [RUN] Overweight: recall to unload.
+[2026-02-19 13:29:55] [RUN] Recalling home to unload.
+[2026-02-19 13:30:02] [RUN] Unloading resources to containers.
+[2026-02-19 13:30:02] [RUN] Unload: 13 items in backpack.
+[2026-02-19 13:30:09] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:30:12] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:30:13] [RUN] Recalling to mining rune 60.
+[2026-02-19 13:31:31] [RUN] No ore here... move.
+[2026-02-19 13:31:34] [RUN] Recalling home to unload.
+[2026-02-19 13:31:41] [RUN] Unloading resources to containers.
+[2026-02-19 13:31:41] [RUN] Unload: 11 items in backpack.
+[2026-02-19 13:31:47] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:31:50] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:31:56] [RUN] Recalling to mining rune 61.
+[2026-02-19 13:33:26] [RUN] Overweight detected.
+[2026-02-19 13:33:26] [RUN] Overweight: recall to unload.
+[2026-02-19 13:33:26] [RUN] Recalling home to unload.
+[2026-02-19 13:33:33] [RUN] Unloading resources to containers.
+[2026-02-19 13:33:33] [RUN] Unload: 15 items in backpack.
+[2026-02-19 13:33:41] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:33:45] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:33:46] [RUN] Recalling to mining rune 62.
+[2026-02-19 13:35:02] [RUN] No ore here... move.
+[2026-02-19 13:35:05] [RUN] Recalling home to unload.
+[2026-02-19 13:35:12] [RUN] Unloading resources to containers.
+[2026-02-19 13:35:12] [RUN] Unload: 13 items in backpack.
+[2026-02-19 13:35:18] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:35:21] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:35:22] [RUN] Recalling to mining rune 63.
+[2026-02-19 13:36:51] [RUN] Overweight detected.
+[2026-02-19 13:36:51] [RUN] Overweight: recall to unload.
+[2026-02-19 13:36:51] [RUN] Recalling home to unload.
+[2026-02-19 13:36:58] [RUN] Unloading resources to containers.
+[2026-02-19 13:36:58] [RUN] Unload: 12 items in backpack.
+[2026-02-19 13:37:04] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:37:07] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:37:08] [RUN] Recalling to mining rune 64.
+[2026-02-19 13:38:24] [RUN] No ore here... move.
+[2026-02-19 13:38:27] [RUN] Recalling home to unload.
+[2026-02-19 13:38:34] [RUN] Unloading resources to containers.
+[2026-02-19 13:38:34] [RUN] Unload: 14 items in backpack.
+[2026-02-19 13:38:42] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:38:46] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:38:47] [RUN] Recalling to mining rune 65.
+[2026-02-19 13:39:21] [RUN] No ore here... move.
+[2026-02-19 13:39:24] [RUN] Recalling home to unload.
+[2026-02-19 13:39:31] [RUN] Unloading resources to containers.
+[2026-02-19 13:39:31] [RUN] Unload: 8 items in backpack.
+[2026-02-19 13:39:33] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:39:36] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:39:37] [RUN] Recalling to mining rune 51.
+[2026-02-19 13:41:02] [RUN] Overweight detected.
+[2026-02-19 13:41:02] [RUN] Overweight: recall to unload.
+[2026-02-19 13:41:02] [RUN] Recalling home to unload.
+[2026-02-19 13:41:09] [RUN] Unloading resources to containers.
+[2026-02-19 13:41:09] [RUN] Unload: 12 items in backpack.
+[2026-02-19 13:41:10] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 13:41:16] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:41:19] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:41:25] [RUN] Recalling to mining rune 52.
+[2026-02-19 13:42:53] [RUN] Overweight detected.
+[2026-02-19 13:42:53] [RUN] Overweight: recall to unload.
+[2026-02-19 13:42:53] [RUN] Recalling home to unload.
+[2026-02-19 13:43:00] [RUN] Unloading resources to containers.
+[2026-02-19 13:43:00] [RUN] Unload: 14 items in backpack.
+[2026-02-19 13:43:07] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:43:10] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:43:11] [RUN] Recalling to mining rune 53.
+[2026-02-19 13:43:29] [RUN] No ore here... move.
+[2026-02-19 13:43:32] [RUN] Recalling home to unload.
+[2026-02-19 13:43:39] [RUN] Unloading resources to containers.
+[2026-02-19 13:43:39] [RUN] Unload: 9 items in backpack.
+[2026-02-19 13:43:41] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:43:44] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:43:45] [RUN] Recalling to mining rune 54.
+[2026-02-19 13:45:16] [RUN] Overweight detected.
+[2026-02-19 13:45:16] [RUN] Overweight: recall to unload.
+[2026-02-19 13:45:16] [RUN] Recalling home to unload.
+[2026-02-19 13:45:23] [RUN] Unloading resources to containers.
+[2026-02-19 13:45:23] [RUN] Unload: 15 items in backpack.
+[2026-02-19 13:45:28] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 13:45:32] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:45:35] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:45:36] [RUN] Recalling to mining rune 55.
+[2026-02-19 13:47:07] [RUN] Overweight detected.
+[2026-02-19 13:47:07] [RUN] Overweight: recall to unload.
+[2026-02-19 13:47:07] [RUN] Recalling home to unload.
+[2026-02-19 13:47:14] [RUN] Unloading resources to containers.
+[2026-02-19 13:47:14] [RUN] Unload: 13 items in backpack.
+[2026-02-19 13:47:21] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:47:25] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:47:26] [RUN] Recalling to mining rune 56.
+[2026-02-19 13:47:43] [RUN] No ore here... move.
+[2026-02-19 13:47:46] [RUN] Recalling home to unload.
+[2026-02-19 13:47:53] [RUN] Unloading resources to containers.
+[2026-02-19 13:47:53] [RUN] Unload: 8 items in backpack.
+[2026-02-19 13:47:55] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:47:58] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:47:59] [RUN] Recalling to mining rune 57.
+[2026-02-19 13:48:17] [RUN] No ore here... move.
+[2026-02-19 13:48:20] [RUN] Recalling home to unload.
+[2026-02-19 13:48:27] [RUN] Unloading resources to containers.
+[2026-02-19 13:48:27] [RUN] Unload: 8 items in backpack.
+[2026-02-19 13:48:29] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:48:32] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:48:33] [RUN] Recalling to mining rune 58.
+[2026-02-19 13:49:49] [RUN] No ore here... move.
+[2026-02-19 13:49:52] [RUN] Recalling home to unload.
+[2026-02-19 13:49:59] [RUN] Unloading resources to containers.
+[2026-02-19 13:49:59] [RUN] Unload: 15 items in backpack.
+[2026-02-19 13:50:01] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 13:50:09] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:50:12] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:50:13] [RUN] Recalling to mining rune 59.
+[2026-02-19 13:51:41] [RUN] Overweight detected.
+[2026-02-19 13:51:41] [RUN] Overweight: recall to unload.
+[2026-02-19 13:51:41] [RUN] Recalling home to unload.
+[2026-02-19 13:51:48] [RUN] Unloading resources to containers.
+[2026-02-19 13:51:48] [RUN] Unload: 13 items in backpack.
+[2026-02-19 13:51:55] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:51:58] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:51:59] [RUN] Recalling to mining rune 60.
+[2026-02-19 13:53:18] [RUN] No ore here... move.
+[2026-02-19 13:53:21] [RUN] Recalling home to unload.
+[2026-02-19 13:53:28] [RUN] Unloading resources to containers.
+[2026-02-19 13:53:28] [RUN] Unload: 11 items in backpack.
+[2026-02-19 13:53:34] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:53:37] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:53:43] [RUN] Recalling to mining rune 61.
+[2026-02-19 13:55:13] [RUN] Overweight detected.
+[2026-02-19 13:55:13] [RUN] Overweight: recall to unload.
+[2026-02-19 13:55:13] [RUN] Recalling home to unload.
+[2026-02-19 13:55:20] [RUN] Unloading resources to containers.
+[2026-02-19 13:55:20] [RUN] Unload: 12 items in backpack.
+[2026-02-19 13:55:20] [RUN] Unload: moving blackstone 0x0F2B.
+[2026-02-19 13:55:26] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:55:29] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:55:30] [RUN] Recalling to mining rune 62.
+[2026-02-19 13:56:47] [RUN] No ore here... move.
+[2026-02-19 13:56:50] [RUN] Recalling home to unload.
+[2026-02-19 13:56:57] [RUN] Unloading resources to containers.
+[2026-02-19 13:56:57] [RUN] Unload: 13 items in backpack.
+[2026-02-19 13:57:04] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:57:07] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:57:08] [RUN] Recalling to mining rune 63.
+[2026-02-19 13:58:39] [RUN] Overweight detected.
+[2026-02-19 13:58:39] [RUN] Overweight: recall to unload.
+[2026-02-19 13:58:39] [RUN] Recalling home to unload.
+[2026-02-19 13:58:45] [RUN] Unloading resources to containers.
+[2026-02-19 13:58:45] [RUN] Unload: 10 items in backpack.
+[2026-02-19 13:58:50] [RUN] Restocking ingots from drop container.
+[2026-02-19 13:58:54] [RUN] Ensuring at least two shovels.
+[2026-02-19 13:59:00] [RUN] Recalling to mining rune 64.
+[2026-02-19 14:00:16] [RUN] No ore here... move.
+[2026-02-19 14:00:19] [RUN] Recalling home to unload.
+[2026-02-19 14:00:26] [RUN] Unloading resources to containers.
+[2026-02-19 14:00:26] [RUN] Unload: 13 items in backpack.
+[2026-02-19 14:00:32] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:00:35] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:00:36] [RUN] Recalling to mining rune 65.
+[2026-02-19 14:01:10] [RUN] No ore here... move.
+[2026-02-19 14:01:13] [RUN] Recalling home to unload.
+[2026-02-19 14:01:20] [RUN] Unloading resources to containers.
+[2026-02-19 14:01:20] [RUN] Unload: 9 items in backpack.
+[2026-02-19 14:01:22] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:01:25] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:01:26] [RUN] Recalling to mining rune 51.
+[2026-02-19 14:02:46] [RUN] Overweight detected.
+[2026-02-19 14:02:46] [RUN] Overweight: recall to unload.
+[2026-02-19 14:02:46] [RUN] Recalling home to unload.
+[2026-02-19 14:02:53] [RUN] Unloading resources to containers.
+[2026-02-19 14:02:53] [RUN] Unload: 10 items in backpack.
+[2026-02-19 14:02:57] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:03:00] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:03:01] [RUN] Recalling to mining rune 52.
+[2026-02-19 14:04:32] [RUN] Overweight detected.
+[2026-02-19 14:04:32] [RUN] Overweight: recall to unload.
+[2026-02-19 14:04:32] [RUN] Recalling home to unload.
+[2026-02-19 14:04:39] [RUN] Unloading resources to containers.
+[2026-02-19 14:04:39] [RUN] Unload: 11 items in backpack.
+[2026-02-19 14:04:44] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:04:47] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:04:48] [RUN] Recalling to mining rune 53.
+[2026-02-19 14:05:06] [RUN] No ore here... move.
+[2026-02-19 14:05:09] [RUN] Recalling home to unload.
+[2026-02-19 14:05:16] [RUN] Unloading resources to containers.
+[2026-02-19 14:05:16] [RUN] Unload: 8 items in backpack.
+[2026-02-19 14:05:17] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:05:21] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:05:22] [RUN] Recalling to mining rune 54.
+[2026-02-19 14:06:42] [RUN] No ore here... move.
+[2026-02-19 14:06:45] [RUN] Recalling home to unload.
+[2026-02-19 14:06:52] [RUN] Unloading resources to containers.
+[2026-02-19 14:06:52] [RUN] Unload: 13 items in backpack.
+[2026-02-19 14:06:59] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:07:03] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:07:04] [RUN] Recalling to mining rune 55.
+[2026-02-19 14:08:34] [RUN] Overweight detected.
+[2026-02-19 14:08:34] [RUN] Overweight: recall to unload.
+[2026-02-19 14:08:34] [RUN] Recalling home to unload.
+[2026-02-19 14:08:41] [RUN] Unloading resources to containers.
+[2026-02-19 14:08:41] [RUN] Unload: 12 items in backpack.
+[2026-02-19 14:08:48] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:08:52] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:08:58] [RUN] Recalling to mining rune 56.
+[2026-02-19 14:09:15] [RUN] No ore here... move.
+[2026-02-19 14:09:18] [RUN] Recalling home to unload.
+[2026-02-19 14:09:25] [RUN] Unloading resources to containers.
+[2026-02-19 14:09:25] [RUN] Unload: 9 items in backpack.
+[2026-02-19 14:09:27] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:09:30] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:09:31] [RUN] Recalling to mining rune 57.
+[2026-02-19 14:09:49] [RUN] No ore here... move.
+[2026-02-19 14:09:52] [RUN] Recalling home to unload.
+[2026-02-19 14:09:59] [RUN] Unloading resources to containers.
+[2026-02-19 14:09:59] [RUN] Unload: 9 items in backpack.
+[2026-02-19 14:10:01] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:10:04] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:10:05] [RUN] Recalling to mining rune 58.
+[2026-02-19 14:11:19] [RUN] No ore here... move.
+[2026-02-19 14:11:22] [RUN] Recalling home to unload.
+[2026-02-19 14:11:29] [RUN] Unloading resources to containers.
+[2026-02-19 14:11:29] [RUN] Unload: 13 items in backpack.
+[2026-02-19 14:11:35] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:11:39] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:11:40] [RUN] Recalling to mining rune 59.
+[2026-02-19 14:13:05] [RUN] Overweight detected.
+[2026-02-19 14:13:05] [RUN] Overweight: recall to unload.
+[2026-02-19 14:13:05] [RUN] Recalling home to unload.
+[2026-02-19 14:13:12] [RUN] Unloading resources to containers.
+[2026-02-19 14:13:12] [RUN] Unload: 15 items in backpack.
+[2026-02-19 14:13:16] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 14:13:20] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:13:24] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:13:25] [RUN] Recalling to mining rune 60.
+[2026-02-19 14:14:37] [RUN] No ore here... move.
+[2026-02-19 14:14:40] [RUN] Recalling home to unload.
+[2026-02-19 14:14:47] [RUN] Unloading resources to containers.
+[2026-02-19 14:14:47] [RUN] Unload: 12 items in backpack.
+[2026-02-19 14:14:48] [RUN] Unload: moving blackstone 0x0F28.
+[2026-02-19 14:14:53] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:14:56] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:14:57] [RUN] Recalling to mining rune 61.
+[2026-02-19 14:16:29] [RUN] Overweight detected.
+[2026-02-19 14:16:29] [RUN] Overweight: recall to unload.
+[2026-02-19 14:16:29] [RUN] Recalling home to unload.
+[2026-02-19 14:16:36] [RUN] Unloading resources to containers.
+[2026-02-19 14:16:36] [RUN] Unload: 10 items in backpack.
+[2026-02-19 14:16:41] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:16:44] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:16:50] [RUN] Recalling to mining rune 62.
+[2026-02-19 14:18:04] [RUN] No ore here... move.
+[2026-02-19 14:18:07] [RUN] Recalling home to unload.
+[2026-02-19 14:18:14] [RUN] Unloading resources to containers.
+[2026-02-19 14:18:14] [RUN] Unload: 12 items in backpack.
+[2026-02-19 14:18:19] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:18:22] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:18:24] [RUN] Recalling to mining rune 63.
+[2026-02-19 14:19:51] [RUN] Overweight detected.
+[2026-02-19 14:19:51] [RUN] Overweight: recall to unload.
+[2026-02-19 14:19:51] [RUN] Recalling home to unload.
+[2026-02-19 14:19:58] [RUN] Unloading resources to containers.
+[2026-02-19 14:19:58] [RUN] Unload: 11 items in backpack.
+[2026-02-19 14:20:02] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:20:05] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:20:06] [RUN] Recalling to mining rune 64.
+[2026-02-19 14:21:23] [RUN] No ore here... move.
+[2026-02-19 14:21:26] [RUN] Recalling home to unload.
+[2026-02-19 14:21:33] [RUN] Unloading resources to containers.
+[2026-02-19 14:21:33] [RUN] Unload: 14 items in backpack.
+[2026-02-19 14:21:40] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:21:43] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:21:45] [RUN] Recalling to mining rune 65.
+[2026-02-19 14:22:19] [RUN] No ore here... move.
+[2026-02-19 14:22:22] [RUN] Recalling home to unload.
+[2026-02-19 14:22:29] [RUN] Unloading resources to containers.
+[2026-02-19 14:22:29] [RUN] Unload: 9 items in backpack.
+[2026-02-19 14:22:30] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:22:34] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:22:35] [RUN] Recalling to mining rune 51.
+[2026-02-19 14:23:56] [RUN] Overweight detected.
+[2026-02-19 14:23:56] [RUN] Overweight: recall to unload.
+[2026-02-19 14:23:56] [RUN] Recalling home to unload.
+[2026-02-19 14:24:03] [RUN] Unloading resources to containers.
+[2026-02-19 14:24:03] [RUN] Unload: 11 items in backpack.
+[2026-02-19 14:24:08] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:24:11] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:24:13] [RUN] Recalling to mining rune 52.
+[2026-02-19 14:25:45] [RUN] Overweight detected.
+[2026-02-19 14:25:45] [RUN] Overweight: recall to unload.
+[2026-02-19 14:25:45] [RUN] Recalling home to unload.
+[2026-02-19 14:25:52] [RUN] Unloading resources to containers.
+[2026-02-19 14:25:52] [RUN] Unload: 13 items in backpack.
+[2026-02-19 14:25:59] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:26:03] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:26:04] [RUN] Recalling to mining rune 53.
+[2026-02-19 14:26:21] [RUN] No ore here... move.
+[2026-02-19 14:26:24] [RUN] Recalling home to unload.
+[2026-02-19 14:26:31] [RUN] Unloading resources to containers.
+[2026-02-19 14:26:31] [RUN] Unload: 8 items in backpack.
+[2026-02-19 14:26:33] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:26:36] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:26:37] [RUN] Recalling to mining rune 54.
+[2026-02-19 14:28:06] [RUN] Overweight detected.
+[2026-02-19 14:28:06] [RUN] Overweight: recall to unload.
+[2026-02-19 14:28:06] [RUN] Recalling home to unload.
+[2026-02-19 14:28:13] [RUN] Unloading resources to containers.
+[2026-02-19 14:28:13] [RUN] Unload: 10 items in backpack.
+[2026-02-19 14:28:17] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:28:21] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:28:27] [RUN] Recalling to mining rune 55.
+[2026-02-19 14:29:56] [RUN] Overweight detected.
+[2026-02-19 14:29:56] [RUN] Overweight: recall to unload.
+[2026-02-19 14:29:56] [RUN] Recalling home to unload.
+[2026-02-19 14:30:03] [RUN] Unloading resources to containers.
+[2026-02-19 14:30:03] [RUN] Unload: 13 items in backpack.
+[2026-02-19 14:30:09] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:30:12] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:30:13] [RUN] Recalling to mining rune 56.
+[2026-02-19 14:30:31] [RUN] No ore here... move.
+[2026-02-19 14:30:34] [RUN] Recalling home to unload.
+[2026-02-19 14:30:41] [RUN] Unloading resources to containers.
+[2026-02-19 14:30:41] [RUN] Unload: 9 items in backpack.
+[2026-02-19 14:30:42] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:30:46] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:30:47] [RUN] Recalling to mining rune 57.
+[2026-02-19 14:31:04] [RUN] No ore here... move.
+[2026-02-19 14:31:07] [RUN] Recalling home to unload.
+[2026-02-19 14:31:14] [RUN] Unloading resources to containers.
+[2026-02-19 14:31:14] [RUN] Unload: 9 items in backpack.
+[2026-02-19 14:31:16] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:31:19] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:31:21] [RUN] Recalling to mining rune 58.
+[2026-02-19 14:32:35] [RUN] No ore here... move.
+[2026-02-19 14:32:38] [RUN] Recalling home to unload.
+[2026-02-19 14:32:45] [RUN] Unloading resources to containers.
+[2026-02-19 14:32:45] [RUN] Unload: 11 items in backpack.
+[2026-02-19 14:32:50] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:32:53] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:32:54] [RUN] Recalling to mining rune 59.
+[2026-02-19 14:34:22] [RUN] Overweight detected.
+[2026-02-19 14:34:22] [RUN] Overweight: recall to unload.
+[2026-02-19 14:34:22] [RUN] Recalling home to unload.
+[2026-02-19 14:34:29] [RUN] Unloading resources to containers.
+[2026-02-19 14:34:29] [RUN] Unload: 11 items in backpack.
+[2026-02-19 14:34:35] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:34:38] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:34:44] [RUN] Recalling to mining rune 60.
+[2026-02-19 14:36:00] [RUN] No ore here... move.
+[2026-02-19 14:36:03] [RUN] Recalling home to unload.
+[2026-02-19 14:36:10] [RUN] Unloading resources to containers.
+[2026-02-19 14:36:10] [RUN] Unload: 11 items in backpack.
+[2026-02-19 14:36:14] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:36:17] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:36:18] [RUN] Recalling to mining rune 61.
+[2026-02-19 14:37:51] [RUN] Overweight detected.
+[2026-02-19 14:37:51] [RUN] Overweight: recall to unload.
+[2026-02-19 14:37:51] [RUN] Recalling home to unload.
+[2026-02-19 14:37:58] [RUN] Unloading resources to containers.
+[2026-02-19 14:37:58] [RUN] Unload: 12 items in backpack.
+[2026-02-19 14:38:04] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:38:08] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:38:09] [RUN] Recalling to mining rune 62.
+[2026-02-19 14:39:27] [RUN] No ore here... move.
+[2026-02-19 14:39:30] [RUN] Recalling home to unload.
+[2026-02-19 14:39:37] [RUN] Unloading resources to containers.
+[2026-02-19 14:39:37] [RUN] Unload: 13 items in backpack.
+[2026-02-19 14:39:44] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:39:48] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:39:49] [RUN] Recalling to mining rune 63.
+[2026-02-19 14:41:19] [RUN] Overweight detected.
+[2026-02-19 14:41:19] [RUN] Overweight: recall to unload.
+[2026-02-19 14:41:19] [RUN] Recalling home to unload.
+[2026-02-19 14:41:26] [RUN] Unloading resources to containers.
+[2026-02-19 14:41:26] [RUN] Unload: 12 items in backpack.
+[2026-02-19 14:41:26] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 14:41:27] [RUN] Unload: moving blackstone 0x0F28.
+[2026-02-19 14:41:33] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:41:37] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:41:42] [RUN] Recalling to mining rune 64.
+[2026-02-19 14:42:56] [RUN] No ore here... move.
+[2026-02-19 14:42:59] [RUN] Recalling home to unload.
+[2026-02-19 14:43:06] [RUN] Unloading resources to containers.
+[2026-02-19 14:43:06] [RUN] Unload: 12 items in backpack.
+[2026-02-19 14:43:11] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:43:14] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:43:15] [RUN] Recalling to mining rune 65.
+[2026-02-19 14:43:50] [RUN] No ore here... move.
+[2026-02-19 14:43:53] [RUN] Recalling home to unload.
+[2026-02-19 14:44:00] [RUN] Unloading resources to containers.
+[2026-02-19 14:44:00] [RUN] Unload: 9 items in backpack.
+[2026-02-19 14:44:01] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:44:05] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:44:06] [RUN] Recalling to mining rune 51.
+[2026-02-19 14:45:25] [RUN] Overweight detected.
+[2026-02-19 14:45:25] [RUN] Overweight: recall to unload.
+[2026-02-19 14:45:25] [RUN] Recalling home to unload.
+[2026-02-19 14:45:32] [RUN] Unloading resources to containers.
+[2026-02-19 14:45:32] [RUN] Unload: 11 items in backpack.
+[2026-02-19 14:45:36] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:45:40] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:45:41] [RUN] Recalling to mining rune 52.
+[2026-02-19 14:47:10] [RUN] Overweight detected.
+[2026-02-19 14:47:10] [RUN] Overweight: recall to unload.
+[2026-02-19 14:47:10] [RUN] Recalling home to unload.
+[2026-02-19 14:47:17] [RUN] Unloading resources to containers.
+[2026-02-19 14:47:17] [RUN] Unload: 12 items in backpack.
+[2026-02-19 14:47:23] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:47:27] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:47:28] [RUN] Recalling to mining rune 53.
+[2026-02-19 14:47:45] [RUN] No ore here... move.
+[2026-02-19 14:47:48] [RUN] Recalling home to unload.
+[2026-02-19 14:47:55] [RUN] Unloading resources to containers.
+[2026-02-19 14:47:55] [RUN] Unload: 8 items in backpack.
+[2026-02-19 14:47:57] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:48:00] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:48:01] [RUN] Recalling to mining rune 54.
+[2026-02-19 14:49:29] [RUN] Overweight detected.
+[2026-02-19 14:49:29] [RUN] Overweight: recall to unload.
+[2026-02-19 14:49:29] [RUN] Recalling home to unload.
+[2026-02-19 14:49:36] [RUN] Unloading resources to containers.
+[2026-02-19 14:49:36] [RUN] Unload: 10 items in backpack.
+[2026-02-19 14:49:41] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:49:45] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:49:51] [RUN] Recalling to mining rune 55.
+[2026-02-19 14:51:19] [RUN] Overweight detected.
+[2026-02-19 14:51:19] [RUN] Overweight: recall to unload.
+[2026-02-19 14:51:19] [RUN] Recalling home to unload.
+[2026-02-19 14:51:26] [RUN] Unloading resources to containers.
+[2026-02-19 14:51:26] [RUN] Unload: 13 items in backpack.
+[2026-02-19 14:51:32] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:51:35] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:51:36] [RUN] Recalling to mining rune 56.
+[2026-02-19 14:51:54] [RUN] No ore here... move.
+[2026-02-19 14:51:57] [RUN] Recalling home to unload.
+[2026-02-19 14:52:04] [RUN] Unloading resources to containers.
+[2026-02-19 14:52:04] [RUN] Unload: 9 items in backpack.
+[2026-02-19 14:52:05] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:52:09] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:52:10] [RUN] Recalling to mining rune 57.
+[2026-02-19 14:52:28] [RUN] No ore here... move.
+[2026-02-19 14:52:31] [RUN] Recalling home to unload.
+[2026-02-19 14:52:37] [RUN] Unloading resources to containers.
+[2026-02-19 14:52:37] [RUN] Unload: 9 items in backpack.
+[2026-02-19 14:52:39] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:52:42] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:52:44] [RUN] Recalling to mining rune 58.
+[2026-02-19 14:54:02] [RUN] No ore here... move.
+[2026-02-19 14:54:05] [RUN] Recalling home to unload.
+[2026-02-19 14:54:12] [RUN] Unloading resources to containers.
+[2026-02-19 14:54:12] [RUN] Unload: 13 items in backpack.
+[2026-02-19 14:54:14] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 14:54:19] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:54:23] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:54:24] [RUN] Recalling to mining rune 59.
+[2026-02-19 14:56:01] [RUN] Overweight detected.
+[2026-02-19 14:56:01] [RUN] Overweight: recall to unload.
+[2026-02-19 14:56:01] [RUN] Recalling home to unload.
+[2026-02-19 14:56:08] [RUN] Unloading resources to containers.
+[2026-02-19 14:56:08] [RUN] Unload: 15 items in backpack.
+[2026-02-19 14:56:09] [RUN] Unload: moving blackstone 0x0F2B.
+[2026-02-19 14:56:18] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:56:21] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:56:22] [RUN] Recalling to mining rune 60.
+[2026-02-19 14:57:35] [RUN] No ore here... move.
+[2026-02-19 14:57:38] [RUN] Recalling home to unload.
+[2026-02-19 14:57:45] [RUN] Unloading resources to containers.
+[2026-02-19 14:57:45] [RUN] Unload: 9 items in backpack.
+[2026-02-19 14:57:48] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:57:51] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:57:53] [RUN] Recalling to mining rune 61.
+[2026-02-19 14:59:27] [RUN] Overweight detected.
+[2026-02-19 14:59:27] [RUN] Overweight: recall to unload.
+[2026-02-19 14:59:27] [RUN] Recalling home to unload.
+[2026-02-19 14:59:34] [RUN] Unloading resources to containers.
+[2026-02-19 14:59:34] [RUN] Unload: 12 items in backpack.
+[2026-02-19 14:59:41] [RUN] Restocking ingots from drop container.
+[2026-02-19 14:59:44] [RUN] Ensuring at least two shovels.
+[2026-02-19 14:59:50] [RUN] Recalling to mining rune 62.
+[2026-02-19 15:01:08] [RUN] No ore here... move.
+[2026-02-19 15:01:11] [RUN] Recalling home to unload.
+[2026-02-19 15:01:18] [RUN] Unloading resources to containers.
+[2026-02-19 15:01:18] [RUN] Unload: 13 items in backpack.
+[2026-02-19 15:01:25] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:01:28] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:01:30] [RUN] Recalling to mining rune 63.
+[2026-02-19 15:03:03] [RUN] Overweight detected.
+[2026-02-19 15:03:03] [RUN] Overweight: recall to unload.
+[2026-02-19 15:03:03] [RUN] Recalling home to unload.
+[2026-02-19 15:03:10] [RUN] Unloading resources to containers.
+[2026-02-19 15:03:10] [RUN] Unload: 11 items in backpack.
+[2026-02-19 15:03:15] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:03:18] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:03:19] [RUN] Recalling to mining rune 64.
+[2026-02-19 15:04:38] [RUN] No ore here... move.
+[2026-02-19 15:04:41] [RUN] Recalling home to unload.
+[2026-02-19 15:04:48] [RUN] Unloading resources to containers.
+[2026-02-19 15:04:48] [RUN] Unload: 14 items in backpack.
+[2026-02-19 15:04:57] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:05:00] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:05:06] [RUN] Recalling to mining rune 65.
+[2026-02-19 15:05:41] [RUN] No ore here... move.
+[2026-02-19 15:05:44] [RUN] Recalling home to unload.
+[2026-02-19 15:05:50] [RUN] Unloading resources to containers.
+[2026-02-19 15:05:50] [RUN] Unload: 9 items in backpack.
+[2026-02-19 15:05:52] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:05:56] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:05:57] [RUN] Recalling to mining rune 51.
+[2026-02-19 15:07:15] [RUN] Overweight detected.
+[2026-02-19 15:07:15] [RUN] Overweight: recall to unload.
+[2026-02-19 15:07:15] [RUN] Recalling home to unload.
+[2026-02-19 15:07:22] [RUN] Unloading resources to containers.
+[2026-02-19 15:07:22] [RUN] Unload: 11 items in backpack.
+[2026-02-19 15:07:26] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:07:29] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:07:31] [RUN] Recalling to mining rune 52.
+[2026-02-19 15:08:58] [RUN] Overweight detected.
+[2026-02-19 15:08:58] [RUN] Overweight: recall to unload.
+[2026-02-19 15:08:58] [RUN] Recalling home to unload.
+[2026-02-19 15:09:05] [RUN] Unloading resources to containers.
+[2026-02-19 15:09:05] [RUN] Unload: 11 items in backpack.
+[2026-02-19 15:09:09] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:09:13] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:09:14] [RUN] Recalling to mining rune 53.
+[2026-02-19 15:09:31] [RUN] No ore here... move.
+[2026-02-19 15:09:34] [RUN] Recalling home to unload.
+[2026-02-19 15:09:41] [RUN] Unloading resources to containers.
+[2026-02-19 15:09:41] [RUN] Unload: 9 items in backpack.
+[2026-02-19 15:09:43] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:09:46] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:09:47] [RUN] Recalling to mining rune 54.
+[2026-02-19 15:11:15] [RUN] Overweight detected.
+[2026-02-19 15:11:15] [RUN] Overweight: recall to unload.
+[2026-02-19 15:11:15] [RUN] Recalling home to unload.
+[2026-02-19 15:11:22] [RUN] Unloading resources to containers.
+[2026-02-19 15:11:22] [RUN] Unload: 11 items in backpack.
+[2026-02-19 15:11:22] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 15:11:27] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:11:30] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:11:31] [RUN] Recalling to mining rune 55.
+[2026-02-19 15:12:57] [RUN] Overweight detected.
+[2026-02-19 15:12:57] [RUN] Overweight: recall to unload.
+[2026-02-19 15:12:57] [RUN] Recalling home to unload.
+[2026-02-19 15:13:04] [RUN] Unloading resources to containers.
+[2026-02-19 15:13:04] [RUN] Unload: 12 items in backpack.
+[2026-02-19 15:13:10] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:13:13] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:13:14] [RUN] Recalling to mining rune 56.
+[2026-02-19 15:13:32] [RUN] No ore here... move.
+[2026-02-19 15:13:35] [RUN] Recalling home to unload.
+[2026-02-19 15:13:42] [RUN] Unloading resources to containers.
+[2026-02-19 15:13:42] [RUN] Unload: 8 items in backpack.
+[2026-02-19 15:13:43] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:13:47] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:13:48] [RUN] Recalling to mining rune 57.
+[2026-02-19 15:14:05] [RUN] No ore here... move.
+[2026-02-19 15:14:08] [RUN] Recalling home to unload.
+[2026-02-19 15:14:15] [RUN] Unloading resources to containers.
+[2026-02-19 15:14:15] [RUN] Unload: 8 items in backpack.
+[2026-02-19 15:14:17] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:14:20] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:14:21] [RUN] Recalling to mining rune 58.
+[2026-02-19 15:15:40] [RUN] No ore here... move.
+[2026-02-19 15:15:43] [RUN] Recalling home to unload.
+[2026-02-19 15:15:50] [RUN] Unloading resources to containers.
+[2026-02-19 15:15:50] [RUN] Unload: 14 items in backpack.
+[2026-02-19 15:15:58] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:16:02] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:16:03] [RUN] Recalling to mining rune 59.
+[2026-02-19 15:17:30] [RUN] Overweight detected.
+[2026-02-19 15:17:30] [RUN] Overweight: recall to unload.
+[2026-02-19 15:17:30] [RUN] Recalling home to unload.
+[2026-02-19 15:17:37] [RUN] Unloading resources to containers.
+[2026-02-19 15:17:37] [RUN] Unload: 12 items in backpack.
+[2026-02-19 15:17:38] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 15:17:44] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:17:47] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:17:53] [RUN] Recalling to mining rune 60.
+[2026-02-19 15:19:09] [RUN] No ore here... move.
+[2026-02-19 15:19:12] [RUN] Recalling home to unload.
+[2026-02-19 15:19:19] [RUN] Unloading resources to containers.
+[2026-02-19 15:19:19] [RUN] Unload: 12 items in backpack.
+[2026-02-19 15:19:24] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:19:27] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:19:28] [RUN] Recalling to mining rune 61.
+[2026-02-19 15:21:01] [RUN] Overweight detected.
+[2026-02-19 15:21:01] [RUN] Overweight: recall to unload.
+[2026-02-19 15:21:01] [RUN] Recalling home to unload.
+[2026-02-19 15:21:07] [RUN] Unloading resources to containers.
+[2026-02-19 15:21:07] [RUN] Unload: 12 items in backpack.
+[2026-02-19 15:21:13] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:21:17] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:21:18] [RUN] Recalling to mining rune 62.
+[2026-02-19 15:22:36] [RUN] No ore here... move.
+[2026-02-19 15:22:39] [RUN] Recalling home to unload.
+[2026-02-19 15:22:46] [RUN] Unloading resources to containers.
+[2026-02-19 15:22:46] [RUN] Unload: 13 items in backpack.
+[2026-02-19 15:22:47] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 15:22:53] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:22:57] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:22:58] [RUN] Recalling to mining rune 63.
+[2026-02-19 15:24:26] [RUN] Overweight detected.
+[2026-02-19 15:24:26] [RUN] Overweight: recall to unload.
+[2026-02-19 15:24:26] [RUN] Recalling home to unload.
+[2026-02-19 15:24:33] [RUN] Unloading resources to containers.
+[2026-02-19 15:24:33] [RUN] Unload: 11 items in backpack.
+[2026-02-19 15:24:38] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:24:41] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:24:42] [RUN] Recalling to mining rune 64.
+[2026-02-19 15:26:00] [RUN] No ore here... move.
+[2026-02-19 15:26:03] [RUN] Recalling home to unload.
+[2026-02-19 15:26:10] [RUN] Unloading resources to containers.
+[2026-02-19 15:26:10] [RUN] Unload: 12 items in backpack.
+[2026-02-19 15:26:17] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:26:20] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:26:26] [RUN] Recalling to mining rune 65.
+[2026-02-19 15:27:01] [RUN] No ore here... move.
+[2026-02-19 15:27:04] [RUN] Recalling home to unload.
+[2026-02-19 15:27:11] [RUN] Unloading resources to containers.
+[2026-02-19 15:27:11] [RUN] Unload: 9 items in backpack.
+[2026-02-19 15:27:12] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:27:16] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:27:17] [RUN] Recalling to mining rune 51.
+[2026-02-19 15:28:36] [RUN] Overweight detected.
+[2026-02-19 15:28:36] [RUN] Overweight: recall to unload.
+[2026-02-19 15:28:36] [RUN] Recalling home to unload.
+[2026-02-19 15:28:43] [RUN] Unloading resources to containers.
+[2026-02-19 15:28:43] [RUN] Unload: 11 items in backpack.
+[2026-02-19 15:28:47] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:28:50] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:28:51] [RUN] Recalling to mining rune 52.
+[2026-02-19 15:30:21] [RUN] Overweight detected.
+[2026-02-19 15:30:21] [RUN] Overweight: recall to unload.
+[2026-02-19 15:30:21] [RUN] Recalling home to unload.
+[2026-02-19 15:30:28] [RUN] Unloading resources to containers.
+[2026-02-19 15:30:28] [RUN] Unload: 13 items in backpack.
+[2026-02-19 15:30:29] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 15:30:34] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:30:38] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:30:39] [RUN] Recalling to mining rune 53.
+[2026-02-19 15:30:56] [RUN] No ore here... move.
+[2026-02-19 15:30:59] [RUN] Recalling home to unload.
+[2026-02-19 15:31:06] [RUN] Unloading resources to containers.
+[2026-02-19 15:31:06] [RUN] Unload: 9 items in backpack.
+[2026-02-19 15:31:08] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:31:11] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:31:12] [RUN] Recalling to mining rune 54.
+[2026-02-19 15:32:39] [RUN] Overweight detected.
+[2026-02-19 15:32:39] [RUN] Overweight: recall to unload.
+[2026-02-19 15:32:39] [RUN] Recalling home to unload.
+[2026-02-19 15:32:46] [RUN] Unloading resources to containers.
+[2026-02-19 15:32:46] [RUN] Unload: 12 items in backpack.
+[2026-02-19 15:32:52] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:32:55] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:32:56] [RUN] Recalling to mining rune 55.
+[2026-02-19 15:34:22] [RUN] Overweight detected.
+[2026-02-19 15:34:22] [RUN] Overweight: recall to unload.
+[2026-02-19 15:34:22] [RUN] Recalling home to unload.
+[2026-02-19 15:34:29] [RUN] Unloading resources to containers.
+[2026-02-19 15:34:29] [RUN] Unload: 12 items in backpack.
+[2026-02-19 15:34:35] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:34:38] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:34:39] [RUN] Recalling to mining rune 56.
+[2026-02-19 15:34:57] [RUN] No ore here... move.
+[2026-02-19 15:35:00] [RUN] Recalling home to unload.
+[2026-02-19 15:35:07] [RUN] Unloading resources to containers.
+[2026-02-19 15:35:07] [RUN] Unload: 8 items in backpack.
+[2026-02-19 15:35:08] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:35:12] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:35:13] [RUN] Recalling to mining rune 57.
+[2026-02-19 15:35:32] [RUN] No ore here... move.
+[2026-02-19 15:35:35] [RUN] Recalling home to unload.
+[2026-02-19 15:35:42] [RUN] Unloading resources to containers.
+[2026-02-19 15:35:42] [RUN] Unload: 8 items in backpack.
+[2026-02-19 15:35:44] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:35:47] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:35:48] [RUN] Recalling to mining rune 58.
+[2026-02-19 15:37:04] [RUN] No ore here... move.
+[2026-02-19 15:37:07] [RUN] Recalling home to unload.
+[2026-02-19 15:37:14] [RUN] Unloading resources to containers.
+[2026-02-19 15:37:14] [RUN] Unload: 12 items in backpack.
+[2026-02-19 15:37:20] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:37:24] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:37:25] [RUN] Recalling to mining rune 59.
+[2026-02-19 15:38:54] [RUN] Overweight detected.
+[2026-02-19 15:38:54] [RUN] Overweight: recall to unload.
+[2026-02-19 15:38:54] [RUN] Recalling home to unload.
+[2026-02-19 15:39:01] [RUN] Unloading resources to containers.
+[2026-02-19 15:39:01] [RUN] Unload: 12 items in backpack.
+[2026-02-19 15:39:02] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 15:39:08] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:39:11] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:39:17] [RUN] Recalling to mining rune 60.
+[2026-02-19 15:40:33] [RUN] No ore here... move.
+[2026-02-19 15:40:36] [RUN] Recalling home to unload.
+[2026-02-19 15:40:43] [RUN] Unloading resources to containers.
+[2026-02-19 15:40:43] [RUN] Unload: 11 items in backpack.
+[2026-02-19 15:40:47] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:40:50] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:40:51] [RUN] Recalling to mining rune 61.
+[2026-02-19 15:42:23] [RUN] Overweight detected.
+[2026-02-19 15:42:23] [RUN] Overweight: recall to unload.
+[2026-02-19 15:42:23] [RUN] Recalling home to unload.
+[2026-02-19 15:42:30] [RUN] Unloading resources to containers.
+[2026-02-19 15:42:30] [RUN] Unload: 13 items in backpack.
+[2026-02-19 15:42:36] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:42:39] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:42:41] [RUN] Recalling to mining rune 62.
+[2026-02-19 15:43:57] [RUN] No ore here... move.
+[2026-02-19 15:44:00] [RUN] Recalling home to unload.
+[2026-02-19 15:44:06] [RUN] Unloading resources to containers.
+[2026-02-19 15:44:07] [RUN] Unload: 11 items in backpack.
+[2026-02-19 15:44:11] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:44:15] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:44:16] [RUN] Recalling to mining rune 63.
+[2026-02-19 15:45:46] [RUN] Overweight detected.
+[2026-02-19 15:45:46] [RUN] Overweight: recall to unload.
+[2026-02-19 15:45:46] [RUN] Recalling home to unload.
+[2026-02-19 15:45:53] [RUN] Unloading resources to containers.
+[2026-02-19 15:45:53] [RUN] Unload: 10 items in backpack.
+[2026-02-19 15:45:58] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:46:02] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:46:08] [RUN] Recalling to mining rune 64.
+[2026-02-19 15:47:19] [RUN] No ore here... move.
+[2026-02-19 15:47:22] [RUN] Recalling home to unload.
+[2026-02-19 15:47:29] [RUN] Unloading resources to containers.
+[2026-02-19 15:47:29] [RUN] Unload: 13 items in backpack.
+[2026-02-19 15:47:29] [RUN] Unload: moving blackstone 0x0F2B.
+[2026-02-19 15:47:35] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:47:38] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:47:39] [RUN] Recalling to mining rune 65.
+[2026-02-19 15:48:14] [RUN] No ore here... move.
+[2026-02-19 15:48:17] [RUN] Recalling home to unload.
+[2026-02-19 15:48:24] [RUN] Unloading resources to containers.
+[2026-02-19 15:48:24] [RUN] Unload: 9 items in backpack.
+[2026-02-19 15:48:25] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:48:29] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:48:30] [RUN] Recalling to mining rune 51.
+[2026-02-19 15:49:49] [RUN] Overweight detected.
+[2026-02-19 15:49:49] [RUN] Overweight: recall to unload.
+[2026-02-19 15:49:49] [RUN] Recalling home to unload.
+[2026-02-19 15:49:55] [RUN] Unloading resources to containers.
+[2026-02-19 15:49:55] [RUN] Unload: 10 items in backpack.
+[2026-02-19 15:49:59] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:50:03] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:50:04] [RUN] Recalling to mining rune 52.
+[2026-02-19 15:51:38] [RUN] Overweight detected.
+[2026-02-19 15:51:38] [RUN] Overweight: recall to unload.
+[2026-02-19 15:51:38] [RUN] Recalling home to unload.
+[2026-02-19 15:51:45] [RUN] Unloading resources to containers.
+[2026-02-19 15:51:45] [RUN] Unload: 13 items in backpack.
+[2026-02-19 15:51:53] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:51:57] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:52:02] [RUN] Recalling to mining rune 53.
+[2026-02-19 15:52:20] [RUN] No ore here... move.
+[2026-02-19 15:52:23] [RUN] Recalling home to unload.
+[2026-02-19 15:52:30] [RUN] Unloading resources to containers.
+[2026-02-19 15:52:30] [RUN] Unload: 9 items in backpack.
+[2026-02-19 15:52:31] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:52:35] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:52:36] [RUN] Recalling to mining rune 54.
+[2026-02-19 15:54:13] [RUN] No ore here... move.
+[2026-02-19 15:54:16] [RUN] Recalling home to unload.
+[2026-02-19 15:54:23] [RUN] Unloading resources to containers.
+[2026-02-19 15:54:23] [RUN] Unload: 17 items in backpack.
+[2026-02-19 15:54:33] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:54:37] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:54:38] [RUN] Recalling to mining rune 55.
+[2026-02-19 15:56:06] [RUN] Overweight detected.
+[2026-02-19 15:56:06] [RUN] Overweight: recall to unload.
+[2026-02-19 15:56:06] [RUN] Recalling home to unload.
+[2026-02-19 15:56:13] [RUN] Unloading resources to containers.
+[2026-02-19 15:56:13] [RUN] Unload: 12 items in backpack.
+[2026-02-19 15:56:19] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:56:23] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:56:24] [RUN] Recalling to mining rune 56.
+[2026-02-19 15:56:41] [RUN] No ore here... move.
+[2026-02-19 15:56:44] [RUN] Recalling home to unload.
+[2026-02-19 15:56:51] [RUN] Unloading resources to containers.
+[2026-02-19 15:56:51] [RUN] Unload: 8 items in backpack.
+[2026-02-19 15:56:53] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:56:56] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:56:57] [RUN] Recalling to mining rune 57.
+[2026-02-19 15:57:15] [RUN] No ore here... move.
+[2026-02-19 15:57:18] [RUN] Recalling home to unload.
+[2026-02-19 15:57:25] [RUN] Unloading resources to containers.
+[2026-02-19 15:57:25] [RUN] Unload: 8 items in backpack.
+[2026-02-19 15:57:26] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:57:30] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:57:31] [RUN] Recalling to mining rune 58.
+[2026-02-19 15:58:47] [RUN] No ore here... move.
+[2026-02-19 15:58:50] [RUN] Recalling home to unload.
+[2026-02-19 15:58:57] [RUN] Unloading resources to containers.
+[2026-02-19 15:58:57] [RUN] Unload: 11 items in backpack.
+[2026-02-19 15:59:03] [RUN] Restocking ingots from drop container.
+[2026-02-19 15:59:07] [RUN] Ensuring at least two shovels.
+[2026-02-19 15:59:12] [RUN] Recalling to mining rune 59.
+[2026-02-19 16:00:39] [RUN] Overweight detected.
+[2026-02-19 16:00:39] [RUN] Overweight: recall to unload.
+[2026-02-19 16:00:39] [RUN] Recalling home to unload.
+[2026-02-19 16:00:46] [RUN] Unloading resources to containers.
+[2026-02-19 16:00:46] [RUN] Unload: 14 items in backpack.
+[2026-02-19 16:00:53] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:00:57] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:00:58] [RUN] Recalling to mining rune 60.
+[2026-02-19 16:02:16] [RUN] No ore here... move.
+[2026-02-19 16:02:19] [RUN] Recalling home to unload.
+[2026-02-19 16:02:26] [RUN] Unloading resources to containers.
+[2026-02-19 16:02:26] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:02:32] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:02:35] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:02:36] [RUN] Recalling to mining rune 61.
+[2026-02-19 16:04:09] [RUN] Overweight detected.
+[2026-02-19 16:04:09] [RUN] Overweight: recall to unload.
+[2026-02-19 16:04:09] [RUN] Recalling home to unload.
+[2026-02-19 16:04:16] [RUN] Unloading resources to containers.
+[2026-02-19 16:04:16] [RUN] Unload: 11 items in backpack.
+[2026-02-19 16:04:22] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:04:26] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:04:32] [RUN] Recalling to mining rune 62.
+[2026-02-19 16:05:50] [RUN] No ore here... move.
+[2026-02-19 16:05:53] [RUN] Recalling home to unload.
+[2026-02-19 16:06:00] [RUN] Unloading resources to containers.
+[2026-02-19 16:06:00] [RUN] Unload: 13 items in backpack.
+[2026-02-19 16:06:06] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:06:09] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:06:10] [RUN] Recalling to mining rune 63.
+[2026-02-19 16:07:44] [RUN] Overweight detected.
+[2026-02-19 16:07:44] [RUN] Overweight: recall to unload.
+[2026-02-19 16:07:44] [RUN] Recalling home to unload.
+[2026-02-19 16:07:51] [RUN] Unloading resources to containers.
+[2026-02-19 16:07:51] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:07:57] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:08:01] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:08:02] [RUN] Recalling to mining rune 64.
+[2026-02-19 16:09:15] [RUN] No ore here... move.
+[2026-02-19 16:09:18] [RUN] Recalling home to unload.
+[2026-02-19 16:09:25] [RUN] Unloading resources to containers.
+[2026-02-19 16:09:25] [RUN] Unload: 11 items in backpack.
+[2026-02-19 16:09:30] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:09:33] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:09:34] [RUN] Recalling to mining rune 65.
+[2026-02-19 16:10:09] [RUN] No ore here... move.
+[2026-02-19 16:10:12] [RUN] Recalling home to unload.
+[2026-02-19 16:10:19] [RUN] Unloading resources to containers.
+[2026-02-19 16:10:19] [RUN] Unload: 8 items in backpack.
+[2026-02-19 16:10:20] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:10:24] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:10:25] [RUN] Recalling to mining rune 51.
+[2026-02-19 16:11:45] [RUN] Overweight detected.
+[2026-02-19 16:11:45] [RUN] Overweight: recall to unload.
+[2026-02-19 16:11:45] [RUN] Recalling home to unload.
+[2026-02-19 16:11:52] [RUN] Unloading resources to containers.
+[2026-02-19 16:11:52] [RUN] Unload: 9 items in backpack.
+[2026-02-19 16:11:56] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:12:00] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:12:05] [RUN] Recalling to mining rune 52.
+[2026-02-19 16:13:35] [RUN] Overweight detected.
+[2026-02-19 16:13:35] [RUN] Overweight: recall to unload.
+[2026-02-19 16:13:35] [RUN] Recalling home to unload.
+[2026-02-19 16:13:42] [RUN] Unloading resources to containers.
+[2026-02-19 16:13:42] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:13:48] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:13:52] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:13:53] [RUN] Recalling to mining rune 53.
+[2026-02-19 16:14:10] [RUN] No ore here... move.
+[2026-02-19 16:14:13] [RUN] Recalling home to unload.
+[2026-02-19 16:14:20] [RUN] Unloading resources to containers.
+[2026-02-19 16:14:20] [RUN] Unload: 8 items in backpack.
+[2026-02-19 16:14:22] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:14:25] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:14:26] [RUN] Recalling to mining rune 54.
+[2026-02-19 16:15:59] [RUN] Overweight detected.
+[2026-02-19 16:15:59] [RUN] Overweight: recall to unload.
+[2026-02-19 16:15:59] [RUN] Recalling home to unload.
+[2026-02-19 16:16:06] [RUN] Unloading resources to containers.
+[2026-02-19 16:16:06] [RUN] Unload: 11 items in backpack.
+[2026-02-19 16:16:12] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:16:16] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:16:22] [RUN] Recalling to mining rune 55.
+[2026-02-19 16:17:51] [RUN] Overweight detected.
+[2026-02-19 16:17:51] [RUN] Overweight: recall to unload.
+[2026-02-19 16:17:51] [RUN] Recalling home to unload.
+[2026-02-19 16:17:58] [RUN] Unloading resources to containers.
+[2026-02-19 16:17:58] [RUN] Unload: 15 items in backpack.
+[2026-02-19 16:18:01] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 16:18:06] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:18:09] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:18:10] [RUN] Recalling to mining rune 56.
+[2026-02-19 16:18:28] [RUN] No ore here... move.
+[2026-02-19 16:18:31] [RUN] Recalling home to unload.
+[2026-02-19 16:18:38] [RUN] Unloading resources to containers.
+[2026-02-19 16:18:38] [RUN] Unload: 9 items in backpack.
+[2026-02-19 16:18:40] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:18:43] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:18:44] [RUN] Recalling to mining rune 57.
+[2026-02-19 16:19:02] [RUN] No ore here... move.
+[2026-02-19 16:19:05] [RUN] Recalling home to unload.
+[2026-02-19 16:19:12] [RUN] Unloading resources to containers.
+[2026-02-19 16:19:12] [RUN] Unload: 9 items in backpack.
+[2026-02-19 16:19:13] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:19:17] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:19:18] [RUN] Recalling to mining rune 58.
+[2026-02-19 16:20:31] [RUN] No ore here... move.
+[2026-02-19 16:20:34] [RUN] Recalling home to unload.
+[2026-02-19 16:20:41] [RUN] Unloading resources to containers.
+[2026-02-19 16:20:41] [RUN] Unload: 11 items in backpack.
+[2026-02-19 16:20:46] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:20:50] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:20:51] [RUN] Recalling to mining rune 59.
+[2026-02-19 16:22:18] [RUN] Overweight detected.
+[2026-02-19 16:22:18] [RUN] Overweight: recall to unload.
+[2026-02-19 16:22:18] [RUN] Recalling home to unload.
+[2026-02-19 16:22:25] [RUN] Unloading resources to containers.
+[2026-02-19 16:22:25] [RUN] Unload: 14 items in backpack.
+[2026-02-19 16:22:26] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 16:22:27] [RUN] Unload: moving blackstone 0x0F2A.
+[2026-02-19 16:22:34] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:22:37] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:22:43] [RUN] Recalling to mining rune 60.
+[2026-02-19 16:24:03] [RUN] No ore here... move.
+[2026-02-19 16:24:06] [RUN] Recalling home to unload.
+[2026-02-19 16:24:13] [RUN] Unloading resources to containers.
+[2026-02-19 16:24:13] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:24:18] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:24:21] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:24:22] [RUN] Recalling to mining rune 61.
+[2026-02-19 16:25:51] [RUN] Overweight detected.
+[2026-02-19 16:25:51] [RUN] Overweight: recall to unload.
+[2026-02-19 16:25:51] [RUN] Recalling home to unload.
+[2026-02-19 16:25:58] [RUN] Unloading resources to containers.
+[2026-02-19 16:25:58] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:26:04] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:26:08] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:26:09] [RUN] Recalling to mining rune 62.
+[2026-02-19 16:27:25] [RUN] No ore here... move.
+[2026-02-19 16:27:28] [RUN] Recalling home to unload.
+[2026-02-19 16:27:35] [RUN] Unloading resources to containers.
+[2026-02-19 16:27:35] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:27:41] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:27:44] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:27:45] [RUN] Recalling to mining rune 63.
+[2026-02-19 16:29:13] [RUN] Overweight detected.
+[2026-02-19 16:29:13] [RUN] Overweight: recall to unload.
+[2026-02-19 16:29:13] [RUN] Recalling home to unload.
+[2026-02-19 16:29:20] [RUN] Unloading resources to containers.
+[2026-02-19 16:29:20] [RUN] Unload: 10 items in backpack.
+[2026-02-19 16:29:23] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:29:27] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:29:28] [RUN] Recalling to mining rune 64.
+[2026-02-19 16:30:44] [RUN] No ore here... move.
+[2026-02-19 16:30:47] [RUN] Recalling home to unload.
+[2026-02-19 16:30:54] [RUN] Unloading resources to containers.
+[2026-02-19 16:30:54] [RUN] Unload: 11 items in backpack.
+[2026-02-19 16:30:54] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 16:31:00] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:31:03] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:31:09] [RUN] Recalling to mining rune 65.
+[2026-02-19 16:31:44] [RUN] No ore here... move.
+[2026-02-19 16:31:47] [RUN] Recalling home to unload.
+[2026-02-19 16:31:53] [RUN] Unloading resources to containers.
+[2026-02-19 16:31:54] [RUN] Unload: 9 items in backpack.
+[2026-02-19 16:31:55] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:31:59] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:32:00] [RUN] Recalling to mining rune 51.
+[2026-02-19 16:33:20] [RUN] Overweight detected.
+[2026-02-19 16:33:20] [RUN] Overweight: recall to unload.
+[2026-02-19 16:33:20] [RUN] Recalling home to unload.
+[2026-02-19 16:33:27] [RUN] Unloading resources to containers.
+[2026-02-19 16:33:27] [RUN] Unload: 13 items in backpack.
+[2026-02-19 16:33:33] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:33:36] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:33:37] [RUN] Recalling to mining rune 52.
+[2026-02-19 16:35:07] [RUN] Overweight detected.
+[2026-02-19 16:35:07] [RUN] Overweight: recall to unload.
+[2026-02-19 16:35:07] [RUN] Recalling home to unload.
+[2026-02-19 16:35:14] [RUN] Unloading resources to containers.
+[2026-02-19 16:35:14] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:35:20] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:35:24] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:35:25] [RUN] Recalling to mining rune 53.
+[2026-02-19 16:35:42] [RUN] No ore here... move.
+[2026-02-19 16:35:45] [RUN] Recalling home to unload.
+[2026-02-19 16:35:52] [RUN] Unloading resources to containers.
+[2026-02-19 16:35:52] [RUN] Unload: 8 items in backpack.
+[2026-02-19 16:35:54] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:35:57] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:35:58] [RUN] Recalling to mining rune 54.
+[2026-02-19 16:37:25] [RUN] Overweight detected.
+[2026-02-19 16:37:25] [RUN] Overweight: recall to unload.
+[2026-02-19 16:37:25] [RUN] Recalling home to unload.
+[2026-02-19 16:37:32] [RUN] Unloading resources to containers.
+[2026-02-19 16:37:32] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:37:38] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:37:41] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:37:43] [RUN] Recalling to mining rune 55.
+[2026-02-19 16:39:12] [RUN] Overweight detected.
+[2026-02-19 16:39:12] [RUN] Overweight: recall to unload.
+[2026-02-19 16:39:12] [RUN] Recalling home to unload.
+[2026-02-19 16:39:19] [RUN] Unloading resources to containers.
+[2026-02-19 16:39:19] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:39:25] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:39:28] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:39:29] [RUN] Recalling to mining rune 56.
+[2026-02-19 16:39:47] [RUN] No ore here... move.
+[2026-02-19 16:39:50] [RUN] Recalling home to unload.
+[2026-02-19 16:39:57] [RUN] Unloading resources to containers.
+[2026-02-19 16:39:57] [RUN] Unload: 8 items in backpack.
+[2026-02-19 16:39:59] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:40:02] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:40:03] [RUN] Recalling to mining rune 57.
+[2026-02-19 16:40:21] [RUN] No ore here... move.
+[2026-02-19 16:40:24] [RUN] Recalling home to unload.
+[2026-02-19 16:40:31] [RUN] Unloading resources to containers.
+[2026-02-19 16:40:31] [RUN] Unload: 8 items in backpack.
+[2026-02-19 16:40:32] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:40:36] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:40:37] [RUN] Recalling to mining rune 58.
+[2026-02-19 16:41:51] [RUN] No ore here... move.
+[2026-02-19 16:41:54] [RUN] Recalling home to unload.
+[2026-02-19 16:42:01] [RUN] Unloading resources to containers.
+[2026-02-19 16:42:01] [RUN] Unload: 10 items in backpack.
+[2026-02-19 16:42:06] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:42:09] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:42:15] [RUN] Recalling to mining rune 59.
+[2026-02-19 16:43:45] [RUN] Overweight detected.
+[2026-02-19 16:43:45] [RUN] Overweight: recall to unload.
+[2026-02-19 16:43:45] [RUN] Recalling home to unload.
+[2026-02-19 16:43:52] [RUN] Unloading resources to containers.
+[2026-02-19 16:43:52] [RUN] Unload: 14 items in backpack.
+[2026-02-19 16:44:00] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:44:03] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:44:04] [RUN] Recalling to mining rune 60.
+[2026-02-19 16:45:18] [RUN] No ore here... move.
+[2026-02-19 16:45:21] [RUN] Recalling home to unload.
+[2026-02-19 16:45:28] [RUN] Unloading resources to containers.
+[2026-02-19 16:45:28] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:45:34] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:45:37] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:45:38] [RUN] Recalling to mining rune 61.
+[2026-02-19 16:47:12] [RUN] Overweight detected.
+[2026-02-19 16:47:12] [RUN] Overweight: recall to unload.
+[2026-02-19 16:47:12] [RUN] Recalling home to unload.
+[2026-02-19 16:47:19] [RUN] Unloading resources to containers.
+[2026-02-19 16:47:19] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:47:26] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:47:30] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:47:36] [RUN] Recalling to mining rune 62.
+[2026-02-19 16:48:52] [RUN] No ore here... move.
+[2026-02-19 16:48:55] [RUN] Recalling home to unload.
+[2026-02-19 16:49:02] [RUN] Unloading resources to containers.
+[2026-02-19 16:49:02] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:49:06] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:49:10] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:49:11] [RUN] Recalling to mining rune 63.
+[2026-02-19 16:50:39] [RUN] Overweight detected.
+[2026-02-19 16:50:39] [RUN] Overweight: recall to unload.
+[2026-02-19 16:50:39] [RUN] Recalling home to unload.
+[2026-02-19 16:50:46] [RUN] Unloading resources to containers.
+[2026-02-19 16:50:46] [RUN] Unload: 11 items in backpack.
+[2026-02-19 16:50:49] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:50:53] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:50:54] [RUN] Recalling to mining rune 64.
+[2026-02-19 16:52:12] [RUN] No ore here... move.
+[2026-02-19 16:52:15] [RUN] Recalling home to unload.
+[2026-02-19 16:52:22] [RUN] Unloading resources to containers.
+[2026-02-19 16:52:22] [RUN] Unload: 12 items in backpack.
+[2026-02-19 16:52:28] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:52:31] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:52:32] [RUN] Recalling to mining rune 65.
+[2026-02-19 16:53:07] [RUN] No ore here... move.
+[2026-02-19 16:53:10] [RUN] Recalling home to unload.
+[2026-02-19 16:53:17] [RUN] Unloading resources to containers.
+[2026-02-19 16:53:17] [RUN] Unload: 8 items in backpack.
+[2026-02-19 16:53:18] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:53:22] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:53:23] [RUN] Recalling to mining rune 51.
+[2026-02-19 16:54:41] [RUN] Overweight detected.
+[2026-02-19 16:54:41] [RUN] Overweight: recall to unload.
+[2026-02-19 16:54:41] [RUN] Recalling home to unload.
+[2026-02-19 16:54:48] [RUN] Unloading resources to containers.
+[2026-02-19 16:54:48] [RUN] Unload: 13 items in backpack.
+[2026-02-19 16:54:55] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:54:59] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:55:00] [RUN] Recalling to mining rune 52.
+[2026-02-19 16:56:30] [RUN] Overweight detected.
+[2026-02-19 16:56:30] [RUN] Overweight: recall to unload.
+[2026-02-19 16:56:30] [RUN] Recalling home to unload.
+[2026-02-19 16:56:37] [RUN] Unloading resources to containers.
+[2026-02-19 16:56:37] [RUN] Unload: 11 items in backpack.
+[2026-02-19 16:56:43] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:56:47] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:56:53] [RUN] Recalling to mining rune 53.
+[2026-02-19 16:57:10] [RUN] No ore here... move.
+[2026-02-19 16:57:13] [RUN] Recalling home to unload.
+[2026-02-19 16:57:20] [RUN] Unloading resources to containers.
+[2026-02-19 16:57:20] [RUN] Unload: 9 items in backpack.
+[2026-02-19 16:57:22] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:57:25] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:57:26] [RUN] Recalling to mining rune 54.
+[2026-02-19 16:58:53] [RUN] Overweight detected.
+[2026-02-19 16:58:53] [RUN] Overweight: recall to unload.
+[2026-02-19 16:58:53] [RUN] Recalling home to unload.
+[2026-02-19 16:59:00] [RUN] Unloading resources to containers.
+[2026-02-19 16:59:00] [RUN] Unload: 11 items in backpack.
+[2026-02-19 16:59:04] [RUN] Restocking ingots from drop container.
+[2026-02-19 16:59:08] [RUN] Ensuring at least two shovels.
+[2026-02-19 16:59:09] [RUN] Recalling to mining rune 55.
+[2026-02-19 17:00:29] [RUN] Overweight detected.
+[2026-02-19 17:00:29] [RUN] Overweight: recall to unload.
+[2026-02-19 17:00:29] [RUN] Recalling home to unload.
+[2026-02-19 17:00:36] [RUN] Unloading resources to containers.
+[2026-02-19 17:00:36] [RUN] Unload: 11 items in backpack.
+[2026-02-19 17:00:40] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:00:44] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:00:45] [RUN] Recalling to mining rune 56.
+[2026-02-19 17:01:03] [RUN] No ore here... move.
+[2026-02-19 17:01:06] [RUN] Recalling home to unload.
+[2026-02-19 17:01:12] [RUN] Unloading resources to containers.
+[2026-02-19 17:01:12] [RUN] Unload: 8 items in backpack.
+[2026-02-19 17:01:14] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:01:17] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:01:19] [RUN] Recalling to mining rune 57.
+[2026-02-19 17:01:36] [RUN] No ore here... move.
+[2026-02-19 17:01:39] [RUN] Recalling home to unload.
+[2026-02-19 17:01:46] [RUN] Unloading resources to containers.
+[2026-02-19 17:01:46] [RUN] Unload: 8 items in backpack.
+[2026-02-19 17:01:48] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:01:51] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:01:52] [RUN] Recalling to mining rune 58.
+[2026-02-19 17:03:11] [RUN] No ore here... move.
+[2026-02-19 17:03:14] [RUN] Recalling home to unload.
+[2026-02-19 17:03:21] [RUN] Unloading resources to containers.
+[2026-02-19 17:03:21] [RUN] Unload: 13 items in backpack.
+[2026-02-19 17:03:28] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:03:31] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:03:32] [RUN] Recalling to mining rune 59.
+[2026-02-19 17:05:02] [RUN] Overweight detected.
+[2026-02-19 17:05:02] [RUN] Overweight: recall to unload.
+[2026-02-19 17:05:02] [RUN] Recalling home to unload.
+[2026-02-19 17:05:09] [RUN] Unloading resources to containers.
+[2026-02-19 17:05:09] [RUN] Unload: 13 items in backpack.
+[2026-02-19 17:05:17] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:05:20] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:05:26] [RUN] Recalling to mining rune 60.
+[2026-02-19 17:06:39] [RUN] No ore here... move.
+[2026-02-19 17:06:42] [RUN] Recalling home to unload.
+[2026-02-19 17:06:49] [RUN] Unloading resources to containers.
+[2026-02-19 17:06:49] [RUN] Unload: 12 items in backpack.
+[2026-02-19 17:06:54] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:06:57] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:06:58] [RUN] Recalling to mining rune 61.
+[2026-02-19 17:08:27] [RUN] Overweight detected.
+[2026-02-19 17:08:27] [RUN] Overweight: recall to unload.
+[2026-02-19 17:08:27] [RUN] Recalling home to unload.
+[2026-02-19 17:08:34] [RUN] Unloading resources to containers.
+[2026-02-19 17:08:34] [RUN] Unload: 13 items in backpack.
+[2026-02-19 17:08:40] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:08:44] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:08:45] [RUN] Recalling to mining rune 62.
+[2026-02-19 17:10:01] [RUN] No ore here... move.
+[2026-02-19 17:10:04] [RUN] Recalling home to unload.
+[2026-02-19 17:10:11] [RUN] Unloading resources to containers.
+[2026-02-19 17:10:11] [RUN] Unload: 12 items in backpack.
+[2026-02-19 17:10:17] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:10:20] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:10:21] [RUN] Recalling to mining rune 63.
+[2026-02-19 17:11:49] [RUN] Overweight detected.
+[2026-02-19 17:11:49] [RUN] Overweight: recall to unload.
+[2026-02-19 17:11:49] [RUN] Recalling home to unload.
+[2026-02-19 17:11:56] [RUN] Unloading resources to containers.
+[2026-02-19 17:11:56] [RUN] Unload: 10 items in backpack.
+[2026-02-19 17:12:00] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:12:03] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:12:04] [RUN] Recalling to mining rune 64.
+[2026-02-19 17:13:18] [RUN] No ore here... move.
+[2026-02-19 17:13:21] [RUN] Recalling home to unload.
+[2026-02-19 17:13:28] [RUN] Unloading resources to containers.
+[2026-02-19 17:13:28] [RUN] Unload: 10 items in backpack.
+[2026-02-19 17:13:35] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:13:39] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:13:45] [RUN] Recalling to mining rune 65.
+[2026-02-19 17:14:19] [RUN] No ore here... move.
+[2026-02-19 17:14:22] [RUN] Recalling home to unload.
+[2026-02-19 17:14:29] [RUN] Unloading resources to containers.
+[2026-02-19 17:14:29] [RUN] Unload: 9 items in backpack.
+[2026-02-19 17:14:31] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:14:34] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:14:35] [RUN] Recalling to mining rune 51.
+[2026-02-19 17:15:54] [RUN] Overweight detected.
+[2026-02-19 17:15:54] [RUN] Overweight: recall to unload.
+[2026-02-19 17:15:54] [RUN] Recalling home to unload.
+[2026-02-19 17:16:01] [RUN] Unloading resources to containers.
+[2026-02-19 17:16:01] [RUN] Unload: 10 items in backpack.
+[2026-02-19 17:16:05] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:16:08] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:16:10] [RUN] Recalling to mining rune 52.
+[2026-02-19 17:17:42] [RUN] Overweight detected.
+[2026-02-19 17:17:42] [RUN] Overweight: recall to unload.
+[2026-02-19 17:17:42] [RUN] Recalling home to unload.
+[2026-02-19 17:17:49] [RUN] Unloading resources to containers.
+[2026-02-19 17:17:49] [RUN] Unload: 13 items in backpack.
+[2026-02-19 17:17:56] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:17:59] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:18:00] [RUN] Recalling to mining rune 53.
+[2026-02-19 17:18:18] [RUN] No ore here... move.
+[2026-02-19 17:18:21] [RUN] Recalling home to unload.
+[2026-02-19 17:18:28] [RUN] Unloading resources to containers.
+[2026-02-19 17:18:28] [RUN] Unload: 8 items in backpack.
+[2026-02-19 17:18:29] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:18:33] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:18:34] [RUN] Recalling to mining rune 54.
+[2026-02-19 17:19:59] [RUN] No ore here... move.
+[2026-02-19 17:20:02] [RUN] Recalling home to unload.
+[2026-02-19 17:20:09] [RUN] Unloading resources to containers.
+[2026-02-19 17:20:09] [RUN] Unload: 12 items in backpack.
+[2026-02-19 17:20:15] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:20:18] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:20:19] [RUN] Recalling to mining rune 55.
+[2026-02-19 17:21:52] [RUN] Overweight detected.
+[2026-02-19 17:21:52] [RUN] Overweight: recall to unload.
+[2026-02-19 17:21:52] [RUN] Recalling home to unload.
+[2026-02-19 17:21:59] [RUN] Unloading resources to containers.
+[2026-02-19 17:21:59] [RUN] Unload: 11 items in backpack.
+[2026-02-19 17:22:05] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:22:09] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:22:15] [RUN] Recalling to mining rune 56.
+[2026-02-19 17:22:32] [RUN] No ore here... move.
+[2026-02-19 17:22:35] [RUN] Recalling home to unload.
+[2026-02-19 17:22:42] [RUN] Unloading resources to containers.
+[2026-02-19 17:22:42] [RUN] Unload: 9 items in backpack.
+[2026-02-19 17:22:44] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:22:47] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:22:48] [RUN] Recalling to mining rune 57.
+[2026-02-19 17:23:06] [RUN] No ore here... move.
+[2026-02-19 17:23:09] [RUN] Recalling home to unload.
+[2026-02-19 17:23:16] [RUN] Unloading resources to containers.
+[2026-02-19 17:23:16] [RUN] Unload: 9 items in backpack.
+[2026-02-19 17:23:17] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:23:21] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:23:22] [RUN] Recalling to mining rune 58.
+[2026-02-19 17:24:38] [RUN] No ore here... move.
+[2026-02-19 17:24:41] [RUN] Recalling home to unload.
+[2026-02-19 17:24:48] [RUN] Unloading resources to containers.
+[2026-02-19 17:24:48] [RUN] Unload: 12 items in backpack.
+[2026-02-19 17:24:53] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:24:56] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:24:58] [RUN] Recalling to mining rune 59.
+[2026-02-19 17:26:25] [RUN] Overweight detected.
+[2026-02-19 17:26:25] [RUN] Overweight: recall to unload.
+[2026-02-19 17:26:25] [RUN] Recalling home to unload.
+[2026-02-19 17:26:32] [RUN] Unloading resources to containers.
+[2026-02-19 17:26:32] [RUN] Unload: 13 items in backpack.
+[2026-02-19 17:26:39] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:26:42] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:26:43] [RUN] Recalling to mining rune 60.
+[2026-02-19 17:28:01] [RUN] No ore here... move.
+[2026-02-19 17:28:04] [RUN] Recalling home to unload.
+[2026-02-19 17:28:11] [RUN] Unloading resources to containers.
+[2026-02-19 17:28:11] [RUN] Unload: 14 items in backpack.
+[2026-02-19 17:28:20] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:28:23] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:28:29] [RUN] Recalling to mining rune 61.
+[2026-02-19 17:29:59] [RUN] Overweight detected.
+[2026-02-19 17:29:59] [RUN] Overweight: recall to unload.
+[2026-02-19 17:29:59] [RUN] Recalling home to unload.
+[2026-02-19 17:30:06] [RUN] Unloading resources to containers.
+[2026-02-19 17:30:06] [RUN] Unload: 15 items in backpack.
+[2026-02-19 17:30:14] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:30:17] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:30:18] [RUN] Recalling to mining rune 62.
+[2026-02-19 17:31:34] [RUN] No ore here... move.
+[2026-02-19 17:31:37] [RUN] Recalling home to unload.
+[2026-02-19 17:31:44] [RUN] Unloading resources to containers.
+[2026-02-19 17:31:44] [RUN] Unload: 11 items in backpack.
+[2026-02-19 17:31:49] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:31:52] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:31:53] [RUN] Recalling to mining rune 63.
+[2026-02-19 17:33:23] [RUN] Overweight detected.
+[2026-02-19 17:33:23] [RUN] Overweight: recall to unload.
+[2026-02-19 17:33:23] [RUN] Recalling home to unload.
+[2026-02-19 17:33:30] [RUN] Unloading resources to containers.
+[2026-02-19 17:33:30] [RUN] Unload: 10 items in backpack.
+[2026-02-19 17:33:33] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:33:37] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:33:38] [RUN] Recalling to mining rune 64.
+[2026-02-19 17:34:56] [RUN] No ore here... move.
+[2026-02-19 17:34:59] [RUN] Recalling home to unload.
+[2026-02-19 17:35:06] [RUN] Unloading resources to containers.
+[2026-02-19 17:35:06] [RUN] Unload: 12 items in backpack.
+[2026-02-19 17:35:12] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:35:15] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:35:16] [RUN] Recalling to mining rune 65.
+[2026-02-19 17:35:50] [RUN] No ore here... move.
+[2026-02-19 17:35:53] [RUN] Recalling home to unload.
+[2026-02-19 17:36:00] [RUN] Unloading resources to containers.
+[2026-02-19 17:36:00] [RUN] Unload: 8 items in backpack.
+[2026-02-19 17:36:02] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:36:05] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:36:07] [RUN] Recalling to mining rune 51.
+[2026-02-19 17:37:27] [RUN] Overweight detected.
+[2026-02-19 17:37:27] [RUN] Overweight: recall to unload.
+[2026-02-19 17:37:27] [RUN] Recalling home to unload.
+[2026-02-19 17:37:34] [RUN] Unloading resources to containers.
+[2026-02-19 17:37:34] [RUN] Unload: 9 items in backpack.
+[2026-02-19 17:37:38] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:37:42] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:37:47] [RUN] Recalling to mining rune 52.
+[2026-02-19 17:39:17] [RUN] Overweight detected.
+[2026-02-19 17:39:17] [RUN] Overweight: recall to unload.
+[2026-02-19 17:39:17] [RUN] Recalling home to unload.
+[2026-02-19 17:39:24] [RUN] Unloading resources to containers.
+[2026-02-19 17:39:24] [RUN] Unload: 14 items in backpack.
+[2026-02-19 17:39:31] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:39:35] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:39:36] [RUN] Recalling to mining rune 53.
+[2026-02-19 17:39:53] [RUN] No ore here... move.
+[2026-02-19 17:39:56] [RUN] Recalling home to unload.
+[2026-02-19 17:40:03] [RUN] Unloading resources to containers.
+[2026-02-19 17:40:03] [RUN] Unload: 9 items in backpack.
+[2026-02-19 17:40:05] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:40:08] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:40:09] [RUN] Recalling to mining rune 54.
+[2026-02-19 17:41:36] [RUN] Overweight detected.
+[2026-02-19 17:41:36] [RUN] Overweight: recall to unload.
+[2026-02-19 17:41:36] [RUN] Recalling home to unload.
+[2026-02-19 17:41:43] [RUN] Unloading resources to containers.
+[2026-02-19 17:41:43] [RUN] Unload: 12 items in backpack.
+[2026-02-19 17:41:46] [RUN] Unload: moving blackstone 0x0F2B.
+[2026-02-19 17:41:49] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:41:52] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:41:54] [RUN] Recalling to mining rune 55.
+[2026-02-19 17:43:22] [RUN] Overweight detected.
+[2026-02-19 17:43:22] [RUN] Overweight: recall to unload.
+[2026-02-19 17:43:22] [RUN] Recalling home to unload.
+[2026-02-19 17:43:29] [RUN] Unloading resources to containers.
+[2026-02-19 17:43:29] [RUN] Unload: 12 items in backpack.
+[2026-02-19 17:43:35] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:43:39] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:43:40] [RUN] Recalling to mining rune 56.
+[2026-02-19 17:43:57] [RUN] No ore here... move.
+[2026-02-19 17:44:00] [RUN] Recalling home to unload.
+[2026-02-19 17:44:07] [RUN] Unloading resources to containers.
+[2026-02-19 17:44:07] [RUN] Unload: 8 items in backpack.
+[2026-02-19 17:44:09] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:44:12] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:44:14] [RUN] Recalling to mining rune 57.
+[2026-02-19 17:44:31] [RUN] No ore here... move.
+[2026-02-19 17:44:34] [RUN] Recalling home to unload.
+[2026-02-19 17:44:41] [RUN] Unloading resources to containers.
+[2026-02-19 17:44:41] [RUN] Unload: 8 items in backpack.
+[2026-02-19 17:44:43] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:44:46] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:44:47] [RUN] Recalling to mining rune 58.
+[2026-02-19 17:46:01] [RUN] No ore here... move.
+[2026-02-19 17:46:05] [RUN] Recalling home to unload.
+[2026-02-19 17:46:11] [RUN] Unloading resources to containers.
+[2026-02-19 17:46:11] [RUN] Unload: 13 items in backpack.
+[2026-02-19 17:46:17] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 17:46:19] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:46:22] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:46:23] [RUN] Recalling to mining rune 59.
+[2026-02-19 17:47:53] [RUN] Overweight detected.
+[2026-02-19 17:47:53] [RUN] Overweight: recall to unload.
+[2026-02-19 17:47:53] [RUN] Recalling home to unload.
+[2026-02-19 17:48:00] [RUN] Unloading resources to containers.
+[2026-02-19 17:48:00] [RUN] Unload: 13 items in backpack.
+[2026-02-19 17:48:08] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:48:12] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:48:17] [RUN] Recalling to mining rune 60.
+[2026-02-19 17:49:33] [RUN] No ore here... move.
+[2026-02-19 17:49:36] [RUN] Recalling home to unload.
+[2026-02-19 17:49:43] [RUN] Unloading resources to containers.
+[2026-02-19 17:49:43] [RUN] Unload: 13 items in backpack.
+[2026-02-19 17:49:50] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:49:54] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:49:55] [RUN] Recalling to mining rune 61.
+[2026-02-19 17:51:27] [RUN] Overweight detected.
+[2026-02-19 17:51:27] [RUN] Overweight: recall to unload.
+[2026-02-19 17:51:27] [RUN] Recalling home to unload.
+[2026-02-19 17:51:34] [RUN] Unloading resources to containers.
+[2026-02-19 17:51:34] [RUN] Unload: 13 items in backpack.
+[2026-02-19 17:51:34] [RUN] Unload: moving blackstone 0x0F28.
+[2026-02-19 17:51:41] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:51:44] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:51:45] [RUN] Recalling to mining rune 62.
+[2026-02-19 17:53:01] [RUN] No ore here... move.
+[2026-02-19 17:53:04] [RUN] Recalling home to unload.
+[2026-02-19 17:53:11] [RUN] Unloading resources to containers.
+[2026-02-19 17:53:11] [RUN] Unload: 12 items in backpack.
+[2026-02-19 17:53:14] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 17:53:18] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:53:21] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:53:27] [RUN] Recalling to mining rune 63.
+[2026-02-19 17:54:59] [RUN] Overweight detected.
+[2026-02-19 17:54:59] [RUN] Overweight: recall to unload.
+[2026-02-19 17:54:59] [RUN] Recalling home to unload.
+[2026-02-19 17:55:06] [RUN] Unloading resources to containers.
+[2026-02-19 17:55:06] [RUN] Unload: 12 items in backpack.
+[2026-02-19 17:55:12] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:55:16] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:55:17] [RUN] Recalling to mining rune 64.
+[2026-02-19 17:56:33] [RUN] No ore here... move.
+[2026-02-19 17:56:36] [RUN] Recalling home to unload.
+[2026-02-19 17:56:43] [RUN] Unloading resources to containers.
+[2026-02-19 17:56:43] [RUN] Unload: 12 items in backpack.
+[2026-02-19 17:56:45] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 17:56:49] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:56:52] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:56:53] [RUN] Recalling to mining rune 65.
+[2026-02-19 17:57:28] [RUN] No ore here... move.
+[2026-02-19 17:57:31] [RUN] Recalling home to unload.
+[2026-02-19 17:57:38] [RUN] Unloading resources to containers.
+[2026-02-19 17:57:38] [RUN] Unload: 8 items in backpack.
+[2026-02-19 17:57:39] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:57:43] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:57:44] [RUN] Recalling to mining rune 51.
+[2026-02-19 17:59:03] [RUN] Overweight detected.
+[2026-02-19 17:59:03] [RUN] Overweight: recall to unload.
+[2026-02-19 17:59:03] [RUN] Recalling home to unload.
+[2026-02-19 17:59:10] [RUN] Unloading resources to containers.
+[2026-02-19 17:59:10] [RUN] Unload: 10 items in backpack.
+[2026-02-19 17:59:14] [RUN] Restocking ingots from drop container.
+[2026-02-19 17:59:17] [RUN] Ensuring at least two shovels.
+[2026-02-19 17:59:18] [RUN] Recalling to mining rune 52.
+[2026-02-19 18:00:51] [RUN] Overweight detected.
+[2026-02-19 18:00:51] [RUN] Overweight: recall to unload.
+[2026-02-19 18:00:51] [RUN] Recalling home to unload.
+[2026-02-19 18:00:58] [RUN] Unloading resources to containers.
+[2026-02-19 18:00:58] [RUN] Unload: 11 items in backpack.
+[2026-02-19 18:00:58] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 18:01:04] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:01:07] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:01:13] [RUN] Recalling to mining rune 53.
+[2026-02-19 18:01:31] [RUN] No ore here... move.
+[2026-02-19 18:01:34] [RUN] Recalling home to unload.
+[2026-02-19 18:01:41] [RUN] Unloading resources to containers.
+[2026-02-19 18:01:41] [RUN] Unload: 9 items in backpack.
+[2026-02-19 18:01:42] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:01:43] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:01:44] [RUN] Recalling to mining rune 54.
+[2026-02-19 18:03:11] [RUN] Overweight detected.
+[2026-02-19 18:03:11] [RUN] Overweight: recall to unload.
+[2026-02-19 18:03:11] [RUN] Recalling home to unload.
+[2026-02-19 18:03:18] [RUN] Unloading resources to containers.
+[2026-02-19 18:03:18] [RUN] Unload: 11 items in backpack.
+[2026-02-19 18:03:22] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:03:26] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:03:27] [RUN] Recalling to mining rune 55.
+[2026-02-19 18:04:47] [RUN] Overweight detected.
+[2026-02-19 18:04:47] [RUN] Overweight: recall to unload.
+[2026-02-19 18:04:47] [RUN] Recalling home to unload.
+[2026-02-19 18:04:54] [RUN] Unloading resources to containers.
+[2026-02-19 18:04:54] [RUN] Unload: 12 items in backpack.
+[2026-02-19 18:04:59] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:05:02] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:05:03] [RUN] Recalling to mining rune 56.
+[2026-02-19 18:05:21] [RUN] No ore here... move.
+[2026-02-19 18:05:24] [RUN] Recalling home to unload.
+[2026-02-19 18:05:31] [RUN] Unloading resources to containers.
+[2026-02-19 18:05:31] [RUN] Unload: 9 items in backpack.
+[2026-02-19 18:05:32] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:05:36] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:05:37] [RUN] Recalling to mining rune 57.
+[2026-02-19 18:05:55] [RUN] No ore here... move.
+[2026-02-19 18:05:58] [RUN] Recalling home to unload.
+[2026-02-19 18:06:04] [RUN] Unloading resources to containers.
+[2026-02-19 18:06:04] [RUN] Unload: 9 items in backpack.
+[2026-02-19 18:06:06] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:06:09] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:06:11] [RUN] Recalling to mining rune 58.
+[2026-02-19 18:07:29] [RUN] No ore here... move.
+[2026-02-19 18:07:32] [RUN] Recalling home to unload.
+[2026-02-19 18:07:39] [RUN] Unloading resources to containers.
+[2026-02-19 18:07:39] [RUN] Unload: 12 items in backpack.
+[2026-02-19 18:07:45] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:07:48] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:07:49] [RUN] Recalling to mining rune 59.
+[2026-02-19 18:09:17] [RUN] Overweight detected.
+[2026-02-19 18:09:17] [RUN] Overweight: recall to unload.
+[2026-02-19 18:09:17] [RUN] Recalling home to unload.
+[2026-02-19 18:09:24] [RUN] Unloading resources to containers.
+[2026-02-19 18:09:24] [RUN] Unload: 14 items in backpack.
+[2026-02-19 18:09:25] [RUN] Unload: moving blackstone 0x0F2A.
+[2026-02-19 18:09:32] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:09:36] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:09:37] [RUN] Recalling to mining rune 60.
+[2026-02-19 18:10:52] [RUN] No ore here... move.
+[2026-02-19 18:10:55] [RUN] Recalling home to unload.
+[2026-02-19 18:11:02] [RUN] Unloading resources to containers.
+[2026-02-19 18:11:02] [RUN] Unload: 12 items in backpack.
+[2026-02-19 18:11:08] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:11:11] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:11:12] [RUN] Recalling to mining rune 61.
+[2026-02-19 18:12:46] [RUN] Overweight detected.
+[2026-02-19 18:12:46] [RUN] Overweight: recall to unload.
+[2026-02-19 18:12:46] [RUN] Recalling home to unload.
+[2026-02-19 18:12:53] [RUN] Unloading resources to containers.
+[2026-02-19 18:12:53] [RUN] Unload: 12 items in backpack.
+[2026-02-19 18:13:00] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:13:04] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:13:08] [RUN] Recalling to mining rune 62.
+[2026-02-19 18:14:27] [RUN] No ore here... move.
+[2026-02-19 18:14:30] [RUN] Recalling home to unload.
+[2026-02-19 18:14:37] [RUN] Unloading resources to containers.
+[2026-02-19 18:14:37] [RUN] Unload: 13 items in backpack.
+[2026-02-19 18:14:43] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:14:46] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:14:47] [RUN] Recalling to mining rune 63.
+[2026-02-19 18:16:16] [RUN] Overweight detected.
+[2026-02-19 18:16:16] [RUN] Overweight: recall to unload.
+[2026-02-19 18:16:16] [RUN] Recalling home to unload.
+[2026-02-19 18:16:23] [RUN] Unloading resources to containers.
+[2026-02-19 18:16:23] [RUN] Unload: 11 items in backpack.
+[2026-02-19 18:16:27] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:16:30] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:16:32] [RUN] Recalling to mining rune 64.
+[2026-02-19 18:17:50] [RUN] No ore here... move.
+[2026-02-19 18:17:53] [RUN] Recalling home to unload.
+[2026-02-19 18:18:00] [RUN] Unloading resources to containers.
+[2026-02-19 18:18:00] [RUN] Unload: 15 items in backpack.
+[2026-02-19 18:18:08] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:18:11] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:18:12] [RUN] Recalling to mining rune 65.
+[2026-02-19 18:18:47] [RUN] No ore here... move.
+[2026-02-19 18:18:50] [RUN] Recalling home to unload.
+[2026-02-19 18:18:57] [RUN] Unloading resources to containers.
+[2026-02-19 18:18:57] [RUN] Unload: 9 items in backpack.
+[2026-02-19 18:18:58] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:19:02] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:19:03] [RUN] Recalling to mining rune 51.
+[2026-02-19 18:20:22] [RUN] Overweight detected.
+[2026-02-19 18:20:22] [RUN] Overweight: recall to unload.
+[2026-02-19 18:20:22] [RUN] Recalling home to unload.
+[2026-02-19 18:20:29] [RUN] Unloading resources to containers.
+[2026-02-19 18:20:29] [RUN] Unload: 10 items in backpack.
+[2026-02-19 18:20:33] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:20:36] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:20:37] [RUN] Recalling to mining rune 52.
+[2026-02-19 18:22:09] [RUN] Overweight detected.
+[2026-02-19 18:22:09] [RUN] Overweight: recall to unload.
+[2026-02-19 18:22:09] [RUN] Recalling home to unload.
+[2026-02-19 18:22:16] [RUN] Unloading resources to containers.
+[2026-02-19 18:22:16] [RUN] Unload: 11 items in backpack.
+[2026-02-19 18:22:22] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:22:26] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:22:31] [RUN] Recalling to mining rune 53.
+[2026-02-19 18:22:48] [RUN] No ore here... move.
+[2026-02-19 18:22:51] [RUN] Recalling home to unload.
+[2026-02-19 18:22:58] [RUN] Unloading resources to containers.
+[2026-02-19 18:22:58] [RUN] Unload: 9 items in backpack.
+[2026-02-19 18:23:00] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:23:03] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:23:04] [RUN] Recalling to mining rune 54.
+[2026-02-19 18:24:33] [RUN] Overweight detected.
+[2026-02-19 18:24:33] [RUN] Overweight: recall to unload.
+[2026-02-19 18:24:33] [RUN] Recalling home to unload.
+[2026-02-19 18:24:40] [RUN] Unloading resources to containers.
+[2026-02-19 18:24:40] [RUN] Unload: 12 items in backpack.
+[2026-02-19 18:24:45] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:24:49] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:24:50] [RUN] Recalling to mining rune 55.
+[2026-02-19 18:26:16] [RUN] Overweight detected.
+[2026-02-19 18:26:16] [RUN] Overweight: recall to unload.
+[2026-02-19 18:26:16] [RUN] Recalling home to unload.
+[2026-02-19 18:26:23] [RUN] Unloading resources to containers.
+[2026-02-19 18:26:23] [RUN] Unload: 15 items in backpack.
+[2026-02-19 18:26:31] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:26:34] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:26:35] [RUN] Recalling to mining rune 56.
+[2026-02-19 18:26:53] [RUN] No ore here... move.
+[2026-02-19 18:26:56] [RUN] Recalling home to unload.
+[2026-02-19 18:27:03] [RUN] Unloading resources to containers.
+[2026-02-19 18:27:03] [RUN] Unload: 9 items in backpack.
+[2026-02-19 18:27:05] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:27:08] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:27:09] [RUN] Recalling to mining rune 57.
+[2026-02-19 18:27:27] [RUN] No ore here... move.
+[2026-02-19 18:27:30] [RUN] Recalling home to unload.
+[2026-02-19 18:27:37] [RUN] Unloading resources to containers.
+[2026-02-19 18:27:37] [RUN] Unload: 9 items in backpack.
+[2026-02-19 18:27:38] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:27:42] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:27:43] [RUN] Recalling to mining rune 58.
+[2026-02-19 18:29:02] [RUN] No ore here... move.
+[2026-02-19 18:29:05] [RUN] Recalling home to unload.
+[2026-02-19 18:29:12] [RUN] Unloading resources to containers.
+[2026-02-19 18:29:12] [RUN] Unload: 15 items in backpack.
+[2026-02-19 18:29:21] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:29:24] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:29:26] [RUN] Recalling to mining rune 59.
+[2026-02-19 18:30:51] [RUN] Overweight detected.
+[2026-02-19 18:30:51] [RUN] Overweight: recall to unload.
+[2026-02-19 18:30:51] [RUN] Recalling home to unload.
+[2026-02-19 18:30:58] [RUN] Unloading resources to containers.
+[2026-02-19 18:30:58] [RUN] Unload: 12 items in backpack.
+[2026-02-19 18:31:04] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:31:07] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:31:08] [RUN] Recalling to mining rune 60.
+[2026-02-19 18:32:26] [RUN] No ore here... move.
+[2026-02-19 18:32:29] [RUN] Recalling home to unload.
+[2026-02-19 18:32:36] [RUN] Unloading resources to containers.
+[2026-02-19 18:32:36] [RUN] Unload: 13 items in backpack.
+[2026-02-19 18:32:43] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:32:46] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:32:47] [RUN] Recalling to mining rune 61.
+[2026-02-19 18:34:21] [RUN] Overweight detected.
+[2026-02-19 18:34:21] [RUN] Overweight: recall to unload.
+[2026-02-19 18:34:21] [RUN] Recalling home to unload.
+[2026-02-19 18:34:28] [RUN] Unloading resources to containers.
+[2026-02-19 18:34:28] [RUN] Unload: 11 items in backpack.
+[2026-02-19 18:34:34] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:34:38] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:34:43] [RUN] Recalling to mining rune 62.
+[2026-02-19 18:35:57] [RUN] No ore here... move.
+[2026-02-19 18:36:00] [RUN] Recalling home to unload.
+[2026-02-19 18:36:07] [RUN] Unloading resources to containers.
+[2026-02-19 18:36:07] [RUN] Unload: 12 items in backpack.
+[2026-02-19 18:36:12] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:36:15] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:36:16] [RUN] Recalling to mining rune 63.
+[2026-02-19 18:37:45] [RUN] Overweight detected.
+[2026-02-19 18:37:45] [RUN] Overweight: recall to unload.
+[2026-02-19 18:37:45] [RUN] Recalling home to unload.
+[2026-02-19 18:37:52] [RUN] Unloading resources to containers.
+[2026-02-19 18:37:52] [RUN] Unload: 11 items in backpack.
+[2026-02-19 18:37:56] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:38:00] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:38:01] [RUN] Recalling to mining rune 64.
+[2026-02-19 18:39:19] [RUN] No ore here... move.
+[2026-02-19 18:39:22] [RUN] Recalling home to unload.
+[2026-02-19 18:39:29] [RUN] Unloading resources to containers.
+[2026-02-19 18:39:29] [RUN] Unload: 11 items in backpack.
+[2026-02-19 18:39:34] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:39:37] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:39:39] [RUN] Recalling to mining rune 65.
+[2026-02-19 18:40:13] [RUN] No ore here... move.
+[2026-02-19 18:40:16] [RUN] Recalling home to unload.
+[2026-02-19 18:40:23] [RUN] Unloading resources to containers.
+[2026-02-19 18:40:23] [RUN] Unload: 8 items in backpack.
+[2026-02-19 18:40:25] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:40:28] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:40:29] [RUN] Recalling to mining rune 51.
+[2026-02-19 18:41:48] [RUN] Overweight detected.
+[2026-02-19 18:41:48] [RUN] Overweight: recall to unload.
+[2026-02-19 18:41:48] [RUN] Recalling home to unload.
+[2026-02-19 18:41:55] [RUN] Unloading resources to containers.
+[2026-02-19 18:41:55] [RUN] Unload: 11 items in backpack.
+[2026-02-19 18:42:00] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:42:03] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:42:04] [RUN] Recalling to mining rune 52.
+[2026-02-19 18:43:37] [RUN] Overweight detected.
+[2026-02-19 18:43:37] [RUN] Overweight: recall to unload.
+[2026-02-19 18:43:37] [RUN] Recalling home to unload.
+[2026-02-19 18:43:44] [RUN] Unloading resources to containers.
+[2026-02-19 18:43:44] [RUN] Unload: 11 items in backpack.
+[2026-02-19 18:43:50] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:43:53] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:43:59] [RUN] Recalling to mining rune 53.
+[2026-02-19 18:44:17] [RUN] No ore here... move.
+[2026-02-19 18:44:20] [RUN] Recalling home to unload.
+[2026-02-19 18:44:27] [RUN] Unloading resources to containers.
+[2026-02-19 18:44:27] [RUN] Unload: 9 items in backpack.
+[2026-02-19 18:44:28] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:44:32] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:44:33] [RUN] Recalling to mining rune 54.
+[2026-02-19 18:46:05] [RUN] Overweight detected.
+[2026-02-19 18:46:05] [RUN] Overweight: recall to unload.
+[2026-02-19 18:46:05] [RUN] Recalling home to unload.
+[2026-02-19 18:46:12] [RUN] Unloading resources to containers.
+[2026-02-19 18:46:12] [RUN] Unload: 13 items in backpack.
+[2026-02-19 18:46:13] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 18:46:19] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:46:22] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:46:23] [RUN] Recalling to mining rune 55.
+[2026-02-19 18:47:56] [RUN] Overweight detected.
+[2026-02-19 18:47:56] [RUN] Overweight: recall to unload.
+[2026-02-19 18:47:56] [RUN] Recalling home to unload.
+[2026-02-19 18:48:03] [RUN] Unloading resources to containers.
+[2026-02-19 18:48:03] [RUN] Unload: 12 items in backpack.
+[2026-02-19 18:48:11] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:48:14] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:48:20] [RUN] Recalling to mining rune 56.
+[2026-02-19 18:48:37] [RUN] No ore here... move.
+[2026-02-19 18:48:40] [RUN] Recalling home to unload.
+[2026-02-19 18:48:47] [RUN] Unloading resources to containers.
+[2026-02-19 18:48:47] [RUN] Unload: 9 items in backpack.
+[2026-02-19 18:48:49] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:48:50] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:48:51] [RUN] Recalling to mining rune 57.
+[2026-02-19 18:49:08] [RUN] No ore here... move.
+[2026-02-19 18:49:11] [RUN] Recalling home to unload.
+[2026-02-19 18:49:18] [RUN] Unloading resources to containers.
+[2026-02-19 18:49:18] [RUN] Unload: 9 items in backpack.
+[2026-02-19 18:49:20] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:49:23] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:49:25] [RUN] Recalling to mining rune 58.
+[2026-02-19 18:50:42] [RUN] No ore here... move.
+[2026-02-19 18:50:45] [RUN] Recalling home to unload.
+[2026-02-19 18:50:52] [RUN] Unloading resources to containers.
+[2026-02-19 18:50:52] [RUN] Unload: 14 items in backpack.
+[2026-02-19 18:50:54] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 18:50:59] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:51:02] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:51:03] [RUN] Recalling to mining rune 59.
+[2026-02-19 18:52:30] [RUN] Overweight detected.
+[2026-02-19 18:52:30] [RUN] Overweight: recall to unload.
+[2026-02-19 18:52:30] [RUN] Recalling home to unload.
+[2026-02-19 18:52:37] [RUN] Unloading resources to containers.
+[2026-02-19 18:52:37] [RUN] Unload: 12 items in backpack.
+[2026-02-19 18:52:43] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:52:47] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:52:48] [RUN] Recalling to mining rune 60.
+[2026-02-19 18:54:09] [RUN] No ore here... move.
+[2026-02-19 18:54:12] [RUN] Recalling home to unload.
+[2026-02-19 18:54:19] [RUN] Unloading resources to containers.
+[2026-02-19 18:54:19] [RUN] Unload: 15 items in backpack.
+[2026-02-19 18:54:29] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:54:32] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:54:33] [RUN] Recalling to mining rune 61.
+[2026-02-19 18:56:06] [RUN] Overweight detected.
+[2026-02-19 18:56:06] [RUN] Overweight: recall to unload.
+[2026-02-19 18:56:06] [RUN] Recalling home to unload.
+[2026-02-19 18:56:13] [RUN] Unloading resources to containers.
+[2026-02-19 18:56:13] [RUN] Unload: 13 items in backpack.
+[2026-02-19 18:56:21] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:56:25] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:56:31] [RUN] Recalling to mining rune 62.
+[2026-02-19 18:57:46] [RUN] No ore here... move.
+[2026-02-19 18:57:49] [RUN] Recalling home to unload.
+[2026-02-19 18:57:56] [RUN] Unloading resources to containers.
+[2026-02-19 18:57:56] [RUN] Unload: 10 items in backpack.
+[2026-02-19 18:58:00] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:58:04] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:58:05] [RUN] Recalling to mining rune 63.
+[2026-02-19 18:59:32] [RUN] Overweight detected.
+[2026-02-19 18:59:32] [RUN] Overweight: recall to unload.
+[2026-02-19 18:59:32] [RUN] Recalling home to unload.
+[2026-02-19 18:59:39] [RUN] Unloading resources to containers.
+[2026-02-19 18:59:39] [RUN] Unload: 11 items in backpack.
+[2026-02-19 18:59:40] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 18:59:44] [RUN] Restocking ingots from drop container.
+[2026-02-19 18:59:48] [RUN] Ensuring at least two shovels.
+[2026-02-19 18:59:49] [RUN] Recalling to mining rune 64.
+[2026-02-19 19:01:03] [RUN] No ore here... move.
+[2026-02-19 19:01:06] [RUN] Recalling home to unload.
+[2026-02-19 19:01:12] [RUN] Unloading resources to containers.
+[2026-02-19 19:01:12] [RUN] Unload: 13 items in backpack.
+[2026-02-19 19:01:20] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:01:23] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:01:24] [RUN] Recalling to mining rune 65.
+[2026-02-19 19:01:59] [RUN] No ore here... move.
+[2026-02-19 19:02:02] [RUN] Recalling home to unload.
+[2026-02-19 19:02:08] [RUN] Unloading resources to containers.
+[2026-02-19 19:02:08] [RUN] Unload: 8 items in backpack.
+[2026-02-19 19:02:10] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:02:14] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:02:15] [RUN] Recalling to mining rune 51.
+[2026-02-19 19:03:36] [RUN] Overweight detected.
+[2026-02-19 19:03:36] [RUN] Overweight: recall to unload.
+[2026-02-19 19:03:36] [RUN] Recalling home to unload.
+[2026-02-19 19:03:43] [RUN] Unloading resources to containers.
+[2026-02-19 19:03:43] [RUN] Unload: 9 items in backpack.
+[2026-02-19 19:03:47] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:03:50] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:03:56] [RUN] Recalling to mining rune 52.
+[2026-02-19 19:05:26] [RUN] Overweight detected.
+[2026-02-19 19:05:26] [RUN] Overweight: recall to unload.
+[2026-02-19 19:05:26] [RUN] Recalling home to unload.
+[2026-02-19 19:05:33] [RUN] Unloading resources to containers.
+[2026-02-19 19:05:33] [RUN] Unload: 12 items in backpack.
+[2026-02-19 19:05:38] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:05:41] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:05:42] [RUN] Recalling to mining rune 53.
+[2026-02-19 19:06:00] [RUN] No ore here... move.
+[2026-02-19 19:06:03] [RUN] Recalling home to unload.
+[2026-02-19 19:06:10] [RUN] Unloading resources to containers.
+[2026-02-19 19:06:10] [RUN] Unload: 9 items in backpack.
+[2026-02-19 19:06:11] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:06:15] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:06:16] [RUN] Recalling to mining rune 54.
+[2026-02-19 19:07:46] [RUN] No ore here... move.
+[2026-02-19 19:07:49] [RUN] Recalling home to unload.
+[2026-02-19 19:07:56] [RUN] Unloading resources to containers.
+[2026-02-19 19:07:56] [RUN] Unload: 13 items in backpack.
+[2026-02-19 19:08:03] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:08:07] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:08:08] [RUN] Recalling to mining rune 55.
+[2026-02-19 19:09:36] [RUN] Overweight detected.
+[2026-02-19 19:09:36] [RUN] Overweight: recall to unload.
+[2026-02-19 19:09:36] [RUN] Recalling home to unload.
+[2026-02-19 19:09:43] [RUN] Unloading resources to containers.
+[2026-02-19 19:09:43] [RUN] Unload: 10 items in backpack.
+[2026-02-19 19:09:48] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:09:52] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:09:57] [RUN] Recalling to mining rune 56.
+[2026-02-19 19:10:15] [RUN] No ore here... move.
+[2026-02-19 19:10:18] [RUN] Recalling home to unload.
+[2026-02-19 19:10:25] [RUN] Unloading resources to containers.
+[2026-02-19 19:10:25] [RUN] Unload: 9 items in backpack.
+[2026-02-19 19:10:27] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:10:30] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:10:31] [RUN] Recalling to mining rune 57.
+[2026-02-19 19:10:49] [RUN] No ore here... move.
+[2026-02-19 19:10:52] [RUN] Recalling home to unload.
+[2026-02-19 19:10:59] [RUN] Unloading resources to containers.
+[2026-02-19 19:10:59] [RUN] Unload: 9 items in backpack.
+[2026-02-19 19:11:00] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:11:04] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:11:05] [RUN] Recalling to mining rune 58.
+[2026-02-19 19:12:21] [RUN] No ore here... move.
+[2026-02-19 19:12:24] [RUN] Recalling home to unload.
+[2026-02-19 19:12:31] [RUN] Unloading resources to containers.
+[2026-02-19 19:12:31] [RUN] Unload: 13 items in backpack.
+[2026-02-19 19:12:37] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:12:40] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:12:41] [RUN] Recalling to mining rune 59.
+[2026-02-19 19:14:06] [RUN] Overweight detected.
+[2026-02-19 19:14:06] [RUN] Overweight: recall to unload.
+[2026-02-19 19:14:06] [RUN] Recalling home to unload.
+[2026-02-19 19:14:13] [RUN] Unloading resources to containers.
+[2026-02-19 19:14:13] [RUN] Unload: 13 items in backpack.
+[2026-02-19 19:14:19] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:14:23] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:14:24] [RUN] Recalling to mining rune 60.
+[2026-02-19 19:15:42] [RUN] No ore here... move.
+[2026-02-19 19:15:45] [RUN] Recalling home to unload.
+[2026-02-19 19:15:52] [RUN] Unloading resources to containers.
+[2026-02-19 19:15:52] [RUN] Unload: 15 items in backpack.
+[2026-02-19 19:15:55] [RUN] Unload: moving blackstone 0x0F26.
+[2026-02-19 19:16:01] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:16:05] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:16:06] [RUN] Recalling to mining rune 61.
+[2026-02-19 19:17:41] [RUN] Overweight detected.
+[2026-02-19 19:17:41] [RUN] Overweight: recall to unload.
+[2026-02-19 19:17:41] [RUN] Recalling home to unload.
+[2026-02-19 19:17:48] [RUN] Unloading resources to containers.
+[2026-02-19 19:17:48] [RUN] Unload: 13 items in backpack.
+[2026-02-19 19:17:55] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:17:58] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:17:59] [RUN] Recalling to mining rune 62.
+[2026-02-19 19:19:17] [RUN] No ore here... move.
+[2026-02-19 19:19:20] [RUN] Recalling home to unload.
+[2026-02-19 19:19:27] [RUN] Unloading resources to containers.
+[2026-02-19 19:19:27] [RUN] Unload: 12 items in backpack.
+[2026-02-19 19:19:33] [RUN] Restocking ingots from drop container.
+[2026-02-19 19:19:37] [RUN] Ensuring at least two shovels.
+[2026-02-19 19:19:38] [RUN] Recalling to mining rune 63.

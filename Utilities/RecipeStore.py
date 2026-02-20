@@ -1,19 +1,46 @@
 import json
 import os
 import sqlite3
+import time
 
 DB_FILE = "craftables.db"
 SCHEMA_VERSION = 2
 RECIPES_JSON_FILE = "recipes.json"
 MATERIAL_KEYS_JSON_FILE = "material_keys.json"
 ITEM_KEYS_JSON_FILE = "item_keys.json"
+BASE_DIR_OVERRIDE = ""
+SQLITE_CONNECT_TIMEOUT_S = 0.35
+SQLITE_BUSY_TIMEOUT_MS = 350
+INIT_RETRY_COOLDOWN_S = 1.5
+_INIT_OK = False
+_INIT_NEXT_RETRY_AT = 0.0
+_INIT_LAST_ERROR = ""
 
 
 def _base_dir():
+    if BASE_DIR_OVERRIDE:
+        return BASE_DIR_OVERRIDE
     try:
         return os.path.dirname(__file__)
     except Exception:
+        try:
+            spec = globals().get("__spec__", None)
+            origin = getattr(spec, "origin", "") if spec is not None else ""
+            if origin:
+                return os.path.dirname(origin)
+        except Exception:
+            pass
         return os.getcwd()
+
+
+def set_base_dir(path):
+    global BASE_DIR_OVERRIDE
+    try:
+        p = str(path or "").strip()
+    except Exception:
+        p = ""
+    if p:
+        BASE_DIR_OVERRIDE = p
 
 
 def _db_path():
@@ -24,11 +51,99 @@ def _json_path(filename):
     return os.path.join(_base_dir(), filename)
 
 
-def _connect():
-    conn = sqlite3.connect(_db_path(), timeout=5.0)
-    conn.execute("PRAGMA journal_mode=WAL;")
-    conn.execute("PRAGMA busy_timeout=5000;")
+def _is_db_format_error(ex):
+    msg = str(ex or "").lower()
+    return (
+        ("file is encrypted or is not a database" in msg)
+        or ("not a database" in msg)
+        or ("wal format detected" in msg)
+    )
+
+
+def _remove_sidecars(db_path):
+    for suffix in ("-wal", "-shm"):
+        p = db_path + suffix
+        try:
+            if os.path.exists(p):
+                os.remove(p)
+        except Exception:
+            pass
+
+
+def _connect_raw(db_path):
+    conn = sqlite3.connect(db_path, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
+    conn.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)) + ";")
     return conn
+
+
+def _connect():
+    db_path = _db_path()
+    conn = None
+    try:
+        conn = _connect_raw(db_path)
+        # Touch schema immediately so header/format errors surface here.
+        conn.execute("PRAGMA schema_version;").fetchone()
+        return conn
+    except Exception as ex:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        if not _is_db_format_error(ex):
+            raise
+        _remove_sidecars(db_path)
+        try:
+            conn = _connect_raw(db_path)
+            conn.execute("PRAGMA schema_version;").fetchone()
+            return conn
+        except Exception:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+
+        # Final fallback: preserve unreadable DB and recreate from split JSON.
+        try:
+            if os.path.exists(db_path):
+                bad_path = db_path + ".bad." + str(int(time.time()))
+                os.replace(db_path, bad_path)
+        except Exception:
+            pass
+        conn = _connect_raw(db_path)
+        return conn
+
+
+def _now_s():
+    try:
+        return float(time.time())
+    except Exception:
+        return 0.0
+
+
+def try_init_store(force=False):
+    global _INIT_OK, _INIT_NEXT_RETRY_AT, _INIT_LAST_ERROR
+    if _INIT_OK and not force:
+        return True
+    now = _now_s()
+    if not force and now < float(_INIT_NEXT_RETRY_AT or 0.0):
+        return False
+    try:
+        init_store()
+        _INIT_OK = True
+        _INIT_LAST_ERROR = ""
+        _INIT_NEXT_RETRY_AT = 0.0
+        return True
+    except Exception as ex:
+        _INIT_OK = False
+        _INIT_LAST_ERROR = str(ex or "")
+        _INIT_NEXT_RETRY_AT = now + float(INIT_RETRY_COOLDOWN_S)
+        return False
+
+
+def last_init_error():
+    return str(_INIT_LAST_ERROR or "")
 
 
 def _safe_json_loads(text, default):
@@ -335,7 +450,6 @@ def init_store():
 
 
 def load_recipes():
-    init_store()
     conn = _connect()
     try:
         cur = conn.execute(
@@ -370,7 +484,6 @@ def load_recipes():
 
 
 def save_recipes(rows):
-    init_store()
     conn = _connect()
     try:
         with conn:
@@ -407,7 +520,6 @@ def save_recipes(rows):
 
 
 def load_key_maps():
-    init_store()
     conn = _connect()
     try:
         out = {}
@@ -454,7 +566,6 @@ def load_key_maps():
 
 
 def save_key_maps(key_maps):
-    init_store()
     conn = _connect()
     try:
         with conn:
@@ -515,7 +626,6 @@ def save_key_maps(key_maps):
 
 
 def health_summary(selected_server=None):
-    init_store()
     conn = _connect()
     try:
         out = {

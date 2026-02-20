@@ -5,7 +5,7 @@ import os
 import time
 
 # Use custom gump image background when True; fallback to colorbox when False.
-CUSTOM_GUMP = False
+CUSTOM_GUMP = True
 
 # Debug log gump state (define early to avoid NameError in IronPython).
 LOG_GUMP = None  # Current debug log gump instance.

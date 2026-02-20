@@ -1,0 +1,1726 @@
+[2026-02-19 13:42:06] Recipe DB init failed: file is encrypted or is not a database (db=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\craftables.db)
+[2026-02-19 13:42:07] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 13:51:50] Startup: entering _main.
+[2026-02-19 13:51:50] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 13:52:27] Startup: entering _main.
+[2026-02-19 13:52:27] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 14:02:16] Startup: entering _main.
+[2026-02-19 14:02:16] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 14:02:16] Startup: _load_config begin.
+[2026-02-19 14:02:16] Config: recipe DB stage begin.
+[2026-02-19 14:02:16] Config: RECIPE_STORE.init_store begin.
+[2026-02-19 14:15:43] Startup: entering _main.
+[2026-02-19 14:15:43] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 14:15:43] Startup: _load_config begin.
+[2026-02-19 14:15:44] Config: recipe DB stage begin.
+[2026-02-19 14:15:44] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 14:15:44] Config: recipe load begin.
+[2026-02-19 14:15:44] Config: key-map load begin.
+[2026-02-19 14:15:44] Config: recipe DB stage end. recipes=0 key_servers=1
+[2026-02-19 14:15:44] Startup: _load_config end.
+[2026-02-19 14:15:44] Startup: _create_control_gump begin.
+[2026-02-19 14:15:44] Startup: _create_control_gump end.
+[2026-02-19 14:15:44] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 15:02:43] Startup: entering _main.
+[2026-02-19 15:02:43] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 15:02:43] Startup: _load_config begin.
+[2026-02-19 15:02:43] Config: recipe DB stage begin.
+[2026-02-19 15:02:43] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 15:02:43] Config: recipe load begin.
+[2026-02-19 15:02:43] Config: key-map load begin.
+[2026-02-19 15:02:43] Config: recipe DB stage end. recipes=0 key_servers=1
+[2026-02-19 15:02:43] Startup: _load_config end.
+[2026-02-19 15:02:43] Startup: _create_control_gump begin.
+[2026-02-19 15:02:44] Startup: _create_control_gump end.
+[2026-02-19 15:02:44] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 15:02:55] Collect: home slot 1, visiting 1 selected BOD stop(s).
+[2026-02-19 15:02:55] Recalling to slot 5 (Tinker).
+[2026-02-19 15:03:01] Found 3 Tinker giver(s) at slot 5.
+[2026-02-19 15:03:16] Collect complete. Recalling home.
+[2026-02-19 15:03:16] Runtime loop exit: stop=True force_stop=False
+[2026-02-19 15:12:59] Startup: entering _main.
+[2026-02-19 15:12:59] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 15:12:59] Startup: _load_config begin.
+[2026-02-19 15:12:59] Config: recipe DB stage begin.
+[2026-02-19 15:12:59] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 15:12:59] Config: recipe load begin.
+[2026-02-19 15:12:59] Config: key-map load begin.
+[2026-02-19 15:12:59] Config: recipe DB stage end. recipes=0 key_servers=1
+[2026-02-19 15:12:59] Startup: _load_config end.
+[2026-02-19 15:12:59] Startup: _create_control_gump begin.
+[2026-02-19 15:12:59] Startup: _create_control_gump end.
+[2026-02-19 15:12:59] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 15:13:04] Prep/Sort: recalling home.
+[2026-02-19 15:13:10] Pathfinding to crafting station (attempt 1/3).
+[2026-02-19 15:13:12] Arrived at crafting station.
+[2026-02-19 15:13:12] Prep/Sort complete. At crafting station.
+[2026-02-19 15:13:16] Runtime loop exit: stop=True force_stop=False
+[2026-02-19 15:30:03] Startup: entering _main.
+[2026-02-19 15:30:03] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 15:30:03] Startup: _load_config begin.
+[2026-02-19 15:30:03] Config: recipe DB stage begin.
+[2026-02-19 15:30:03] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 15:30:03] Config: recipe load begin.
+[2026-02-19 15:30:03] Config: key-map load begin.
+[2026-02-19 15:30:03] Config: recipe DB stage end. recipes=0 key_servers=1
+[2026-02-19 15:30:03] Startup: _load_config end.
+[2026-02-19 15:30:03] Startup: _create_control_gump begin.
+[2026-02-19 15:30:03] Startup: _create_control_gump end.
+[2026-02-19 15:30:03] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 15:30:09] [F01][RUN] run_fill: start
+[2026-02-19 15:30:09] Fill runtime: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\BODAssist.py
+[2026-02-19 15:30:09] Fill resource serial: 0x40008663
+[2026-02-19 15:30:09] [F02][RUN] run_fill: config validation
+[2026-02-19 15:30:09] [F03][RUN] run_fill: travel phase
+[2026-02-19 15:30:09] [F03][RUN] travel_phase: recall home
+[2026-02-19 15:30:09] Fill: recalling home.
+[2026-02-19 15:30:15] [F03][RUN] travel_phase: close recall gump
+[2026-02-19 15:30:15] [F03S][RUN] post travel phase: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:15] [F03D][RUN] delay start: travel->move (0.5s)
+[2026-02-19 15:30:16] [F03D][RUN] delay end: travel->move (elapsed=0.50s)
+[2026-02-19 15:30:16] [F03B][RUN] run_fill: move phase
+[2026-02-19 15:30:16] [F03B][RUN] move_phase: move to crafting station
+[2026-02-19 15:30:16] Pathfinding to crafting station (attempt 1/3).
+[2026-02-19 15:30:18] Arrived at crafting station.
+[2026-02-19 15:30:19] [F03BS][RUN] post move phase: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:19] [F03BD][RUN] delay start: move->validate_resource (0.5s)
+[2026-02-19 15:30:19] [F03BD][RUN] delay end: move->validate_resource (elapsed=0.50s)
+[2026-02-19 15:30:19] [F04][RUN] run_fill: validate resource container access
+[2026-02-19 15:30:19] Resource container info (post-move): name='Barrel', dist=2, is_container=True
+[2026-02-19 15:30:19] [F04S][RUN] post validate resource: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:19] [F04D][RUN] delay start: validate_resource->scan_bods (0.5s)
+[2026-02-19 15:30:20] [F04D][RUN] delay end: validate_resource->scan_bods (elapsed=0.50s)
+[2026-02-19 15:30:20] [F05][RUN] run_fill: backpack deeds found=34
+[2026-02-19 15:30:20] [F05S][RUN] post scan backpack deeds: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:20] Fill selected BOD types: Tinker
+[2026-02-19 15:30:20] [F06][RUN] run_fill: filter deeds by selected/supported type
+[2026-02-19 15:30:20] Fill skip: 'unknown item' is Carpentry, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Stool' is Carpentry, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Wooden Bench' is Carpentry, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Studded Sleeves' is Tailor, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Studded Tunic' is Tailor, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Chainmail Leggings' is Blacksmith, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Metal Kite Shield' is Blacksmith, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Norse Helm' is Blacksmith, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Medium Crate' is Carpentry, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Foot Stool' is Carpentry, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Bow' unresolved profession 'Bowcraft'.
+[2026-02-19 15:30:20] Fill skip: 'Studded Gloves' is Tailor, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Boots' is Tailor, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Leather Gorget' is Tailor, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Skullcap' is Tailor, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Wizard's Hat' is Tailor, not selected.
+[2026-02-19 15:30:20] Fill skip: 'unknown item' is Blacksmith, not selected.
+[2026-02-19 15:30:20] Fill skip: 'War Fork' is Blacksmith, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Female Plate' is Blacksmith, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Heater Shield' is Blacksmith, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Ringmail Sleeves' is Blacksmith, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Double Axe' is Blacksmith, not selected.
+[2026-02-19 15:30:20] Fill skip: 'Two Handed Axe' is Blacksmith, not selected.
+[2026-02-19 15:30:20] Fill skip: 'unknown item' unresolved profession 'unknown'.
+[2026-02-19 15:30:20] [F06S][RUN] post deed filtering: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:20] [F06D][RUN] delay start: filter->process_worklist (0.5s)
+[2026-02-19 15:30:21] [F06D][RUN] delay end: filter->process_worklist (elapsed=0.50s)
+[2026-02-19 15:30:21] [F07][RUN] run_fill: processing worklist count=8
+[2026-02-19 15:30:21] [F07S][RUN] pre run loop setup: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:21] [F07S][RUN] post run loop setup: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:21] Fill: processing 8 deed(s). Skipped 26.
+[2026-02-19 15:30:21] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:21] [F08][RUN] run_fill: deed 0x420EBA2F
+[2026-02-19 15:30:21] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:21] [D01][PARSE] fill_single_deed: start deed=0x420EBA2F
+[2026-02-19 15:30:21] Learn Mode (manual): enter mapping for 'Clock Frame'.
+[2026-02-19 15:30:21] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:30:26] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:30:26] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:30:26] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:30:26] No recipe mapping for deed item 'Clock Frame'.
+[2026-02-19 15:30:26] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:30:26] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:30:26] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:26] [F08][RUN] run_fill: deed 0x420EBA06
+[2026-02-19 15:30:26] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:26] [D01][PARSE] fill_single_deed: start deed=0x420EBA06
+[2026-02-19 15:30:26] Learn Mode (manual): enter mapping for 'Candelabra'.
+[2026-02-19 15:30:26] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:30:31] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:30:31] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:30:31] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:30:31] No recipe mapping for deed item 'Candelabra'.
+[2026-02-19 15:30:31] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:30:32] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:30:32] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:32] [F08][RUN] run_fill: deed 0x420EB9DA
+[2026-02-19 15:30:32] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:32] [D01][PARSE] fill_single_deed: start deed=0x420EB9DA
+[2026-02-19 15:30:32] Learn Mode (manual): enter mapping for 'Froe'.
+[2026-02-19 15:30:32] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:30:36] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:30:36] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:30:36] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:30:36] No recipe mapping for deed item 'Froe'.
+[2026-02-19 15:30:36] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:30:37] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:30:37] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:37] [F08][RUN] run_fill: deed 0x41C99796
+[2026-02-19 15:30:37] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:37] [D01][PARSE] fill_single_deed: start deed=0x41C99796
+[2026-02-19 15:30:37] Learn Mode (manual): enter mapping for 'Metal Container Engraving Tool'.
+[2026-02-19 15:30:37] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:30:42] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:30:42] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:30:42] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:30:42] No recipe mapping for deed item 'Metal Container Engraving Tool'.
+[2026-02-19 15:30:42] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:30:42] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:30:42] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:42] [F08][RUN] run_fill: deed 0x41A1EB76
+[2026-02-19 15:30:42] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:42] [D01][PARSE] fill_single_deed: start deed=0x41A1EB76
+[2026-02-19 15:30:42] Learn Mode (manual): enter mapping for 'Sewing Kit'.
+[2026-02-19 15:30:42] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:30:47] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:30:47] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:30:47] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:30:47] No recipe mapping for deed item 'Sewing Kit'.
+[2026-02-19 15:30:47] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:30:48] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:30:48] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:48] [F08][RUN] run_fill: deed 0x41A1E904
+[2026-02-19 15:30:48] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:48] [D01][PARSE] fill_single_deed: start deed=0x41A1E904
+[2026-02-19 15:30:48] Learn Mode (manual): enter mapping for 'Clock Frame'.
+[2026-02-19 15:30:48] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:30:53] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:30:53] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:30:53] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:30:53] No recipe mapping for deed item 'Clock Frame'.
+[2026-02-19 15:30:53] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:30:53] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:30:53] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:53] [F08][RUN] run_fill: deed 0x41A1EABB
+[2026-02-19 15:30:53] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:53] [D01][PARSE] fill_single_deed: start deed=0x41A1EABB
+[2026-02-19 15:30:53] Learn Mode (manual): enter mapping for 'Tourmaline Bracelet'.
+[2026-02-19 15:30:53] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:30:58] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:30:58] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:30:58] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:30:58] No recipe mapping for deed item 'Tourmaline Bracelet'.
+[2026-02-19 15:30:58] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:30:58] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:30:58] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:58] [F08][RUN] run_fill: deed 0x42952A78
+[2026-02-19 15:30:58] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:30:58] [D01][PARSE] fill_single_deed: start deed=0x42952A78
+[2026-02-19 15:30:58] Learn Mode (manual): enter mapping for 'Barrel Tap'.
+[2026-02-19 15:30:58] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:31:03] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:31:03] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:31:03] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:31:03] No recipe mapping for deed item 'Barrel Tap'.
+[2026-02-19 15:31:03] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:31:04] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:31:04] [F09][RUN] run_fill: salvage cycle
+[2026-02-19 15:31:05] Fill pass complete.
+[2026-02-19 15:31:05] [F10][RUN] run_fill: complete
+[2026-02-19 15:43:04] Runtime loop exit: stop=True force_stop=False
+[2026-02-19 15:44:02] Startup: entering _main.
+[2026-02-19 15:44:02] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 15:44:02] Startup: _load_config begin.
+[2026-02-19 15:44:02] Config: recipe DB stage begin.
+[2026-02-19 15:44:02] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 15:44:02] Config: recipe load begin.
+[2026-02-19 15:46:50] Config: key-map load begin.
+[2026-02-19 15:49:03] Startup: entering _main.
+[2026-02-19 15:49:03] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 15:49:03] Startup: _load_config begin.
+[2026-02-19 15:49:03] Config: recipe DB stage begin.
+[2026-02-19 15:49:03] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 15:49:03] Config: recipe load begin.
+[2026-02-19 15:49:03] Config: key-map load begin.
+[2026-02-19 15:49:03] Config: recipe DB stage end. recipes=0 key_servers=1
+[2026-02-19 15:49:03] Startup: _load_config end.
+[2026-02-19 15:49:03] Startup: _create_control_gump begin.
+[2026-02-19 15:49:03] Startup: _create_control_gump end.
+[2026-02-19 15:49:03] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 15:49:11] [F01][RUN] run_fill: start
+[2026-02-19 15:49:11] Fill runtime: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\BODAssist.py
+[2026-02-19 15:49:11] Fill resource serial: 0x40008663
+[2026-02-19 15:49:11] [F02][RUN] run_fill: config validation
+[2026-02-19 15:49:11] [F03][RUN] run_fill: travel phase
+[2026-02-19 15:49:11] [F03][RUN] travel_phase: recall home
+[2026-02-19 15:49:11] Fill: recalling home.
+[2026-02-19 15:49:17] [F03][RUN] travel_phase: close recall gump
+[2026-02-19 15:49:17] [F03S][RUN] post travel phase: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:49:17] [F03D][RUN] delay start: travel->move (0.5s)
+[2026-02-19 15:49:18] [F03D][RUN] delay end: travel->move (elapsed=0.50s)
+[2026-02-19 15:49:18] [F03B][RUN] run_fill: move phase
+[2026-02-19 15:49:18] [F03B][RUN] move_phase: move to crafting station
+[2026-02-19 15:49:18] Pathfinding to crafting station (attempt 1/3).
+[2026-02-19 15:49:20] Arrived at crafting station.
+[2026-02-19 15:49:21] [F03BS][RUN] post move phase: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:49:21] [F03BD][RUN] delay start: move->validate_resource (0.5s)
+[2026-02-19 15:49:21] [F03BD][RUN] delay end: move->validate_resource (elapsed=0.50s)
+[2026-02-19 15:49:21] [F04][RUN] run_fill: validate resource container access
+[2026-02-19 15:49:21] Resource container info (post-move): name='Barrel', dist=2, is_container=True
+[2026-02-19 15:49:21] [F04S][RUN] post validate resource: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:49:21] [F04D][RUN] delay start: validate_resource->scan_bods (0.5s)
+[2026-02-19 15:49:22] [F04D][RUN] delay end: validate_resource->scan_bods (elapsed=0.50s)
+[2026-02-19 15:49:22] [F05][RUN] run_fill: backpack deeds found=34
+[2026-02-19 15:49:22] [F05S][RUN] post scan backpack deeds: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:49:22] Fill selected BOD types: Tinker
+[2026-02-19 15:49:22] [F06][RUN] run_fill: filter deeds by selected/supported type
+[2026-02-19 15:49:22] Fill skip: 'unknown item' is Carpentry, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Stool' is Carpentry, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Wooden Bench' is Carpentry, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Studded Sleeves' is Tailor, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Studded Tunic' is Tailor, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Chainmail Leggings' is Blacksmith, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Metal Kite Shield' is Blacksmith, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Norse Helm' is Blacksmith, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Medium Crate' is Carpentry, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Foot Stool' is Carpentry, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Bow' unresolved profession 'Bowcraft'.
+[2026-02-19 15:49:22] Fill skip: 'Studded Gloves' is Tailor, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Boots' is Tailor, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Leather Gorget' is Tailor, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Skullcap' is Tailor, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Wizard's Hat' is Tailor, not selected.
+[2026-02-19 15:49:22] Fill skip: 'unknown item' is Blacksmith, not selected.
+[2026-02-19 15:49:22] Fill skip: 'War Fork' is Blacksmith, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Female Plate' is Blacksmith, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Heater Shield' is Blacksmith, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Ringmail Sleeves' is Blacksmith, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Double Axe' is Blacksmith, not selected.
+[2026-02-19 15:49:22] Fill skip: 'Two Handed Axe' is Blacksmith, not selected.
+[2026-02-19 15:49:22] Fill skip: 'unknown item' unresolved profession 'unknown'.
+[2026-02-19 15:49:22] [F06S][RUN] post deed filtering: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:49:22] [F06D][RUN] delay start: filter->process_worklist (0.5s)
+[2026-02-19 15:49:23] [F06D][RUN] delay end: filter->process_worklist (elapsed=0.50s)
+[2026-02-19 15:49:23] [F07][RUN] run_fill: processing worklist count=8
+[2026-02-19 15:49:23] [F07S][RUN] pre run loop setup: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:49:23] [F07S][RUN] post run loop setup: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:49:23] Fill: processing 8 deed(s). Skipped 26.
+[2026-02-19 15:49:23] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:49:23] [F08][RUN] run_fill: deed 0x42952A78
+[2026-02-19 15:49:23] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:49:23] [D01][PARSE] fill_single_deed: start deed=0x42952A78
+[2026-02-19 15:49:23] Learn Mode (manual): enter mapping for 'Barrel Tap'.
+[2026-02-19 15:49:23] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:52:25] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:52:25] No recipe mapping for deed item 'Barrel Tap'.
+[2026-02-19 15:52:25] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:52:26] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:52:26] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:26] [F08][RUN] run_fill: deed 0x420EBA2F
+[2026-02-19 15:52:26] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:26] [D01][PARSE] fill_single_deed: start deed=0x420EBA2F
+[2026-02-19 15:52:26] Learn Mode (manual): enter mapping for 'Clock Frame'.
+[2026-02-19 15:52:26] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:52:32] RecipeEditor fallback exec failed [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]: name 'PyGameObject' is not defined
+[2026-02-19 15:52:32] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:52:32] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:52:32] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:52:32] No recipe mapping for deed item 'Clock Frame'.
+[2026-02-19 15:52:32] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:52:32] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:52:32] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:32] [F08][RUN] run_fill: deed 0x420EBA06
+[2026-02-19 15:52:32] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:32] [D01][PARSE] fill_single_deed: start deed=0x420EBA06
+[2026-02-19 15:52:32] Learn Mode (manual): enter mapping for 'Candelabra'.
+[2026-02-19 15:52:32] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:52:38] RecipeEditor fallback exec failed [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]: name 'PyGameObject' is not defined
+[2026-02-19 15:52:38] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:52:38] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:52:38] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:52:38] No recipe mapping for deed item 'Candelabra'.
+[2026-02-19 15:52:38] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:52:39] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:52:39] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:39] [F08][RUN] run_fill: deed 0x420EB9DA
+[2026-02-19 15:52:39] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:39] [D01][PARSE] fill_single_deed: start deed=0x420EB9DA
+[2026-02-19 15:52:39] Learn Mode (manual): enter mapping for 'Froe'.
+[2026-02-19 15:52:39] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:52:45] RecipeEditor fallback exec failed [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]: name 'PyGameObject' is not defined
+[2026-02-19 15:52:45] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:52:45] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:52:45] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:52:45] No recipe mapping for deed item 'Froe'.
+[2026-02-19 15:52:45] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:52:45] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:52:45] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:45] [F08][RUN] run_fill: deed 0x41C99796
+[2026-02-19 15:52:45] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:45] [D01][PARSE] fill_single_deed: start deed=0x41C99796
+[2026-02-19 15:52:45] Learn Mode (manual): enter mapping for 'Metal Container Engraving Tool'.
+[2026-02-19 15:52:45] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:52:51] RecipeEditor fallback exec failed [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]: name 'PyGameObject' is not defined
+[2026-02-19 15:52:51] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:52:51] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:52:51] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:52:51] No recipe mapping for deed item 'Metal Container Engraving Tool'.
+[2026-02-19 15:52:51] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:52:52] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:52:52] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:52] [F08][RUN] run_fill: deed 0x41A1EB76
+[2026-02-19 15:52:52] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:52] [D01][PARSE] fill_single_deed: start deed=0x41A1EB76
+[2026-02-19 15:52:52] Learn Mode (manual): enter mapping for 'Sewing Kit'.
+[2026-02-19 15:52:52] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:52:58] RecipeEditor fallback exec failed [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]: name 'PyGameObject' is not defined
+[2026-02-19 15:52:58] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:52:58] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:52:58] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:52:58] No recipe mapping for deed item 'Sewing Kit'.
+[2026-02-19 15:52:58] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:52:58] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:52:58] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:58] [F08][RUN] run_fill: deed 0x41A1E904
+[2026-02-19 15:52:58] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:52:58] [D01][PARSE] fill_single_deed: start deed=0x41A1E904
+[2026-02-19 15:52:58] Learn Mode (manual): enter mapping for 'Clock Frame'.
+[2026-02-19 15:52:58] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:53:04] RecipeEditor fallback exec failed [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]: name 'PyGameObject' is not defined
+[2026-02-19 15:53:04] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:53:04] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:53:04] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:53:04] No recipe mapping for deed item 'Clock Frame'.
+[2026-02-19 15:53:04] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:53:05] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:53:05] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:53:05] [F08][RUN] run_fill: deed 0x41A1EABB
+[2026-02-19 15:53:05] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 15:53:05] [D01][PARSE] fill_single_deed: start deed=0x41A1EABB
+[2026-02-19 15:53:05] Learn Mode (manual): enter mapping for 'Tourmaline Bracelet'.
+[2026-02-19 15:53:05] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 15:53:06] RecipeEditor fallback exec failed [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]: name 'PyGameObject' is not defined
+[2026-02-19 15:53:06] RecipeBookEditor fallback lookup failed: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\Utilities\RecipeBookEditor.py | F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\RecipeBookEditor.py
+[2026-02-19 15:53:06] Could not launch RecipeBookEditor.py (check script path/name in Script Manager).
+[2026-02-19 15:53:06] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 15:53:06] No recipe mapping for deed item 'Tourmaline Bracelet'.
+[2026-02-19 15:53:06] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 15:53:07] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 15:53:07] [F09][RUN] run_fill: salvage cycle
+[2026-02-19 15:53:07] Fill pass complete.
+[2026-02-19 15:53:07] [F10][RUN] run_fill: complete
+[2026-02-19 15:53:07] Runtime loop exit: stop=True force_stop=False
+[2026-02-19 16:05:27] Startup: entering _main.
+[2026-02-19 16:05:27] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 16:05:27] Startup: _load_config begin.
+[2026-02-19 16:05:27] Config: recipe DB stage begin.
+[2026-02-19 16:05:27] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 16:05:27] Config: recipe load begin.
+[2026-02-19 16:05:27] Config: key-map load begin.
+[2026-02-19 16:05:27] Config: recipe DB stage end. recipes=0 key_servers=1
+[2026-02-19 16:05:27] Startup: _load_config end.
+[2026-02-19 16:05:27] Startup: _create_control_gump begin.
+[2026-02-19 16:05:27] Startup: _create_control_gump end.
+[2026-02-19 16:05:27] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 16:05:31] [F01][RUN] run_fill: start
+[2026-02-19 16:05:31] Fill runtime: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\BODAssist.py
+[2026-02-19 16:05:31] Fill resource serial: 0x40008663
+[2026-02-19 16:05:31] [F02][RUN] run_fill: config validation
+[2026-02-19 16:05:31] [F03][RUN] run_fill: travel phase
+[2026-02-19 16:05:31] [F03][RUN] travel_phase: recall home
+[2026-02-19 16:05:31] Fill: recalling home.
+[2026-02-19 16:05:37] [F03][RUN] travel_phase: close recall gump
+[2026-02-19 16:05:37] [F03S][RUN] post travel phase: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:05:37] [F03D][RUN] delay start: travel->move (0.5s)
+[2026-02-19 16:05:37] [F03D][RUN] delay end: travel->move (elapsed=0.50s)
+[2026-02-19 16:05:37] [F03B][RUN] run_fill: move phase
+[2026-02-19 16:05:37] [F03B][RUN] move_phase: move to crafting station
+[2026-02-19 16:05:37] Pathfinding to crafting station (attempt 1/3).
+[2026-02-19 16:05:40] Arrived at crafting station.
+[2026-02-19 16:05:40] [F03BS][RUN] post move phase: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:05:40] [F03BD][RUN] delay start: move->validate_resource (0.5s)
+[2026-02-19 16:05:41] [F03BD][RUN] delay end: move->validate_resource (elapsed=0.50s)
+[2026-02-19 16:05:41] [F04][RUN] run_fill: validate resource container access
+[2026-02-19 16:05:41] Resource container info (post-move): name='Barrel', dist=2, is_container=True
+[2026-02-19 16:05:41] [F04S][RUN] post validate resource: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:05:41] [F04D][RUN] delay start: validate_resource->scan_bods (0.5s)
+[2026-02-19 16:05:41] [F04D][RUN] delay end: validate_resource->scan_bods (elapsed=0.50s)
+[2026-02-19 16:05:42] [F05][RUN] run_fill: backpack deeds found=34
+[2026-02-19 16:05:42] [F05S][RUN] post scan backpack deeds: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:05:42] Fill selected BOD types: Tinker
+[2026-02-19 16:05:42] [F06][RUN] run_fill: filter deeds by selected/supported type
+[2026-02-19 16:05:42] Fill skip: 'unknown item' is Carpentry, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Stool' is Carpentry, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Wooden Bench' is Carpentry, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Studded Sleeves' is Tailor, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Studded Tunic' is Tailor, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Chainmail Leggings' is Blacksmith, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Metal Kite Shield' is Blacksmith, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Norse Helm' is Blacksmith, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Medium Crate' is Carpentry, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Foot Stool' is Carpentry, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Bow' unresolved profession 'Bowcraft'.
+[2026-02-19 16:05:42] Fill skip: 'Studded Gloves' is Tailor, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Boots' is Tailor, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Leather Gorget' is Tailor, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Skullcap' is Tailor, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Wizard's Hat' is Tailor, not selected.
+[2026-02-19 16:05:42] Fill skip: 'unknown item' is Blacksmith, not selected.
+[2026-02-19 16:05:42] Fill skip: 'War Fork' is Blacksmith, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Female Plate' is Blacksmith, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Heater Shield' is Blacksmith, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Ringmail Sleeves' is Blacksmith, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Double Axe' is Blacksmith, not selected.
+[2026-02-19 16:05:42] Fill skip: 'Two Handed Axe' is Blacksmith, not selected.
+[2026-02-19 16:05:42] Fill skip: 'unknown item' unresolved profession 'unknown'.
+[2026-02-19 16:05:42] [F06S][RUN] post deed filtering: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:05:42] [F06D][RUN] delay start: filter->process_worklist (0.5s)
+[2026-02-19 16:05:42] [F06D][RUN] delay end: filter->process_worklist (elapsed=0.50s)
+[2026-02-19 16:05:42] [F07][RUN] run_fill: processing worklist count=8
+[2026-02-19 16:05:42] [F07S][RUN] pre run loop setup: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:05:42] [F07S][RUN] post run loop setup: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:05:42] Fill: processing 8 deed(s). Skipped 26.
+[2026-02-19 16:05:42] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:05:42] [F08][RUN] run_fill: deed 0x42952A78
+[2026-02-19 16:05:42] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:05:42] [D01][PARSE] fill_single_deed: start deed=0x42952A78
+[2026-02-19 16:05:42] Learn Mode (manual): enter mapping for 'Barrel Tap'.
+[2026-02-19 16:05:42] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 16:05:45] RecipeEditor launch assumed after PlayScript [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py] (no ack)
+[2026-02-19 16:05:45] RecipeBookEditor opened. Waiting for Save/Cancel...
+[2026-02-19 16:06:09] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 16:06:09] No recipe mapping for deed item 'Barrel Tap'.
+[2026-02-19 16:06:09] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 16:06:10] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 16:06:10] Fill interrupted.
+[2026-02-19 16:06:10] [F09][RUN] run_fill: salvage cycle
+[2026-02-19 16:06:10] Fill pass complete.
+[2026-02-19 16:06:10] [F10][RUN] run_fill: complete
+[2026-02-19 16:06:10] Runtime loop exit: stop=True force_stop=False
+[2026-02-19 16:12:57] Startup: entering _main.
+[2026-02-19 16:12:57] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 16:12:57] Startup: _load_config begin.
+[2026-02-19 16:12:57] Config: recipe DB stage begin.
+[2026-02-19 16:12:57] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 16:12:57] Config: recipe load begin.
+[2026-02-19 16:12:57] Config: key-map load begin.
+[2026-02-19 16:12:57] Config: recipe DB stage end. recipes=0 key_servers=1
+[2026-02-19 16:12:57] Startup: _load_config end.
+[2026-02-19 16:12:57] Startup: _create_control_gump begin.
+[2026-02-19 16:12:57] Startup: _create_control_gump end.
+[2026-02-19 16:12:57] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 16:13:00] [F01][RUN] run_fill: start
+[2026-02-19 16:13:00] Fill runtime: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\BODAssist.py
+[2026-02-19 16:13:00] Fill resource serial: 0x40008663
+[2026-02-19 16:13:00] [F02][RUN] run_fill: config validation
+[2026-02-19 16:13:00] [F03][RUN] run_fill: travel phase
+[2026-02-19 16:13:00] [F03][RUN] travel_phase: recall home
+[2026-02-19 16:13:00] Fill: recalling home.
+[2026-02-19 16:13:06] [F03][RUN] travel_phase: close recall gump
+[2026-02-19 16:13:06] [F03S][RUN] post travel phase: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:13:06] [F03D][RUN] delay start: travel->move (0.5s)
+[2026-02-19 16:13:07] [F03D][RUN] delay end: travel->move (elapsed=0.50s)
+[2026-02-19 16:13:07] [F03B][RUN] run_fill: move phase
+[2026-02-19 16:13:07] [F03B][RUN] move_phase: move to crafting station
+[2026-02-19 16:13:07] Pathfinding to crafting station (attempt 1/3).
+[2026-02-19 16:13:09] Arrived at crafting station.
+[2026-02-19 16:13:10] [F03BS][RUN] post move phase: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:13:10] [F03BD][RUN] delay start: move->validate_resource (0.5s)
+[2026-02-19 16:13:10] [F03BD][RUN] delay end: move->validate_resource (elapsed=0.50s)
+[2026-02-19 16:13:10] [F04][RUN] run_fill: validate resource container access
+[2026-02-19 16:13:10] Resource container info (post-move): name='Barrel', dist=2, is_container=True
+[2026-02-19 16:13:10] [F04S][RUN] post validate resource: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:13:10] [F04D][RUN] delay start: validate_resource->scan_bods (0.5s)
+[2026-02-19 16:13:11] [F04D][RUN] delay end: validate_resource->scan_bods (elapsed=0.50s)
+[2026-02-19 16:13:11] [F05][RUN] run_fill: backpack deeds found=34
+[2026-02-19 16:13:11] [F05S][RUN] post scan backpack deeds: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:13:11] Fill selected BOD types: Tinker
+[2026-02-19 16:13:11] [F06][RUN] run_fill: filter deeds by selected/supported type
+[2026-02-19 16:13:11] Fill skip: 'unknown item' is Carpentry, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Stool' is Carpentry, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Wooden Bench' is Carpentry, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Studded Sleeves' is Tailor, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Studded Tunic' is Tailor, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Chainmail Leggings' is Blacksmith, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Metal Kite Shield' is Blacksmith, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Norse Helm' is Blacksmith, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Medium Crate' is Carpentry, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Foot Stool' is Carpentry, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Bow' unresolved profession 'Bowcraft'.
+[2026-02-19 16:13:11] Fill skip: 'Studded Gloves' is Tailor, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Boots' is Tailor, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Leather Gorget' is Tailor, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Skullcap' is Tailor, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Wizard's Hat' is Tailor, not selected.
+[2026-02-19 16:13:11] Fill skip: 'unknown item' is Blacksmith, not selected.
+[2026-02-19 16:13:11] Fill skip: 'War Fork' is Blacksmith, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Female Plate' is Blacksmith, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Heater Shield' is Blacksmith, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Ringmail Sleeves' is Blacksmith, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Double Axe' is Blacksmith, not selected.
+[2026-02-19 16:13:11] Fill skip: 'Two Handed Axe' is Blacksmith, not selected.
+[2026-02-19 16:13:11] Fill skip: 'unknown item' unresolved profession 'unknown'.
+[2026-02-19 16:13:11] [F06S][RUN] post deed filtering: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:13:11] [F06D][RUN] delay start: filter->process_worklist (0.5s)
+[2026-02-19 16:13:12] [F06D][RUN] delay end: filter->process_worklist (elapsed=0.50s)
+[2026-02-19 16:13:12] [F07][RUN] run_fill: processing worklist count=8
+[2026-02-19 16:13:12] [F07S][RUN] pre run loop setup: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:13:12] [F07S][RUN] post run loop setup: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:13:12] Fill: processing 8 deed(s). Skipped 26.
+[2026-02-19 16:13:12] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:13:12] [F08][RUN] run_fill: deed 0x42952A78
+[2026-02-19 16:13:12] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 16:13:12] [D01][PARSE] fill_single_deed: start deed=0x42952A78
+[2026-02-19 16:13:12] Learn Mode (manual): enter mapping for 'Barrel Tap'.
+[2026-02-19 16:13:12] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 16:13:14] RecipeEditor no ack after PlayScript [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]
+[2026-02-19 16:13:15] RecipeBookEditor opened. Waiting for Save/Cancel...
+[2026-02-19 16:13:45] Filling Barrel Tap (Tinker) 0/20
+[2026-02-19 16:13:45] [D05][PARSE] fill_single_deed: begin progress=0/20
+[2026-02-19 16:13:45] [D06][PARSE] fill_single_deed: cycle=1 remaining=20
+[2026-02-19 16:13:45] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 16:13:46] Opening resource container 0x40008663 for restock.
+[2026-02-19 16:13:46] RestockOpen: closed blocking gumps [2124269839] prior to container open.
+[2026-02-19 16:13:47] RestockOpen: UseObject attempt 1 sent.
+[2026-02-19 16:13:48] RestockOpen: attempt 1 counts shallow=28 recursive=28
+[2026-02-19 16:13:48] Resource scan items: 28
+[2026-02-19 16:13:49] Restock moved-item trace: serial=0x4272EEA1, container=0x4631B20C, container_serial=0x00000000, amt=400
+[2026-02-19 16:13:49] Restock result in pack: 0 (pack_any=400, resource_delta=400)
+[2026-02-19 16:13:49] Restock count mismatch: using backpack any-count as success (pack_any=400).
+[2026-02-19 16:13:49] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 16:13:49] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 16:13:50] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 16:13:50] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 16:13:50] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 16:13:50] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 16:13:50] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 16:13:50] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 16:13:51] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=True apply_material=True
+[2026-02-19 16:13:51] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 16:13:51] [D09D][CONTEXT] delay start: context->craft (0.5s)
+[2026-02-19 16:13:52] [D09D][CONTEXT] delay end: context->craft (elapsed=0.50s)
+[2026-02-19 16:13:52] [D10][CRAFT] craft_n_items: target=20, gid=3563514524
+[2026-02-19 16:13:52] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 16:13:52] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 16:13:52] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 16:13:56] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 16:13:56] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 16:13:56] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 16:14:01] [D10][CRAFT] craft_n_items: done crafted=0/20 last_err=craft_timeout
+[2026-02-19 16:14:01] Stopping deed after repeated failure: craft_timeout.
+[2026-02-19 16:14:01] [D06][PARSE] fill_single_deed: cycle=2 remaining=20
+[2026-02-19 16:14:01] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 16:14:01] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 16:14:01] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 16:14:01] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 16:14:01] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 16:14:01] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 16:14:01] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 16:14:02] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 16:14:02] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 16:14:02] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=False apply_material=True
+[2026-02-19 16:14:02] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 16:14:02] [D09D][CONTEXT] delay start: context->craft (0.5s)
+[2026-02-19 16:14:03] [D09D][CONTEXT] delay end: context->craft (elapsed=0.50s)
+[2026-02-19 16:14:03] [D10][CRAFT] craft_n_items: target=20, gid=3563514524
+[2026-02-19 16:14:03] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 16:14:03] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 16:14:03] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 16:14:07] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 16:14:07] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 16:14:07] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 16:14:09] [D10][CRAFT] craft_n_items: stopped
+[2026-02-19 16:14:09] Stopping deed after repeated failure: stopped.
+[2026-02-19 16:14:09] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 16:14:09] [F08D][RUN] delay end: deed->next_deed (elapsed=0.00s)
+[2026-02-19 16:14:09] Fill interrupted.
+[2026-02-19 16:14:09] [F09][RUN] run_fill: salvage cycle
+[2026-02-19 16:14:09] Fill pass complete.
+[2026-02-19 16:14:09] [F10][RUN] run_fill: complete
+[2026-02-19 16:14:09] Runtime loop exit: stop=True force_stop=False
+[2026-02-19 19:09:41] Config: recipe DB stage end. recipes=0 key_servers=0
+[2026-02-19 19:09:41] Startup: _load_config end.
+[2026-02-19 19:09:41] Startup: _create_control_gump begin.
+[2026-02-19 19:09:41] Recipe DB init failed: unable to close due to unfinalised statements (db=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\craftables.db)
+[2026-02-19 19:09:41] Recipe DB init failed: unable to close due to unfinalised statements (db=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\craftables.db)
+[2026-02-19 19:09:41] Config: recipe load begin.
+e to close due to unfinalised statements (db=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\craftables.db)
+[2026-02-19 19:09:41] Recipe DB init failed: unable to close due to unfinalised statements (db=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\craftables.db)
+[2026-02-19 19:44:30] Startup: entering _main.
+[2026-02-19 19:44:30] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 19:44:30] Startup: _load_config begin.
+[2026-02-19 19:44:30] Config: recipe DB stage begin.
+[2026-02-19 19:44:30] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 19:44:30] Config: recipe load begin.
+[2026-02-19 19:44:30] Config: key-map load begin.
+[2026-02-19 19:44:30] Config: recipe DB stage end. recipes=1 key_servers=1
+[2026-02-19 19:44:30] Startup: _load_config end.
+[2026-02-19 19:44:30] Startup: _create_control_gump begin.
+[2026-02-19 19:44:30] Startup: _create_control_gump end.
+[2026-02-19 19:44:30] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 19:44:32] [F01][RUN] run_fill: start
+[2026-02-19 19:44:32] Fill runtime: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\BODAssist.py
+[2026-02-19 19:44:32] Fill resource serial: 0x40008663
+[2026-02-19 19:44:32] [F02][RUN] run_fill: config validation
+[2026-02-19 19:44:32] [F03][RUN] run_fill: travel phase
+[2026-02-19 19:44:32] [F03][RUN] travel_phase: recall home
+[2026-02-19 19:44:32] Fill: recalling home.
+[2026-02-19 19:44:38] [F03][RUN] travel_phase: close recall gump
+[2026-02-19 19:44:38] [F03S][RUN] post travel phase: recall_has=False, gumps=[2124269839]
+[2026-02-19 19:44:38] [F03D][RUN] delay start: travel->move (0.5s)
+[2026-02-19 19:44:39] [F03D][RUN] delay end: travel->move (elapsed=0.50s)
+[2026-02-19 19:44:39] [F03B][RUN] run_fill: move phase
+[2026-02-19 19:44:39] [F03B][RUN] move_phase: move to crafting station
+[2026-02-19 19:44:39] Pathfinding to crafting station (attempt 1/3).
+[2026-02-19 19:44:41] Arrived at crafting station.
+[2026-02-19 19:44:41] [F03BS][RUN] post move phase: recall_has=False, gumps=[2124269839]
+[2026-02-19 19:44:41] [F03BD][RUN] delay start: move->validate_resource (0.5s)
+[2026-02-19 19:44:42] [F03BD][RUN] delay end: move->validate_resource (elapsed=0.50s)
+[2026-02-19 19:44:42] [F04][RUN] run_fill: validate resource container access
+[2026-02-19 19:44:42] Resource container info (post-move): name='Barrel', dist=2, is_container=True
+[2026-02-19 19:44:42] [F04S][RUN] post validate resource: recall_has=False, gumps=[2124269839]
+[2026-02-19 19:44:42] [F04D][RUN] delay start: validate_resource->scan_bods (0.5s)
+[2026-02-19 19:44:43] [F04D][RUN] delay end: validate_resource->scan_bods (elapsed=0.50s)
+[2026-02-19 19:44:43] [F05][RUN] run_fill: backpack deeds found=34
+[2026-02-19 19:44:43] [F05S][RUN] post scan backpack deeds: recall_has=False, gumps=[2124269839]
+[2026-02-19 19:44:43] Fill selected BOD types: Tinker
+[2026-02-19 19:44:43] [F06][RUN] run_fill: filter deeds by selected/supported type
+[2026-02-19 19:44:43] Fill skip: 'unknown item' is Carpentry, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Stool' is Carpentry, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Wooden Bench' is Carpentry, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Studded Sleeves' is Tailor, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Studded Tunic' is Tailor, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Chainmail Leggings' is Blacksmith, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Metal Kite Shield' is Blacksmith, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Norse Helm' is Blacksmith, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Medium Crate' is Carpentry, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Foot Stool' is Carpentry, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Bow' unresolved profession 'Bowcraft'.
+[2026-02-19 19:44:43] Fill skip: 'Studded Gloves' is Tailor, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Boots' is Tailor, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Leather Gorget' is Tailor, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Skullcap' is Tailor, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Wizard's Hat' is Tailor, not selected.
+[2026-02-19 19:44:43] Fill skip: 'unknown item' is Blacksmith, not selected.
+[2026-02-19 19:44:43] Fill skip: 'War Fork' is Blacksmith, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Female Plate' is Blacksmith, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Heater Shield' is Blacksmith, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Ringmail Sleeves' is Blacksmith, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Double Axe' is Blacksmith, not selected.
+[2026-02-19 19:44:43] Fill skip: 'Two Handed Axe' is Blacksmith, not selected.
+[2026-02-19 19:44:43] Fill skip: 'unknown item' unresolved profession 'unknown'.
+[2026-02-19 19:44:43] [F06S][RUN] post deed filtering: recall_has=False, gumps=[2124269839]
+[2026-02-19 19:44:43] [F06D][RUN] delay start: filter->process_worklist (0.5s)
+[2026-02-19 19:44:43] [F06D][RUN] delay end: filter->process_worklist (elapsed=0.50s)
+[2026-02-19 19:44:43] [F07][RUN] run_fill: processing worklist count=8
+[2026-02-19 19:44:43] [F07S][RUN] pre run loop setup: recall_has=False, gumps=[2124269839]
+[2026-02-19 19:44:43] [F07S][RUN] post run loop setup: recall_has=False, gumps=[2124269839]
+[2026-02-19 19:44:43] Fill: processing 8 deed(s). Skipped 26.
+[2026-02-19 19:44:43] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 19:44:43] [F08][RUN] run_fill: deed 0x42952A78
+[2026-02-19 19:44:43] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[2124269839]
+[2026-02-19 19:44:43] [D01][PARSE] fill_single_deed: start deed=0x42952A78
+[2026-02-19 19:44:43] Filling Barrel Tap (Tinker) 0/20
+[2026-02-19 19:44:43] [D05][PARSE] fill_single_deed: begin progress=0/20
+[2026-02-19 19:44:43] [D06][PARSE] fill_single_deed: cycle=1 remaining=20
+[2026-02-19 19:44:43] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 19:44:45] Opening resource container 0x40008663 for restock.
+[2026-02-19 19:44:45] RestockOpen: closed blocking gumps [2124269839] prior to container open.
+[2026-02-19 19:44:45] RestockOpen: UseObject attempt 1 sent.
+[2026-02-19 19:44:46] RestockOpen: attempt 1 counts shallow=29 recursive=29
+[2026-02-19 19:44:46] Resource scan items: 29
+[2026-02-19 19:44:47] Restock moved-item trace: serial=0x4297CEEE, container=0x4631B20C, container_serial=0x00000000, amt=400
+[2026-02-19 19:44:47] Restock result in pack: 0 (pack_any=400, resource_delta=400)
+[2026-02-19 19:44:48] Restock count mismatch: using backpack any-count as success (pack_any=400).
+[2026-02-19 19:44:48] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 19:44:48] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 19:44:48] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 19:44:48] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 19:44:48] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 19:44:48] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 19:44:49] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 19:44:49] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 19:44:49] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=True apply_material=True
+[2026-02-19 19:44:50] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:44:50] [D09D][CONTEXT] delay start: context->craft (0.5s)
+[2026-02-19 19:44:50] [D09D][CONTEXT] delay end: context->craft (elapsed=0.50s)
+[2026-02-19 19:44:50] [D10][CRAFT] craft_n_items: target=20, gid=3563514524
+[2026-02-19 19:44:50] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:44:50] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:44:50] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:44:50] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:44:53] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:44:53] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:44:53] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:44:53] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:44:55] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:44:55] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:44:55] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:44:55] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:44:57] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:44:57] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:44:57] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:44:57] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:44:59] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:44:59] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:44:59] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:44:59] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:02] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:02] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:02] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:02] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:04] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:04] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:04] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:04] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:06] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:06] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:06] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:06] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:09] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:09] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:09] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:09] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:11] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:11] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:11] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:11] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:13] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:13] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:13] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:13] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:16] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:16] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:16] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:16] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:18] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:18] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:18] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:18] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:21] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:21] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:21] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:21] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:23] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:23] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:23] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:23] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:26] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:26] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:26] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:26] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:29] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:29] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:29] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:29] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:31] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:31] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:31] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:31] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:34] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:34] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:34] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:34] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:36] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:36] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:36] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:36] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:38] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 19:45:38] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 19:45:38] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 19:45:38] [D10A][CRAFT] craft_once buttons=[61, 42]
+[2026-02-19 19:45:41] [D10][CRAFT] craft_n_items: done crafted=20/20 last_err=none
+[2026-02-19 19:45:41] [D10D][CRAFT] delay start: craft->combine (0.5s)
+[2026-02-19 19:45:41] [D10D][CRAFT] delay end: craft->combine (elapsed=0.50s)
+[2026-02-19 19:45:41] [D11][COMBINE] combine_and_recount: deed=0x42952A78
+[2026-02-19 19:45:42] [D11][COMBINE] combine_and_recount: progress=20/20
+[2026-02-19 19:45:42] [D11D][COMBINE] delay start: combine->progress_check (0.5s)
+[2026-02-19 19:45:43] [D11D][COMBINE] delay end: combine->progress_check (elapsed=0.50s)
+[2026-02-19 19:45:43] Deed progress: 20/20
+[2026-02-19 19:45:43] [D12][PARSE] fill_single_deed: loop progress=20/20
+[2026-02-19 19:45:43] [D13][PARSE] fill_single_deed: done=True
+[2026-02-19 19:45:43] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 19:45:43] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 19:45:43] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 19:45:43] [F08][RUN] run_fill: deed 0x420EBA2F
+[2026-02-19 19:45:43] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 19:45:43] [D01][PARSE] fill_single_deed: start deed=0x420EBA2F
+[2026-02-19 19:45:43] Learn Mode (manual): enter mapping for 'Clock Frame'.
+[2026-02-19 19:45:43] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 19:45:46] RecipeEditor no ack after PlayScript [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]
+[2026-02-19 19:45:46] RecipeBookEditor opened. Waiting for Save/Cancel...
+[2026-02-19 19:52:30] RecipeEditor wait aborted: stop requested.
+[2026-02-19 19:52:30] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 19:52:30] No recipe mapping for deed item 'Clock Frame'.
+[2026-02-19 19:52:30] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 19:52:31] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 19:52:31] Fill interrupted.
+[2026-02-19 19:52:31] [F09][RUN] run_fill: salvage cycle
+[2026-02-19 19:52:31] Fill pass complete.
+[2026-02-19 19:52:31] [F10][RUN] run_fill: complete
+[2026-02-19 19:52:31] Runtime loop exit: stop=True force_stop=False
+[2026-02-19 20:03:18] Startup: entering _main.
+[2026-02-19 20:03:18] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 20:03:18] Startup: _load_config begin.
+[2026-02-19 20:03:18] Config: recipe DB stage begin.
+[2026-02-19 20:03:18] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 20:03:18] Config: recipe load begin.
+[2026-02-19 20:03:18] Config: key-map load begin.
+[2026-02-19 20:03:18] Config: recipe DB stage end. recipes=2 key_servers=1
+[2026-02-19 20:03:18] Startup: _load_config end.
+[2026-02-19 20:03:18] Startup: _create_control_gump begin.
+[2026-02-19 20:03:19] Startup: _create_control_gump end.
+[2026-02-19 20:03:19] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 20:03:21] [F01][RUN] run_fill: start
+[2026-02-19 20:03:21] Fill runtime: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\BODAssist.py
+[2026-02-19 20:03:21] Fill resource serial: 0x40008663
+[2026-02-19 20:03:21] [F02][RUN] run_fill: config validation
+[2026-02-19 20:03:21] [F03][RUN] run_fill: travel phase
+[2026-02-19 20:03:21] [F03][RUN] travel_phase: recall home
+[2026-02-19 20:03:21] Fill: recalling home.
+[2026-02-19 20:03:27] [F03][RUN] travel_phase: close recall gump
+[2026-02-19 20:03:27] [F03S][RUN] post travel phase: recall_has=False, gumps=[]
+[2026-02-19 20:03:27] [F03D][RUN] delay start: travel->move (0.5s)
+[2026-02-19 20:03:28] [F03D][RUN] delay end: travel->move (elapsed=0.50s)
+[2026-02-19 20:03:28] [F03B][RUN] run_fill: move phase
+[2026-02-19 20:03:28] [F03B][RUN] move_phase: move to crafting station
+[2026-02-19 20:03:28] Pathfinding to crafting station (attempt 1/3).
+[2026-02-19 20:03:30] Arrived at crafting station.
+[2026-02-19 20:03:31] [F03BS][RUN] post move phase: recall_has=False, gumps=[]
+[2026-02-19 20:03:31] [F03BD][RUN] delay start: move->validate_resource (0.5s)
+[2026-02-19 20:03:31] [F03BD][RUN] delay end: move->validate_resource (elapsed=0.50s)
+[2026-02-19 20:03:31] [F04][RUN] run_fill: validate resource container access
+[2026-02-19 20:03:31] Resource container info (post-move): name='Barrel', dist=2, is_container=True
+[2026-02-19 20:03:31] [F04S][RUN] post validate resource: recall_has=False, gumps=[]
+[2026-02-19 20:03:31] [F04D][RUN] delay start: validate_resource->scan_bods (0.5s)
+[2026-02-19 20:03:32] [F04D][RUN] delay end: validate_resource->scan_bods (elapsed=0.50s)
+[2026-02-19 20:03:32] [F05][RUN] run_fill: backpack deeds found=34
+[2026-02-19 20:03:32] [F05S][RUN] post scan backpack deeds: recall_has=False, gumps=[]
+[2026-02-19 20:03:32] Fill selected BOD types: Tinker
+[2026-02-19 20:03:32] [F06][RUN] run_fill: filter deeds by selected/supported type
+[2026-02-19 20:03:32] Fill skip: 'unknown item' unresolved profession 'unknown'.
+[2026-02-19 20:03:32] Fill skip: 'Two Handed Axe' is Blacksmith, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Double Axe' is Blacksmith, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Ringmail Sleeves' is Blacksmith, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Heater Shield' is Blacksmith, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Female Plate' is Blacksmith, not selected.
+[2026-02-19 20:03:32] Fill skip: 'War Fork' is Blacksmith, not selected.
+[2026-02-19 20:03:32] Fill skip: 'unknown item' is Blacksmith, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Wizard's Hat' is Tailor, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Skullcap' is Tailor, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Leather Gorget' is Tailor, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Boots' is Tailor, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Studded Gloves' is Tailor, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Bow' unresolved profession 'Bowcraft'.
+[2026-02-19 20:03:32] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Foot Stool' is Carpentry, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Medium Crate' is Carpentry, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Norse Helm' is Blacksmith, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Metal Kite Shield' is Blacksmith, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Chainmail Leggings' is Blacksmith, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Studded Tunic' is Tailor, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Studded Sleeves' is Tailor, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Wooden Bench' is Carpentry, not selected.
+[2026-02-19 20:03:32] Fill skip: 'Stool' is Carpentry, not selected.
+[2026-02-19 20:03:32] Fill skip: 'unknown item' is Carpentry, not selected.
+[2026-02-19 20:03:32] [F06S][RUN] post deed filtering: recall_has=False, gumps=[]
+[2026-02-19 20:03:32] [F06D][RUN] delay start: filter->process_worklist (0.5s)
+[2026-02-19 20:03:33] [F06D][RUN] delay end: filter->process_worklist (elapsed=0.50s)
+[2026-02-19 20:03:33] [F07][RUN] run_fill: processing worklist count=8
+[2026-02-19 20:03:33] [F07S][RUN] pre run loop setup: recall_has=False, gumps=[]
+[2026-02-19 20:03:33] [F07S][RUN] post run loop setup: recall_has=False, gumps=[]
+[2026-02-19 20:03:33] Fill: processing 8 deed(s). Skipped 26.
+[2026-02-19 20:03:33] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[]
+[2026-02-19 20:03:33] [F08][RUN] run_fill: deed 0x41A1EABB
+[2026-02-19 20:03:33] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[]
+[2026-02-19 20:03:33] [D01][PARSE] fill_single_deed: start deed=0x41A1EABB
+[2026-02-19 20:03:33] Learn Mode (manual): enter mapping for 'Tourmaline Bracelet'.
+[2026-02-19 20:03:33] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 20:03:35] RecipeEditor no ack after PlayScript [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]
+[2026-02-19 20:03:35] RecipeBookEditor opened. Waiting for Save/Cancel...
+[2026-02-19 20:07:07] RecipeEditor wait aborted: stop requested.
+[2026-02-19 20:07:07] Recipe cache reload (post_recipe_editor): recipes=3 key_servers=1
+[2026-02-19 20:07:07] Manual learn: recovered mapping from refreshed cache for 'Tourmaline Bracelet'.
+[2026-02-19 20:07:07] Filling tourmaline bracelet (Tinker) 0/20
+[2026-02-19 20:07:07] [D05][PARSE] fill_single_deed: begin progress=0/20
+[2026-02-19 20:07:07] [D06][PARSE] fill_single_deed: cycle=1 remaining=20
+[2026-02-19 20:07:07] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:07:07] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:07:07] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:07:08] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:07:08] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:07:08] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:07:08] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:07:08] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:07:08] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:07:08] [D09][CONTEXT] ensure_craft_context: open_gump fail
+[2026-02-19 20:07:08] Could not open Tinker gump.
+[2026-02-19 20:07:08] [D06][PARSE] fill_single_deed: cycle=2 remaining=20
+[2026-02-19 20:07:08] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:07:08] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:07:08] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:07:09] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:07:09] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:07:09] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:07:09] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:07:09] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:07:09] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:07:09] [D09][CONTEXT] ensure_craft_context: open_gump fail
+[2026-02-19 20:07:09] Could not open Tinker gump.
+[2026-02-19 20:07:09] Stopping deed after repeated failure: open_gump.
+[2026-02-19 20:07:09] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 20:07:10] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 20:07:10] Fill interrupted.
+[2026-02-19 20:07:10] [F09][RUN] run_fill: salvage cycle
+[2026-02-19 20:07:10] Fill pass complete.
+[2026-02-19 20:07:10] [F10][RUN] run_fill: complete
+[2026-02-19 20:07:10] Runtime loop exit: stop=True force_stop=False
+[2026-02-19 20:10:53] Startup: entering _main.
+[2026-02-19 20:10:53] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 20:10:53] Startup: _load_config begin.
+[2026-02-19 20:10:53] Config: recipe DB stage begin.
+[2026-02-19 20:10:53] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 20:10:53] Config: recipe load begin.
+[2026-02-19 20:10:53] Config: key-map load begin.
+[2026-02-19 20:10:53] Config: recipe DB stage end. recipes=3 key_servers=1
+[2026-02-19 20:10:53] Startup: _load_config end.
+[2026-02-19 20:10:53] Startup: _create_control_gump begin.
+[2026-02-19 20:10:53] Startup: _create_control_gump end.
+[2026-02-19 20:10:53] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 20:10:58] [F01][RUN] run_fill: start
+[2026-02-19 20:10:58] Fill runtime: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\BODAssist.py
+[2026-02-19 20:10:58] Fill resource serial: 0x40008663
+[2026-02-19 20:10:58] [F02][RUN] run_fill: config validation
+[2026-02-19 20:10:58] [F03][RUN] run_fill: travel phase
+[2026-02-19 20:10:58] [F03][RUN] travel_phase: recall home
+[2026-02-19 20:10:58] Fill: recalling home.
+[2026-02-19 20:11:04] [F03][RUN] travel_phase: close recall gump
+[2026-02-19 20:11:04] [F03S][RUN] post travel phase: recall_has=False, gumps=[]
+[2026-02-19 20:11:04] [F03D][RUN] delay start: travel->move (0.5s)
+[2026-02-19 20:11:04] [F03D][RUN] delay end: travel->move (elapsed=0.50s)
+[2026-02-19 20:11:04] [F03B][RUN] run_fill: move phase
+[2026-02-19 20:11:04] [F03B][RUN] move_phase: move to crafting station
+[2026-02-19 20:11:04] Pathfinding to crafting station (attempt 1/3).
+[2026-02-19 20:11:06] Arrived at crafting station.
+[2026-02-19 20:11:07] [F03BS][RUN] post move phase: recall_has=False, gumps=[]
+[2026-02-19 20:11:07] [F03BD][RUN] delay start: move->validate_resource (0.5s)
+[2026-02-19 20:11:08] [F03BD][RUN] delay end: move->validate_resource (elapsed=0.50s)
+[2026-02-19 20:11:08] [F04][RUN] run_fill: validate resource container access
+[2026-02-19 20:11:08] Resource container info (post-move): name='Barrel', dist=2, is_container=True
+[2026-02-19 20:11:08] [F04S][RUN] post validate resource: recall_has=False, gumps=[]
+[2026-02-19 20:11:08] [F04D][RUN] delay start: validate_resource->scan_bods (0.5s)
+[2026-02-19 20:11:08] [F04D][RUN] delay end: validate_resource->scan_bods (elapsed=0.50s)
+[2026-02-19 20:11:08] [F05][RUN] run_fill: backpack deeds found=34
+[2026-02-19 20:11:08] [F05S][RUN] post scan backpack deeds: recall_has=False, gumps=[]
+[2026-02-19 20:11:08] Fill selected BOD types: Tinker
+[2026-02-19 20:11:08] [F06][RUN] run_fill: filter deeds by selected/supported type
+[2026-02-19 20:11:08] Fill skip: 'unknown item' unresolved profession 'unknown'.
+[2026-02-19 20:11:08] Fill skip: 'Two Handed Axe' is Blacksmith, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Double Axe' is Blacksmith, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Ringmail Sleeves' is Blacksmith, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Heater Shield' is Blacksmith, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Female Plate' is Blacksmith, not selected.
+[2026-02-19 20:11:08] Fill skip: 'War Fork' is Blacksmith, not selected.
+[2026-02-19 20:11:08] Fill skip: 'unknown item' is Blacksmith, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Wizard's Hat' is Tailor, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Skullcap' is Tailor, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Leather Gorget' is Tailor, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Boots' is Tailor, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Studded Gloves' is Tailor, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Bow' unresolved profession 'Bowcraft'.
+[2026-02-19 20:11:08] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Foot Stool' is Carpentry, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Medium Crate' is Carpentry, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Norse Helm' is Blacksmith, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Metal Kite Shield' is Blacksmith, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Chainmail Leggings' is Blacksmith, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Studded Tunic' is Tailor, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Studded Sleeves' is Tailor, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Wooden Bench' is Carpentry, not selected.
+[2026-02-19 20:11:08] Fill skip: 'Stool' is Carpentry, not selected.
+[2026-02-19 20:11:08] Fill skip: 'unknown item' is Carpentry, not selected.
+[2026-02-19 20:11:08] [F06S][RUN] post deed filtering: recall_has=False, gumps=[]
+[2026-02-19 20:11:08] [F06D][RUN] delay start: filter->process_worklist (0.5s)
+[2026-02-19 20:11:09] [F06D][RUN] delay end: filter->process_worklist (elapsed=0.50s)
+[2026-02-19 20:11:09] [F07][RUN] run_fill: processing worklist count=8
+[2026-02-19 20:11:09] [F07S][RUN] pre run loop setup: recall_has=False, gumps=[]
+[2026-02-19 20:11:09] [F07S][RUN] post run loop setup: recall_has=False, gumps=[]
+[2026-02-19 20:11:09] Fill: processing 8 deed(s). Skipped 26.
+[2026-02-19 20:11:09] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[]
+[2026-02-19 20:11:09] [F08][RUN] run_fill: deed 0x41A1EABB
+[2026-02-19 20:11:09] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[]
+[2026-02-19 20:11:09] [D01][PARSE] fill_single_deed: start deed=0x41A1EABB
+[2026-02-19 20:11:09] Filling tourmaline bracelet (Tinker) 0/20
+[2026-02-19 20:11:09] [D05][PARSE] fill_single_deed: begin progress=0/20
+[2026-02-19 20:11:09] [D06][PARSE] fill_single_deed: cycle=1 remaining=20
+[2026-02-19 20:11:09] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:11:09] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:11:09] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:11:09] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:11:09] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:11:10] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:11:10] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:11:11] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:11:11] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:11:11] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=True apply_material=True
+[2026-02-19 20:11:12] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:12] [D09D][CONTEXT] delay start: context->craft (0.5s)
+[2026-02-19 20:11:12] [D09D][CONTEXT] delay end: context->craft (elapsed=0.50s)
+[2026-02-19 20:11:12] [D10][CRAFT] craft_n_items: target=20, gid=3563514524
+[2026-02-19 20:11:12] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:12] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:12] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:12] [D10A][CRAFT] craft_once buttons=[1, 942]
+[2026-02-19 20:11:17] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:17] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:17] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:17] [D10A][CRAFT] craft_once buttons=[1, 942]
+[2026-02-19 20:11:21] [D10][CRAFT] craft_n_items: done crafted=0/20 last_err=craft_timeout
+[2026-02-19 20:11:21] Stopping deed after repeated failure: craft_timeout.
+[2026-02-19 20:11:21] [D06][PARSE] fill_single_deed: cycle=2 remaining=20
+[2026-02-19 20:11:21] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:11:21] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:11:21] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:11:22] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:11:22] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:11:22] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:11:22] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:11:22] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:11:22] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:22] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=False apply_material=True
+[2026-02-19 20:11:23] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:23] [D09D][CONTEXT] delay start: context->craft (0.5s)
+[2026-02-19 20:11:24] [D09D][CONTEXT] delay end: context->craft (elapsed=0.50s)
+[2026-02-19 20:11:24] [D10][CRAFT] craft_n_items: target=20, gid=3563514524
+[2026-02-19 20:11:24] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:24] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:24] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:24] [D10A][CRAFT] craft_once buttons=[1, 942]
+[2026-02-19 20:11:28] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:28] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:28] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:28] [D10A][CRAFT] craft_once buttons=[1, 942]
+[2026-02-19 20:11:33] [D10][CRAFT] craft_n_items: done crafted=0/20 last_err=craft_timeout
+[2026-02-19 20:11:33] Stopping deed after repeated failure: craft_timeout.
+[2026-02-19 20:11:33] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 20:11:33] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 20:11:33] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 20:11:33] [F08][RUN] run_fill: deed 0x41A1E904
+[2026-02-19 20:11:33] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 20:11:33] [D01][PARSE] fill_single_deed: start deed=0x41A1E904
+[2026-02-19 20:11:33] Filling clock frame (Tinker) 0/20
+[2026-02-19 20:11:33] [D05][PARSE] fill_single_deed: begin progress=0/20
+[2026-02-19 20:11:33] [D06][PARSE] fill_single_deed: cycle=1 remaining=20
+[2026-02-19 20:11:33] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:11:33] Opening resource container 0x40008663 for restock.
+[2026-02-19 20:11:34] RestockOpen: closed blocking gumps [3563514524] prior to container open.
+[2026-02-19 20:11:34] RestockOpen: UseObject attempt 1 sent.
+[2026-02-19 20:11:35] RestockOpen: attempt 1 counts shallow=29 recursive=29
+[2026-02-19 20:11:35] Resource scan items: 29
+[2026-02-19 20:11:37] Restock moved-item trace: serial=0x41A250DD, container=0x4631B20C, container_serial=0x00000000, amt=100
+[2026-02-19 20:11:37] Restock result in pack: 160 (pack_any=160, resource_delta=160)
+[2026-02-19 20:11:37] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:11:37] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:11:38] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:11:38] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:11:38] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:11:38] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:11:38] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:11:38] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:11:38] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=True apply_material=True
+[2026-02-19 20:11:39] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:39] [D09D][CONTEXT] delay start: context->craft (0.5s)
+[2026-02-19 20:11:40] [D09D][CONTEXT] delay end: context->craft (elapsed=0.50s)
+[2026-02-19 20:11:40] [D10][CRAFT] craft_n_items: target=20, gid=3563514524
+[2026-02-19 20:11:40] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:40] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:40] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:40] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:11:42] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:42] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:42] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:42] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:11:44] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:44] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:44] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:44] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:11:46] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:46] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:46] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:46] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:11:49] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:49] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:49] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:49] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:11:51] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:51] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:51] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:51] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:11:53] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:53] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:53] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:53] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:11:56] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:56] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:56] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:56] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:11:58] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:11:58] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:11:58] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:11:58] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:00] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:00] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:00] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:00] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:02] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:02] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:02] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:02] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:05] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:05] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:05] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:05] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:07] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:07] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:07] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:07] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:10] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:10] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:10] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:10] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:12] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:12] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:12] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:12] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:14] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:14] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:14] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:14] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:16] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:16] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:16] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:16] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:21] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:21] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:21] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:21] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:26] [D10][CRAFT] craft_n_items: done crafted=16/20 last_err=craft_timeout
+[2026-02-19 20:12:26] [D10D][CRAFT] delay start: craft->combine (0.5s)
+[2026-02-19 20:12:26] [D10D][CRAFT] delay end: craft->combine (elapsed=0.50s)
+[2026-02-19 20:12:26] [D11][COMBINE] combine_and_recount: deed=0x41A1E904
+[2026-02-19 20:12:27] [D11][COMBINE] combine_and_recount: progress=16/20
+[2026-02-19 20:12:27] [D11D][COMBINE] delay start: combine->progress_check (0.5s)
+[2026-02-19 20:12:27] [D11D][COMBINE] delay end: combine->progress_check (elapsed=0.50s)
+[2026-02-19 20:12:27] Deed progress: 16/20
+[2026-02-19 20:12:27] [D12][PARSE] fill_single_deed: loop progress=16/20
+[2026-02-19 20:12:27] [D06][PARSE] fill_single_deed: cycle=2 remaining=4
+[2026-02-19 20:12:27] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:12:27] Opening resource container 0x40008663 for restock.
+[2026-02-19 20:12:28] RestockOpen: closed blocking gumps [3563514524] prior to container open.
+[2026-02-19 20:12:28] TargetGuard: cleared pending target cursor (restock_open_pre).
+[2026-02-19 20:12:28] RestockOpen: UseObject attempt 1 sent.
+[2026-02-19 20:12:29] RestockOpen: attempt 1 counts shallow=28 recursive=28
+[2026-02-19 20:12:29] Resource scan items: 28
+[2026-02-19 20:12:30] Restock moved-item trace: source serial 0x42A2C891 not found after move.
+[2026-02-19 20:12:30] Restock result in pack: 464 (pack_any=464, resource_delta=400)
+[2026-02-19 20:12:30] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:12:30] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:12:31] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:12:31] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:12:31] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:12:31] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:12:31] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:12:31] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:31] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=True apply_material=True
+[2026-02-19 20:12:32] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:32] [D09D][CONTEXT] delay start: context->craft (0.5s)
+[2026-02-19 20:12:33] [D09D][CONTEXT] delay end: context->craft (elapsed=0.50s)
+[2026-02-19 20:12:33] [D10][CRAFT] craft_n_items: target=4, gid=3563514524
+[2026-02-19 20:12:33] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:33] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:33] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:33] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:35] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:35] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:35] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:35] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:37] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:37] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:37] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:37] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:39] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:12:39] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:12:39] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:12:39] [D10A][CRAFT] craft_once buttons=[21, 82]
+[2026-02-19 20:12:42] [D10][CRAFT] craft_n_items: done crafted=4/4 last_err=none
+[2026-02-19 20:12:42] [D10D][CRAFT] delay start: craft->combine (0.5s)
+[2026-02-19 20:12:42] [D10D][CRAFT] delay end: craft->combine (elapsed=0.50s)
+[2026-02-19 20:12:42] [D11][COMBINE] combine_and_recount: deed=0x41A1E904
+[2026-02-19 20:12:43] [D11][COMBINE] combine_and_recount: progress=20/20
+[2026-02-19 20:12:43] [D11D][COMBINE] delay start: combine->progress_check (0.5s)
+[2026-02-19 20:12:43] [D11D][COMBINE] delay end: combine->progress_check (elapsed=0.50s)
+[2026-02-19 20:12:43] Deed progress: 20/20
+[2026-02-19 20:12:43] [D12][PARSE] fill_single_deed: loop progress=20/20
+[2026-02-19 20:12:43] [D13][PARSE] fill_single_deed: done=True
+[2026-02-19 20:12:43] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 20:12:44] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 20:12:44] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 20:12:44] [F08][RUN] run_fill: deed 0x41A1EB76
+[2026-02-19 20:12:44] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 20:12:44] [D01][PARSE] fill_single_deed: start deed=0x41A1EB76
+[2026-02-19 20:12:44] Learn Mode (manual): enter mapping for 'Sewing Kit'.
+[2026-02-19 20:12:44] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 20:12:46] RecipeEditor no ack after PlayScript [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]
+[2026-02-19 20:12:46] RecipeBookEditor opened. Waiting for Save/Cancel...
+[2026-02-19 20:14:51] RecipeEditor wait aborted: stop requested.
+[2026-02-19 20:14:51] Recipe cache reload (post_recipe_editor): recipes=4 key_servers=1
+[2026-02-19 20:14:51] Manual learn: recovered mapping from refreshed cache for 'Sewing Kit'.
+[2026-02-19 20:14:51] Filling sewing kit (Tinker) 0/10
+[2026-02-19 20:14:51] [D05][PARSE] fill_single_deed: begin progress=0/10
+[2026-02-19 20:14:51] [D06][PARSE] fill_single_deed: cycle=1 remaining=10
+[2026-02-19 20:14:51] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:14:51] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:14:51] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:14:52] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:14:52] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:14:52] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:14:52] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:14:52] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:14:52] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:14:52] [D09][CONTEXT] ensure_craft_context: open_gump fail
+[2026-02-19 20:14:52] Could not open Tinker gump.
+[2026-02-19 20:14:52] [D06][PARSE] fill_single_deed: cycle=2 remaining=10
+[2026-02-19 20:14:52] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:14:52] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:14:52] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:14:53] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:14:53] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:14:53] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:14:53] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:14:53] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:14:53] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:14:53] [D09][CONTEXT] ensure_craft_context: open_gump fail
+[2026-02-19 20:14:53] Could not open Tinker gump.
+[2026-02-19 20:14:53] Stopping deed after repeated failure: open_gump.
+[2026-02-19 20:14:53] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 20:14:54] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 20:14:54] Fill interrupted.
+[2026-02-19 20:14:54] [F09][RUN] run_fill: salvage cycle
+[2026-02-19 20:14:54] Fill pass complete.
+[2026-02-19 20:14:54] [F10][RUN] run_fill: complete
+[2026-02-19 20:14:54] Runtime loop exit: stop=True force_stop=False
+[2026-02-19 20:14:55] Startup: entering _main.
+[2026-02-19 20:14:55] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 20:14:55] Startup: _load_config begin.
+[2026-02-19 20:14:55] Config: recipe DB stage begin.
+[2026-02-19 20:14:55] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 20:14:55] Config: recipe load begin.
+[2026-02-19 20:14:55] Config: key-map load begin.
+[2026-02-19 20:14:55] Config: recipe DB stage end. recipes=4 key_servers=1
+[2026-02-19 20:14:55] Startup: _load_config end.
+[2026-02-19 20:14:55] Startup: _create_control_gump begin.
+[2026-02-19 20:14:55] Startup: _create_control_gump end.
+[2026-02-19 20:14:55] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 20:14:56] Runtime loop exit: stop=True force_stop=False
+[2026-02-19 20:23:16] Startup: entering _main.
+[2026-02-19 20:23:16] Startup state: stop_requested=False, force_stop=False, util_dir=F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities
+[2026-02-19 20:23:16] Startup: _load_config begin.
+[2026-02-19 20:23:16] Config: recipe DB stage begin.
+[2026-02-19 20:23:16] Config: startup DB init skipped (lazy-load mode).
+[2026-02-19 20:23:16] Config: recipe load begin.
+[2026-02-19 20:23:16] Config: key-map load begin.
+[2026-02-19 20:23:16] Config: recipe DB stage end. recipes=4 key_servers=1
+[2026-02-19 20:23:16] Startup: _load_config end.
+[2026-02-19 20:23:16] Startup: _create_control_gump begin.
+[2026-02-19 20:23:16] Startup: _create_control_gump end.
+[2026-02-19 20:23:16] BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.
+[2026-02-19 20:23:18] [F01][RUN] run_fill: start
+[2026-02-19 20:23:18] Fill runtime: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\BODAssist.py
+[2026-02-19 20:23:18] Fill resource serial: 0x40008663
+[2026-02-19 20:23:18] [F02][RUN] run_fill: config validation
+[2026-02-19 20:23:18] [F03][RUN] run_fill: travel phase
+[2026-02-19 20:23:18] [F03][RUN] travel_phase: recall home
+[2026-02-19 20:23:18] Fill: recalling home.
+[2026-02-19 20:23:24] [F03][RUN] travel_phase: close recall gump
+[2026-02-19 20:23:24] [F03S][RUN] post travel phase: recall_has=False, gumps=[]
+[2026-02-19 20:23:24] [F03D][RUN] delay start: travel->move (0.5s)
+[2026-02-19 20:23:24] [F03D][RUN] delay end: travel->move (elapsed=0.50s)
+[2026-02-19 20:23:24] [F03B][RUN] run_fill: move phase
+[2026-02-19 20:23:24] [F03B][RUN] move_phase: move to crafting station
+[2026-02-19 20:23:25] [F03BS][RUN] post move phase: recall_has=False, gumps=[]
+[2026-02-19 20:23:25] [F03BD][RUN] delay start: move->validate_resource (0.5s)
+[2026-02-19 20:23:25] [F03BD][RUN] delay end: move->validate_resource (elapsed=0.50s)
+[2026-02-19 20:23:25] [F04][RUN] run_fill: validate resource container access
+[2026-02-19 20:23:25] Resource container info (post-move): name='Barrel', dist=2, is_container=True
+[2026-02-19 20:23:25] [F04S][RUN] post validate resource: recall_has=False, gumps=[]
+[2026-02-19 20:23:25] [F04D][RUN] delay start: validate_resource->scan_bods (0.5s)
+[2026-02-19 20:23:26] [F04D][RUN] delay end: validate_resource->scan_bods (elapsed=0.50s)
+[2026-02-19 20:23:26] [F05][RUN] run_fill: backpack deeds found=34
+[2026-02-19 20:23:26] [F05S][RUN] post scan backpack deeds: recall_has=False, gumps=[]
+[2026-02-19 20:23:26] Fill selected BOD types: Tinker
+[2026-02-19 20:23:26] [F06][RUN] run_fill: filter deeds by selected/supported type
+[2026-02-19 20:23:26] Fill skip: 'unknown item' unresolved profession 'unknown'.
+[2026-02-19 20:23:26] Fill skip: 'Two Handed Axe' is Blacksmith, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Double Axe' is Blacksmith, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Ringmail Sleeves' is Blacksmith, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Heater Shield' is Blacksmith, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Female Plate' is Blacksmith, not selected.
+[2026-02-19 20:23:26] Fill skip: 'War Fork' is Blacksmith, not selected.
+[2026-02-19 20:23:26] Fill skip: 'unknown item' is Blacksmith, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Wizard's Hat' is Tailor, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Skullcap' is Tailor, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Leather Gorget' is Tailor, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Boots' is Tailor, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Studded Gloves' is Tailor, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Bow' unresolved profession 'Bowcraft'.
+[2026-02-19 20:23:26] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Wooden Box' is Carpentry, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Foot Stool' is Carpentry, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Medium Crate' is Carpentry, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Norse Helm' is Blacksmith, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Metal Kite Shield' is Blacksmith, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Chainmail Leggings' is Blacksmith, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Studded Tunic' is Tailor, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Studded Sleeves' is Tailor, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Wooden Bench' is Carpentry, not selected.
+[2026-02-19 20:23:26] Fill skip: 'Stool' is Carpentry, not selected.
+[2026-02-19 20:23:26] Fill skip: 'unknown item' is Carpentry, not selected.
+[2026-02-19 20:23:26] [F06S][RUN] post deed filtering: recall_has=False, gumps=[]
+[2026-02-19 20:23:26] [F06D][RUN] delay start: filter->process_worklist (0.5s)
+[2026-02-19 20:23:27] [F06D][RUN] delay end: filter->process_worklist (elapsed=0.50s)
+[2026-02-19 20:23:27] [F07][RUN] run_fill: processing worklist count=8
+[2026-02-19 20:23:27] [F07S][RUN] pre run loop setup: recall_has=False, gumps=[]
+[2026-02-19 20:23:27] [F07S][RUN] post run loop setup: recall_has=False, gumps=[]
+[2026-02-19 20:23:27] Fill: processing 8 deed(s). Skipped 26.
+[2026-02-19 20:23:27] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[]
+[2026-02-19 20:23:27] [F08][RUN] run_fill: deed 0x41A1EABB
+[2026-02-19 20:23:27] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[]
+[2026-02-19 20:23:27] [D01][PARSE] fill_single_deed: start deed=0x41A1EABB
+[2026-02-19 20:23:27] Filling tourmaline bracelet (Tinker) 0/20
+[2026-02-19 20:23:27] [D05][PARSE] fill_single_deed: begin progress=0/20
+[2026-02-19 20:23:27] [D06][PARSE] fill_single_deed: cycle=1 remaining=20
+[2026-02-19 20:23:27] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:23:27] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:23:27] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:23:27] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:23:27] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:23:28] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:23:28] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:23:28] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:23:28] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:23:29] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=True apply_material=True
+[2026-02-19 20:23:29] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:23:29] [D09D][CONTEXT] delay start: context->craft (0.5s)
+[2026-02-19 20:23:30] [D09D][CONTEXT] delay end: context->craft (elapsed=0.50s)
+[2026-02-19 20:23:30] [D10][CRAFT] craft_n_items: target=20, gid=3563514524
+[2026-02-19 20:23:30] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:23:30] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:23:30] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:23:30] [D10A][CRAFT] craft_once buttons=[1, 942]
+[2026-02-19 20:23:35] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:23:35] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:23:35] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:23:35] [D10A][CRAFT] craft_once buttons=[1, 942]
+[2026-02-19 20:23:39] [D10][CRAFT] craft_n_items: done crafted=0/20 last_err=craft_timeout
+[2026-02-19 20:23:39] Stopping deed after repeated failure: craft_timeout.
+[2026-02-19 20:23:39] [D06][PARSE] fill_single_deed: cycle=2 remaining=20
+[2026-02-19 20:23:39] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:23:39] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:23:39] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:23:40] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:23:40] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:23:40] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:23:40] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:23:40] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:23:40] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:23:40] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=False apply_material=True
+[2026-02-19 20:23:41] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:23:41] [D09D][CONTEXT] delay start: context->craft (0.5s)
+[2026-02-19 20:23:41] [D09D][CONTEXT] delay end: context->craft (elapsed=0.50s)
+[2026-02-19 20:23:41] [D10][CRAFT] craft_n_items: target=20, gid=3563514524
+[2026-02-19 20:23:41] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:23:41] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:23:41] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:23:41] [D10A][CRAFT] craft_once buttons=[1, 942]
+[2026-02-19 20:23:46] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:23:46] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:23:46] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:23:46] [D10A][CRAFT] craft_once buttons=[1, 942]
+[2026-02-19 20:23:51] [D10][CRAFT] craft_n_items: done crafted=0/20 last_err=craft_timeout
+[2026-02-19 20:23:51] Stopping deed after repeated failure: craft_timeout.
+[2026-02-19 20:23:51] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 20:23:51] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 20:23:51] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 20:23:51] [F08][RUN] run_fill: deed 0x41A1E904
+[2026-02-19 20:23:51] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 20:23:51] [D01][PARSE] fill_single_deed: start deed=0x41A1E904
+[2026-02-19 20:23:51] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 20:23:52] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 20:23:52] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 20:23:52] [F08][RUN] run_fill: deed 0x41A1EB76
+[2026-02-19 20:23:52] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 20:23:52] [D01][PARSE] fill_single_deed: start deed=0x41A1EB76
+[2026-02-19 20:23:52] Filling sewing kit (Tinker) 0/10
+[2026-02-19 20:23:52] [D05][PARSE] fill_single_deed: begin progress=0/10
+[2026-02-19 20:23:52] [D06][PARSE] fill_single_deed: cycle=1 remaining=10
+[2026-02-19 20:23:52] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:23:52] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:23:52] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:23:52] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:23:52] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:23:52] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:23:52] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:23:53] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:23:53] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:23:53] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=True apply_material=True
+[2026-02-19 20:23:54] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:23:54] [D09D][CONTEXT] delay start: context->craft (0.5s)
+[2026-02-19 20:23:54] [D09D][CONTEXT] delay end: context->craft (elapsed=0.50s)
+[2026-02-19 20:23:54] [D10][CRAFT] craft_n_items: target=10, gid=3563514524
+[2026-02-19 20:23:54] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:23:54] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:23:54] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:23:54] [D10A][CRAFT] craft_once buttons=[41, 122]
+[2026-02-19 20:23:56] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:23:56] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:23:56] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:23:56] [D10A][CRAFT] craft_once buttons=[41, 122]
+[2026-02-19 20:23:59] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:23:59] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:23:59] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:23:59] [D10A][CRAFT] craft_once buttons=[41, 122]
+[2026-02-19 20:24:01] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:24:01] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:24:01] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:24:01] [D10A][CRAFT] craft_once buttons=[41, 122]
+[2026-02-19 20:24:03] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:24:03] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:24:03] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:24:03] [D10A][CRAFT] craft_once buttons=[41, 122]
+[2026-02-19 20:24:05] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:24:05] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:24:06] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:24:06] [D10A][CRAFT] craft_once buttons=[41, 122]
+[2026-02-19 20:24:08] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:24:08] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:24:08] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:24:08] [D10A][CRAFT] craft_once buttons=[41, 122]
+[2026-02-19 20:24:10] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:24:10] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:24:10] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:24:10] [D10A][CRAFT] craft_once buttons=[41, 122]
+[2026-02-19 20:24:12] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:24:12] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:24:12] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:24:12] [D10A][CRAFT] craft_once buttons=[41, 122]
+[2026-02-19 20:24:15] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=3563514524
+[2026-02-19 20:24:15] [D09][CONTEXT] ensure_craft_context: material_select skipped gid=0xD466EA9C apply_material=False
+[2026-02-19 20:24:15] [D09][CONTEXT] ensure_craft_context: ok gid=3563514524
+[2026-02-19 20:24:15] [D10A][CRAFT] craft_once buttons=[41, 122]
+[2026-02-19 20:24:17] [D10][CRAFT] craft_n_items: done crafted=10/10 last_err=none
+[2026-02-19 20:24:17] [D10D][CRAFT] delay start: craft->combine (0.5s)
+[2026-02-19 20:24:18] [D10D][CRAFT] delay end: craft->combine (elapsed=0.50s)
+[2026-02-19 20:24:18] [D11][COMBINE] combine_and_recount: deed=0x41A1EB76
+[2026-02-19 20:24:18] [D11][COMBINE] combine_and_recount: progress=10/10
+[2026-02-19 20:24:18] [D11D][COMBINE] delay start: combine->progress_check (0.5s)
+[2026-02-19 20:24:19] [D11D][COMBINE] delay end: combine->progress_check (elapsed=0.50s)
+[2026-02-19 20:24:19] Deed progress: 10/10
+[2026-02-19 20:24:19] [D12][PARSE] fill_single_deed: loop progress=10/10
+[2026-02-19 20:24:19] [D13][PARSE] fill_single_deed: done=True
+[2026-02-19 20:24:19] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 20:24:19] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 20:24:19] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 20:24:19] [F08][RUN] run_fill: deed 0x41C99796
+[2026-02-19 20:24:19] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[3563514524]
+[2026-02-19 20:24:19] [D01][PARSE] fill_single_deed: start deed=0x41C99796
+[2026-02-19 20:24:19] Learn Mode (manual): enter mapping for 'Metal Container Engraving Tool'.
+[2026-02-19 20:24:19] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 20:24:22] RecipeEditor no ack after PlayScript [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]
+[2026-02-19 20:24:22] RecipeBookEditor opened. Waiting for Save/Cancel...
+[2026-02-19 20:24:23] RecipeEditor wait probe: requested=1 got=1 status=opened waited=1.0s
+[2026-02-19 20:24:25] RecipeEditor wait probe: requested=1 got=1 status=opened waited=3.0s
+[2026-02-19 20:24:27] RecipeEditor wait probe: requested=1 got=1 status=opened waited=5.1s
+[2026-02-19 20:24:29] RecipeEditor wait probe: requested=1 got=1 status=opened waited=7.2s
+[2026-02-19 20:24:31] RecipeEditor wait probe: requested=1 got=1 status=opened waited=9.3s
+[2026-02-19 20:24:33] RecipeEditor wait probe: requested=1 got=1 status=opened waited=11.4s
+[2026-02-19 20:24:36] RecipeEditor wait probe: requested=1 got=1 status=opened waited=13.5s
+[2026-02-19 20:24:38] RecipeEditor wait probe: requested=1 got=1 status=opened waited=15.6s
+[2026-02-19 20:24:40] RecipeEditor wait probe: requested=1 got=1 status=opened waited=17.6s
+[2026-02-19 20:24:42] RecipeEditor wait probe: requested=1 got=1 status=opened waited=19.6s
+[2026-02-19 20:24:44] RecipeEditor wait probe: requested=1 got=1 status=opened waited=21.6s
+[2026-02-19 20:24:46] RecipeEditor wait probe: requested=1 got=1 status=opened waited=23.6s
+[2026-02-19 20:24:48] RecipeEditor wait probe: requested=1 got=1 status=opened waited=25.6s
+[2026-02-19 20:24:50] RecipeEditor wait probe: requested=1 got=1 status=opened waited=27.6s
+[2026-02-19 20:24:52] RecipeEditor wait probe: requested=1 got=1 status=opened waited=29.6s
+[2026-02-19 20:24:54] RecipeEditor wait probe: requested=1 got=1 status=opened waited=31.6s
+[2026-02-19 20:24:56] RecipeEditor wait probe: requested=1 got=1 status=opened waited=33.6s
+[2026-02-19 20:24:58] RecipeEditor wait probe: requested=1 got=1 status=opened waited=35.6s
+[2026-02-19 20:25:00] RecipeEditor wait probe: requested=1 got=1 status=opened waited=37.6s
+[2026-02-19 20:25:02] RecipeEditor wait probe: requested=1 got=1 status=opened waited=39.6s
+[2026-02-19 20:25:04] RecipeEditor wait probe: requested=1 got=1 status=opened waited=41.6s
+[2026-02-19 20:25:06] RecipeEditor wait probe: requested=1 got=1 status=opened waited=43.6s
+[2026-02-19 20:25:08] RecipeEditor wait probe: requested=1 got=1 status=opened waited=45.6s
+[2026-02-19 20:25:10] RecipeEditor wait probe: requested=1 got=1 status=opened waited=47.6s
+[2026-02-19 20:25:12] RecipeEditor wait probe: requested=1 got=1 status=opened waited=49.6s
+[2026-02-19 20:25:14] RecipeEditor wait probe: requested=1 got=1 status=opened waited=51.6s
+[2026-02-19 20:25:16] RecipeEditor wait probe: requested=1 got=1 status=opened waited=53.6s
+[2026-02-19 20:25:18] RecipeEditor wait probe: requested=1 got=1 status=opened waited=55.6s
+[2026-02-19 20:25:20] RecipeEditor wait probe: requested=1 got=1 status=opened waited=57.6s
+[2026-02-19 20:25:22] RecipeEditor wait probe: requested=1 got=1 status=opened waited=59.6s
+[2026-02-19 20:25:24] RecipeEditor wait probe: requested=1 got=1 status=opened waited=61.6s
+[2026-02-19 20:25:26] RecipeEditor wait probe: requested=1 got=1 status=opened waited=63.6s
+[2026-02-19 20:25:28] RecipeEditor wait probe: requested=1 got=1 status=opened waited=65.7s
+[2026-02-19 20:25:30] RecipeEditor wait probe: requested=1 got=1 status=opened waited=67.8s
+[2026-02-19 20:25:32] RecipeEditor wait probe: requested=1 got=1 status=opened waited=69.9s
+[2026-02-19 20:25:34] RecipeEditor wait probe: requested=1 got=1 status=opened waited=72.0s
+[2026-02-19 20:25:36] RecipeEditor wait probe: requested=1 got=1 status=opened waited=74.1s
+[2026-02-19 20:25:38] RecipeEditor wait probe: requested=1 got=1 status=opened waited=76.2s
+[2026-02-19 20:25:41] RecipeEditor wait probe: requested=1 got=1 status=opened waited=78.3s
+[2026-02-19 20:25:43] RecipeEditor wait probe: requested=1 got=1 status=opened waited=80.4s
+[2026-02-19 20:25:45] RecipeEditor wait probe: requested=1 got=1 status=opened waited=82.5s
+[2026-02-19 20:25:47] RecipeEditor wait probe: requested=1 got=1 status=opened waited=84.6s
+[2026-02-19 20:25:49] RecipeEditor wait probe: requested=1 got=1 status=opened waited=86.7s
+[2026-02-19 20:25:51] RecipeEditor wait probe: requested=1 got=1 status=opened waited=88.8s
+[2026-02-19 20:25:53] RecipeEditor wait probe: requested=1 got=1 status=opened waited=90.9s
+[2026-02-19 20:25:55] RecipeEditor wait probe: requested=1 got=1 status=opened waited=93.0s
+[2026-02-19 20:25:57] RecipeEditor wait probe: requested=1 got=1 status=opened waited=95.1s
+[2026-02-19 20:25:59] RecipeEditor wait probe: requested=1 got=1 status=opened waited=97.2s
+[2026-02-19 20:26:02] RecipeEditor wait probe: requested=1 got=1 status=opened waited=99.3s
+[2026-02-19 20:26:04] RecipeEditor wait probe: requested=1 got=1 status=opened waited=101.4s
+[2026-02-19 20:26:06] RecipeEditor wait probe: requested=1 got=1 status=opened waited=103.5s
+[2026-02-19 20:26:08] RecipeEditor wait probe: requested=1 got=1 status=opened waited=105.6s
+[2026-02-19 20:26:10] RecipeEditor wait probe: requested=1 got=1 status=opened waited=107.7s
+[2026-02-19 20:26:12] RecipeEditor wait probe: requested=1 got=1 status=opened waited=109.8s
+[2026-02-19 20:26:14] RecipeEditor wait probe: requested=1 got=1 status=opened waited=111.9s
+[2026-02-19 20:26:16] RecipeEditor wait probe: requested=1 got=1 status=opened waited=114.0s
+[2026-02-19 20:26:18] RecipeEditor wait probe: requested=1 got=1 status=opened waited=116.1s
+[2026-02-19 20:26:20] RecipeEditor wait probe: requested=1 got=1 status=opened waited=118.2s
+[2026-02-19 20:26:23] RecipeEditor wait probe: requested=1 got=1 status=opened waited=120.3s
+[2026-02-19 20:26:25] RecipeEditor wait probe: requested=1 got=1 status=opened waited=122.4s
+[2026-02-19 20:26:27] RecipeEditor wait probe: requested=1 got=1 status=opened waited=124.5s
+[2026-02-19 20:26:29] RecipeEditor wait probe: requested=1 got=1 status=opened waited=126.6s
+[2026-02-19 20:26:31] RecipeEditor wait probe: requested=1 got=1 status=opened waited=128.7s
+[2026-02-19 20:26:33] RecipeEditor wait probe: requested=1 got=1 status=opened waited=130.8s
+[2026-02-19 20:26:35] RecipeEditor wait probe: requested=1 got=1 status=opened waited=132.9s
+[2026-02-19 20:26:37] RecipeEditor wait probe: requested=1 got=1 status=opened waited=135.0s
+[2026-02-19 20:26:39] RecipeEditor wait probe: requested=1 got=1 status=opened waited=137.1s
+[2026-02-19 20:26:42] RecipeEditor wait probe: requested=1 got=1 status=opened waited=139.2s
+[2026-02-19 20:26:44] RecipeEditor wait probe: requested=1 got=1 status=opened waited=141.3s
+[2026-02-19 20:26:46] RecipeEditor wait probe: requested=1 got=1 status=opened waited=143.4s
+[2026-02-19 20:26:48] RecipeEditor wait probe: requested=1 got=1 status=opened waited=145.5s
+[2026-02-19 20:26:50] RecipeEditor wait probe: requested=1 got=1 status=opened waited=147.6s
+[2026-02-19 20:26:52] RecipeEditor wait probe: requested=1 got=1 status=opened waited=149.7s
+[2026-02-19 20:26:54] RecipeEditor wait probe: requested=1 got=1 status=opened waited=151.8s
+[2026-02-19 20:26:56] RecipeEditor wait probe: requested=1 got=1 status=opened waited=153.9s
+[2026-02-19 20:26:58] RecipeEditor wait probe: requested=1 got=1 status=opened waited=156.0s
+[2026-02-19 20:27:00] RecipeEditor wait probe: requested=1 got=1 status=opened waited=158.1s
+[2026-02-19 20:27:03] RecipeEditor wait probe: requested=1 got=1 status=opened waited=160.2s
+[2026-02-19 20:27:05] RecipeEditor wait probe: requested=1 got=1 status=opened waited=162.3s
+[2026-02-19 20:27:07] RecipeEditor wait probe: requested=1 got=1 status=opened waited=164.4s
+[2026-02-19 20:27:09] RecipeEditor wait probe: requested=1 got=1 status=opened waited=166.5s
+[2026-02-19 20:27:11] RecipeEditor wait probe: requested=1 got=1 status=opened waited=168.6s
+[2026-02-19 20:27:13] RecipeEditor wait probe: requested=1 got=1 status=opened waited=170.7s
+[2026-02-19 20:27:15] RecipeEditor wait probe: requested=1 got=1 status=opened waited=172.8s
+[2026-02-19 20:27:17] RecipeEditor wait probe: requested=1 got=1 status=opened waited=174.9s
+[2026-02-19 20:27:19] RecipeEditor wait probe: requested=1 got=1 status=opened waited=177.0s
+[2026-02-19 20:27:22] RecipeEditor wait probe: requested=1 got=1 status=opened waited=179.1s
+[2026-02-19 20:27:23] RecipeEditor wait fail-safe timeout (180s); continuing.
+[2026-02-19 20:27:23] Recipe cache reload (post_recipe_editor): recipes=5 key_servers=1
+[2026-02-19 20:27:23] Manual learn: recovered mapping from refreshed cache for 'Metal Container Engraving Tool'.
+[2026-02-19 20:27:23] Filling metal container engraving tool (Tinker) 0/20
+[2026-02-19 20:27:23] [D05][PARSE] fill_single_deed: begin progress=0/20
+[2026-02-19 20:27:23] [D06][PARSE] fill_single_deed: cycle=1 remaining=20
+[2026-02-19 20:27:23] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:27:23] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:27:23] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:27:23] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:27:23] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:27:23] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:27:23] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:27:24] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:27:24] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:27:24] TargetGuard: cleared pending target cursor (ensure_craft_context).
+[2026-02-19 20:27:24] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0x4CD8C002 opened_now=True apply_material=True
+[2026-02-19 20:27:26] [D09][CONTEXT] ensure_craft_context: gump closed after material_select gid=0x4CD8C002
+[2026-02-19 20:27:26] Could not open Tinker gump.
+[2026-02-19 20:27:26] [D06][PARSE] fill_single_deed: cycle=2 remaining=20
+[2026-02-19 20:27:26] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:27:26] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:27:26] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:27:26] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:27:26] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:27:26] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:27:26] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:27:27] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:27:27] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:27:27] [D09][CONTEXT] ensure_craft_context: material_select begin gid=0xD466EA9C opened_now=True apply_material=True
+[2026-02-19 20:27:28] [D09][CONTEXT] ensure_craft_context: gump closed after material_select gid=0xD466EA9C
+[2026-02-19 20:27:28] Could not open Tinker gump.
+[2026-02-19 20:27:28] Stopping deed after repeated failure: material_select.
+[2026-02-19 20:27:28] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 20:27:28] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 20:27:28] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[]
+[2026-02-19 20:27:28] [F08][RUN] run_fill: deed 0x420EB9DA
+[2026-02-19 20:27:29] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[]
+[2026-02-19 20:27:29] [D01][PARSE] fill_single_deed: start deed=0x420EB9DA
+[2026-02-19 20:27:29] Learn Mode (manual): enter mapping for 'Froe'.
+[2026-02-19 20:27:29] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 20:27:31] RecipeEditor no ack after PlayScript [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]
+[2026-02-19 20:27:34] RecipeEditor no ack after PlayScript [RecipeBookEditor.py]
+[2026-02-19 20:27:36] RecipeEditor no ack after PlayScript [RecipeBookEditor]
+[2026-02-19 20:27:39] RecipeEditor no ack after PlayScript [Utilities/RecipeBookEditor.py]
+[2026-02-19 20:27:41] RecipeEditor no ack after PlayScript [Utilities\RecipeBookEditor.py]
+[2026-02-19 20:27:41] Could not launch RecipeBookEditor.py (PlayScript sent but no editor ack).
+[2026-02-19 20:27:41] Recipe cache reload (post_recipe_editor): recipes=5 key_servers=1
+[2026-02-19 20:27:41] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 20:27:41] No recipe mapping for deed item 'Froe'.
+[2026-02-19 20:27:41] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 20:27:42] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 20:27:42] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[]
+[2026-02-19 20:27:42] [F08][RUN] run_fill: deed 0x420EBA06
+[2026-02-19 20:27:42] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[]
+[2026-02-19 20:27:42] [D01][PARSE] fill_single_deed: start deed=0x420EBA06
+[2026-02-19 20:27:42] Learn Mode (manual): enter mapping for 'Candelabra'.
+[2026-02-19 20:27:42] Manual recipe required. Opening RecipeBookEditor.
+[2026-02-19 20:27:44] RecipeEditor no ack after PlayScript [F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Utilities\RecipeBookEditor.py]
+[2026-02-19 20:27:47] RecipeEditor no ack after PlayScript [RecipeBookEditor.py]
+[2026-02-19 20:27:49] RecipeEditor no ack after PlayScript [RecipeBookEditor]
+[2026-02-19 20:27:52] RecipeEditor no ack after PlayScript [Utilities/RecipeBookEditor.py]
+[2026-02-19 20:27:54] RecipeEditor no ack after PlayScript [Utilities\RecipeBookEditor.py]
+[2026-02-19 20:27:54] Could not launch RecipeBookEditor.py (PlayScript sent but no editor ack).
+[2026-02-19 20:27:54] Recipe cache reload (post_recipe_editor): recipes=5 key_servers=1
+[2026-02-19 20:27:54] [D03][PARSE] fill_single_deed: missing recipe mapping
+[2026-02-19 20:27:54] No recipe mapping for deed item 'Candelabra'.
+[2026-02-19 20:27:54] [F08D][RUN] delay start: deed->next_deed (0.5s)
+[2026-02-19 20:27:55] [F08D][RUN] delay end: deed->next_deed (elapsed=0.50s)
+[2026-02-19 20:27:55] [F07S][RUN] loop tick pre-deed: recall_has=False, gumps=[]
+[2026-02-19 20:27:55] [F08][RUN] run_fill: deed 0x420EBA2F
+[2026-02-19 20:27:55] [F08S][RUN] pre fill_single_deed: recall_has=False, gumps=[]
+[2026-02-19 20:27:55] [D01][PARSE] fill_single_deed: start deed=0x420EBA2F
+[2026-02-19 20:27:55] Filling clock frame (Tinker) 0/20
+[2026-02-19 20:27:55] [D05][PARSE] fill_single_deed: begin progress=0/20
+[2026-02-19 20:27:55] [D06][PARSE] fill_single_deed: cycle=1 remaining=20
+[2026-02-19 20:27:55] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:27:55] [D07][MATERIAL] ensure_materials_for_deed: ok
+[2026-02-19 20:27:55] [D07D][MATERIAL] delay start: materials->tools (0.5s)
+[2026-02-19 20:27:55] [D07D][MATERIAL] delay end: materials->tools (elapsed=0.50s)
+[2026-02-19 20:27:55] [D08][TOOL] ensure_tool_for_profession: Tinker
+[2026-02-19 20:27:55] [D08][TOOL] ensure_tool_for_profession: ok
+[2026-02-19 20:27:55] [D08D][TOOL] delay start: tools->context (0.5s)
+[2026-02-19 20:27:56] [D08D][TOOL] delay end: tools->context (elapsed=0.50s)
+[2026-02-19 20:27:56] [D09][CONTEXT] ensure_craft_context: prof=Tinker, gid=0
+[2026-02-19 20:27:58] [D09][CONTEXT] ensure_craft_context: open_gump fail
+[2026-02-19 20:27:58] Could not open Tinker gump.
+[2026-02-19 20:27:58] [D06][PARSE] fill_single_deed: cycle=2 remaining=20
+[2026-02-19 20:27:58] [D07][MATERIAL] ensure_materials_for_deed: start
+[2026-02-19 20:27:58] Opening resource container 0x40008663 for restock.
+[2026-02-19 20:27:58] RestockOpen: UseObject attempt 1 sent.
