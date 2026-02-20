@@ -219,6 +219,12 @@ TINKER_IRON_MATERIAL_BUTTONS = [7, 6]
 
 RECIPE_BOOK = []
 KEY_MAPS = {}
+RESOURCE_ITEM_MAP = {}
+RESOURCE_NAME_ALIASES = {
+    "feathers": "feather",
+    "ingots": "ingot",
+    "boards": "board",
+}
 
 # Category-level first-button overrides for craft paths.
 # Format: {server: {profession: {category: first_button_id}}}
@@ -870,19 +876,46 @@ def _merge_item_key_map_into_recipe(recipe):
     return merged
 
 
-def _resource_item_defaults(material):
+def _resource_name_key(material):
     mat = _normalize_text(material or "")
+    if mat in RESOURCE_NAME_ALIASES:
+        mat = str(RESOURCE_NAME_ALIASES.get(mat, mat) or mat)
+    return mat
+
+
+def _resource_map_lookup(material):
+    key = _resource_name_key(material)
+    if not key:
+        return None
+    ent = RESOURCE_ITEM_MAP.get(key, {}) if isinstance(RESOURCE_ITEM_MAP, dict) else {}
+    if not ent and key.endswith("s"):
+        ent = RESOURCE_ITEM_MAP.get(key[:-1], {}) if isinstance(RESOURCE_ITEM_MAP, dict) else {}
+    return dict(ent) if isinstance(ent, dict) else None
+
+
+def _resource_item_defaults(material):
+    mat = _resource_name_key(material)
     if mat == "ingot":
-        return INGOT_ID, 60, 400
+        return INGOT_ID, 60, 400, None
     if mat == "cloth":
-        return CLOTH_ID, 60, 300
+        return CLOTH_ID, 60, 300, None
     if mat == "leather":
-        return LEATHER_ID, 60, 300
+        return LEATHER_ID, 60, 300, None
     if mat == "board":
-        return BOARD_ID, 80, 500
+        return BOARD_ID, 80, 500, None
     if mat in ("feather", "feathers"):
-        return FEATHER_ID, 60, 300
-    return 0, 10, 50
+        return FEATHER_ID, 60, 300, None
+    ent = _resource_map_lookup(mat) or {}
+    iid = int(ent.get("item_id", 0) or 0)
+    hue = ent.get("hue", None)
+    if hue is not None:
+        try:
+            hue = int(hue)
+        except Exception:
+            hue = None
+    if iid > 0:
+        return int(iid), 10, 50, hue
+    return 0, 10, 50, hue
 
 
 def _material_requirements_from_recipe(recipe, required_items=1):
@@ -900,13 +933,13 @@ def _material_requirements_from_recipe(recipe, required_items=1):
             if not base or per_item <= 0:
                 continue
             total = max(1, int(per_item) * int(needed))
-            iid, _, default_pull = _resource_item_defaults(base)
+            iid, _, default_pull, mapped_hue = _resource_item_defaults(base)
             reqs.append({
                 "material": base,
                 "item_id": int(iid or 0),
                 "min_in_pack": int(total),
                 "pull_amount": int(max(total, default_pull)),
-                "hue": None,
+                "hue": mapped_hue,
             })
     raw = recipe.get("materials", []) or []
     if isinstance(raw, list) and not reqs:
@@ -915,12 +948,22 @@ def _material_requirements_from_recipe(recipe, required_items=1):
                 base = _normalize_text(ent.get("material", "") or "")
                 if not base:
                     base = _normalize_text(_material_base_from_recipe(recipe))
+                iid_default, _, pull_default, hue_default = _resource_item_defaults(base)
+                iid = int(ent.get("item_id", 0) or 0)
+                if iid <= 0:
+                    iid = int(iid_default or 0)
+                hue = ent.get("hue", None)
+                if hue is None:
+                    hue = hue_default
+                pull_amount = int(ent.get("pull_amount", 0) or 0)
+                if pull_amount <= 0:
+                    pull_amount = int(pull_default or 0)
                 reqs.append({
                     "material": base,
-                    "item_id": int(ent.get("item_id", 0) or 0),
+                    "item_id": int(iid or 0),
                     "min_in_pack": int(ent.get("min_in_pack", 0) or 0),
-                    "pull_amount": int(ent.get("pull_amount", 0) or 0),
-                    "hue": ent.get("hue", None),
+                    "pull_amount": int(pull_amount or 0),
+                    "hue": hue,
                 })
             else:
                 base = _normalize_text(str(ent or ""))
@@ -1170,8 +1213,20 @@ def _load_key_maps_from_file():
         return {}
 
 
+def _load_resource_item_map_from_file():
+    if RECIPE_STORE is None:
+        return {}
+    if not hasattr(RECIPE_STORE, "load_resource_item_map"):
+        return {}
+    try:
+        raw = RECIPE_STORE.load_resource_item_map() or {}
+        return dict(raw) if isinstance(raw, dict) else {}
+    except Exception:
+        return {}
+
+
 def _reload_recipe_cache_from_store(reason=""):
-    global RECIPE_BOOK, KEY_MAPS
+    global RECIPE_BOOK, KEY_MAPS, RESOURCE_ITEM_MAP
     if RECIPE_STORE is None:
         return False
     changed = False
@@ -1189,12 +1244,20 @@ def _reload_recipe_cache_from_store(reason=""):
             changed = True
     except Exception:
         pass
+    try:
+        res_map = _load_resource_item_map_from_file()
+        if isinstance(res_map, dict):
+            RESOURCE_ITEM_MAP = dict(res_map)
+            changed = True
+    except Exception:
+        pass
     if changed:
         _write_debug_log(
-            "Recipe cache reload ({0}): recipes={1} key_servers={2}".format(
+            "Recipe cache reload ({0}): recipes={1} key_servers={2} resources={3}".format(
                 str(reason or "manual"),
                 int(len(RECIPE_BOOK)),
                 int(len(KEY_MAPS)),
+                int(len(RESOURCE_ITEM_MAP)),
             )
         )
     return changed
@@ -1410,7 +1473,7 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
 
 
 def _load_config():
-    global RUNBOOK_SERIAL, RESOURCE_CONTAINER_SERIAL, BOD_ITEM_CONTAINER_SERIAL, SALVAGE_BAG_SERIAL, TRASH_CONTAINER_SERIAL, AUTO_TOOLING, LEARN_MODE, RECIPE_BOOK, KEY_MAPS, SELECTED_SERVER
+    global RUNBOOK_SERIAL, RESOURCE_CONTAINER_SERIAL, BOD_ITEM_CONTAINER_SERIAL, SALVAGE_BAG_SERIAL, TRASH_CONTAINER_SERIAL, AUTO_TOOLING, LEARN_MODE, RECIPE_BOOK, KEY_MAPS, RESOURCE_ITEM_MAP, SELECTED_SERVER
     global CRAFT_STATION_X, CRAFT_STATION_Y, CRAFT_STATION_Z, CRAFT_STATION_SET, USE_SACRED_JOURNEY, ENABLED_BOD_TYPES
     raw = API.GetPersistentVar(DATA_KEY, "", API.PersistentVar.Char)
     if raw:
@@ -1489,12 +1552,18 @@ def _load_config():
         _write_debug_log("Config: recipe load unavailable; continuing with empty recipe book.")
     _write_debug_log("Config: key-map load begin.")
     KEY_MAPS = dict(_load_key_maps_from_file() or {})
+    _write_debug_log("Config: resource-map load begin.")
+    RESOURCE_ITEM_MAP = dict(_load_resource_item_map_from_file() or {})
     _refresh_recall_buttons()
     try:
         km_ct = len(KEY_MAPS)
     except Exception:
         km_ct = 0
-    _write_debug_log(f"Config: recipe DB stage end. recipes={len(RECIPE_BOOK)} key_servers={km_ct}")
+    try:
+        rm_ct = len(RESOURCE_ITEM_MAP)
+    except Exception:
+        rm_ct = 0
+    _write_debug_log(f"Config: recipe DB stage end. recipes={len(RECIPE_BOOK)} key_servers={km_ct} resources={rm_ct}")
 
 
 def _save_config():
@@ -2545,13 +2614,17 @@ def _run_db_diag():
         f"servers={int(summary.get('servers_count', 0) or 0)} "
         f"profession_nodes={int(summary.get('profession_nodes', 0) or 0)} "
         f"material_keys={int(summary.get('material_keys_total', 0) or 0)} "
-        f"item_keys={int(summary.get('item_keys_total', 0) or 0)}"
+        f"item_keys={int(summary.get('item_keys_total', 0) or 0)} "
+        f"resources={int(summary.get('resources_total', 0) or 0)} "
+        f"resources_mapped={int(summary.get('resources_with_item_id', 0) or 0)} "
+        f"item_resource_costs={int(summary.get('item_resource_costs_total', 0) or 0)}"
     )
     _say(
         "DBDiag: selected_server "
         f"{sel_server} recipes={int(summary.get('selected_server_recipes', 0) or 0)} "
         f"material_keys={int(summary.get('selected_server_material_keys', 0) or 0)} "
-        f"item_keys={int(summary.get('selected_server_item_keys', 0) or 0)}"
+        f"item_keys={int(summary.get('selected_server_item_keys', 0) or 0)} "
+        f"item_resource_costs={int(summary.get('selected_server_item_resource_costs', 0) or 0)}"
     )
     _say("DBDiag: done.")
 
@@ -4070,12 +4143,18 @@ def _ensure_material_for_recipe(recipe, required_items=1):
             # No generic scale item-id mapping in script yet; assume player stocked scales manually.
             continue
         iid = int(r.get("item_id", 0) or 0)
-        if iid > 0:
-            minimum = int(r.get("min_in_pack", 0) or 10)
-            pull = int(r.get("pull_amount", 0) or max(50, minimum))
-            hue = r.get("hue", None)
-            if _restock_resource(iid, min_in_pack=minimum, pull_amount=pull, hue=hue) < minimum:
-                return False
+        minimum = int(r.get("min_in_pack", 0) or 10)
+        pull = int(r.get("pull_amount", 0) or max(50, minimum))
+        hue = r.get("hue", None)
+        if iid <= 0:
+            _say(
+                f"Missing resource item-id mapping for '{mat}' "
+                "(set resources.item_id in craftables.db).",
+                33
+            )
+            return False
+        if _restock_resource(iid, min_in_pack=minimum, pull_amount=pull, hue=hue) < minimum:
+            return False
     return True
 
 

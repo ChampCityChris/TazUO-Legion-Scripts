@@ -4,7 +4,7 @@ import sqlite3
 import time
 
 DB_FILE = "craftables.db"
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 4
 RECIPES_JSON_FILE = "recipes.json"
 MATERIAL_KEYS_JSON_FILE = "material_keys.json"
 ITEM_KEYS_JSON_FILE = "item_keys.json"
@@ -15,6 +15,25 @@ INIT_RETRY_COOLDOWN_S = 1.5
 _INIT_OK = False
 _INIT_NEXT_RETRY_AT = 0.0
 _INIT_LAST_ERROR = ""
+RESOURCE_ITEM_ID_SEEDS = {
+    "ingot": 0x1BF2,
+    "board": 0x1BD7,
+    "feather": 0x1BD1,
+    "feathers": 0x1BD1,
+    "cloth": 0x1766,
+    "leather": 0x1081,
+    "star sapphire": 0x0F0F,
+    "emerald": 0x0F10,
+    "sapphire": 0x0F11,
+    "ruby": 0x0F13,
+    "citrine": 0x0F15,
+    "amethyst": 0x0F16,
+    "tourmaline": 0x0F18,
+    "amber": 0x0F25,
+    "diamond": 0x0F26,
+    "blank scroll": 0x0EF3,
+    "mandrake": 0x0F86,
+}
 
 
 def _base_dir():
@@ -181,6 +200,11 @@ def _as_list(value):
     return list(value) if isinstance(value, list) else []
 
 
+def _norm_resource_name(name):
+    text = str(name or "").strip().lower()
+    return " ".join(text.split())
+
+
 def _is_valid_recipe_row(row):
     if not isinstance(row, dict):
         return False
@@ -200,6 +224,201 @@ def _read_json_file(path, default):
         return default
 
 
+def _table_columns(conn, table_name):
+    out = set()
+    try:
+        cur = conn.execute("PRAGMA table_info(" + str(table_name) + ")")
+        for r in cur.fetchall():
+            try:
+                out.add(str(r[1] or "").strip().lower())
+            except Exception:
+                pass
+    except Exception:
+        return set()
+    return out
+
+
+def _has_columns(conn, table_name, names):
+    cols = _table_columns(conn, table_name)
+    want = [str(x or "").strip().lower() for x in (names or []) if str(x or "").strip()]
+    return bool(cols) and all(n in cols for n in want)
+
+
+def _rename_column_if_present(conn, table_name, old_name, new_name):
+    old_col = str(old_name or "").strip().lower()
+    new_col = str(new_name or "").strip().lower()
+    if not old_col or not new_col or old_col == new_col:
+        return
+    cols = _table_columns(conn, table_name)
+    if not cols or new_col in cols or old_col not in cols:
+        return
+    try:
+        conn.execute(
+            "ALTER TABLE "
+            + str(table_name)
+            + " RENAME COLUMN "
+            + str(old_name)
+            + " TO "
+            + str(new_name)
+        )
+    except Exception:
+        pass
+
+
+def _normalize_resource_rows(resources):
+    out = []
+    for r in (resources or []):
+        if not isinstance(r, dict):
+            continue
+        mat = _norm_resource_name(r.get("material", ""))
+        try:
+            qty = int(r.get("per_item", 0) or 0)
+        except Exception:
+            qty = 0
+        if mat and qty > 0:
+            out.append({"material": mat, "per_item": int(qty)})
+    return out
+
+
+def _ensure_resource_name(conn, name):
+    nm = str(name or "").strip()
+    if not nm:
+        return 0
+    try:
+        cur = conn.execute("SELECT id FROM resources WHERE lower(name)=lower(?) LIMIT 1", (nm,))
+        row = cur.fetchone()
+        if row:
+            return int(row[0] or 0)
+    except Exception:
+        pass
+    try:
+        cur = conn.execute("INSERT INTO resources(name) VALUES (?)", (nm,))
+        return int(getattr(cur, "lastrowid", 0) or 0)
+    except Exception:
+        try:
+            cur = conn.execute("SELECT id FROM resources WHERE lower(name)=lower(?) LIMIT 1", (nm,))
+            row = cur.fetchone()
+            return int(row[0] or 0) if row else 0
+        except Exception:
+            return 0
+
+
+def _write_item_resource_costs(conn, server, profession, item_key, resources):
+    if not _has_columns(conn, "item_resource_costs", ["server", "profession", "item_key", "slot", "resource_id", "per_item"]):
+        return
+    if not _has_columns(conn, "resources", ["id", "name"]):
+        return
+    srv = str(server or "")
+    prof = str(profession or "")
+    ik = str(item_key or "")
+    if not (srv and prof and ik):
+        return
+    rows = _normalize_resource_rows(resources)
+    conn.execute(
+        "DELETE FROM item_resource_costs WHERE server=? AND profession=? AND item_key=?",
+        (srv, prof, ik),
+    )
+    slot = 0
+    for rr in rows:
+        slot += 1
+        rid = _ensure_resource_name(conn, rr.get("material", ""))
+        if int(rid) <= 0:
+            continue
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO item_resource_costs
+            (server, profession, item_key, slot, resource_id, per_item)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (srv, prof, ik, int(slot), int(rid), int(rr.get("per_item", 0) or 0)),
+        )
+
+
+def _seed_resource_item_ids(conn):
+    if not _has_columns(conn, "resources", ["name", "item_id"]):
+        return
+    for name, item_id in (RESOURCE_ITEM_ID_SEEDS or {}).items():
+        nm = _norm_resource_name(name)
+        iid = int(item_id or 0)
+        if not nm or iid <= 0:
+            continue
+        try:
+            conn.execute(
+                """
+                UPDATE resources
+                SET item_id=?
+                WHERE lower(name)=lower(?) AND coalesce(item_id, 0) <= 0
+                """,
+                (iid, nm),
+            )
+        except Exception:
+            pass
+
+
+def _load_item_resource_costs(conn):
+    out = {}
+    if not _has_columns(conn, "item_resource_costs", ["server", "profession", "item_key", "slot", "resource_id", "per_item"]):
+        return out
+    if not _has_columns(conn, "resources", ["id", "name"]):
+        return out
+    cur = conn.execute(
+        """
+        SELECT irc.server, irc.profession, irc.item_key, irc.slot, irc.per_item, res.name
+        FROM item_resource_costs irc
+        JOIN resources res ON res.id = irc.resource_id
+        ORDER BY irc.server, irc.profession, irc.item_key, irc.slot
+        """
+    )
+    for row in cur.fetchall():
+        srv = str(row[0] or "")
+        prof = str(row[1] or "")
+        ik = str(row[2] or "")
+        mat = _norm_resource_name(row[5])
+        try:
+            qty = int(row[4] or 0)
+        except Exception:
+            qty = 0
+        if not (srv and prof and ik and mat and qty > 0):
+            continue
+        k = (srv, prof, ik)
+        if k not in out:
+            out[k] = []
+        out[k].append({"material": mat, "per_item": int(qty)})
+    return out
+
+
+def _bootstrap_item_resource_costs_from_item_keys(conn):
+    if not _has_columns(conn, "item_resource_costs", ["server", "profession", "item_key", "slot", "resource_id", "per_item"]):
+        return
+    if not _has_columns(conn, "resources", ["id", "name"]):
+        return
+    try:
+        cur = conn.execute("SELECT COUNT(1) FROM item_resource_costs")
+        count = int((cur.fetchone() or [0])[0] or 0)
+    except Exception:
+        count = 0
+    if count > 0:
+        return
+    cols = _table_columns(conn, "item_keys")
+    if not cols:
+        return
+    src_col = "resources" if "resources" in cols else ("resources_json" if "resources_json" in cols else "")
+    if not src_col:
+        return
+    cur = conn.execute(
+        "SELECT server, profession, item_key, " + str(src_col) + " FROM item_keys"
+    )
+    for row in cur.fetchall():
+        resources = _safe_json_loads(row[3], [])
+        _write_item_resource_costs(
+            conn,
+            str(row[0] or ""),
+            str(row[1] or ""),
+            str(row[2] or ""),
+            resources,
+        )
+
+
 def _ensure_schema(conn):
     conn.executescript(
         """
@@ -215,11 +434,11 @@ def _ensure_schema(conn):
             profession TEXT NOT NULL,
             name TEXT NOT NULL,
             item_id INTEGER NOT NULL DEFAULT 0,
-            buttons_json TEXT NOT NULL DEFAULT '[]',
+            buttons TEXT NOT NULL DEFAULT '[]',
             material TEXT NOT NULL DEFAULT '',
             material_key TEXT NOT NULL DEFAULT '',
-            materials_json TEXT NOT NULL DEFAULT '[]',
-            material_buttons_json TEXT NOT NULL DEFAULT '[]',
+            materials TEXT NOT NULL DEFAULT '[]',
+            material_buttons TEXT NOT NULL DEFAULT '[]',
             deed_key TEXT NOT NULL DEFAULT '',
             start_at REAL,
             stop_at REAL,
@@ -234,7 +453,7 @@ def _ensure_schema(conn):
             profession TEXT NOT NULL,
             material_key TEXT NOT NULL,
             material TEXT NOT NULL DEFAULT '',
-            material_buttons_json TEXT NOT NULL DEFAULT '[]',
+            material_buttons TEXT NOT NULL DEFAULT '[]',
             PRIMARY KEY(server, profession, material_key)
         );
 
@@ -244,10 +463,10 @@ def _ensure_schema(conn):
             item_key TEXT NOT NULL,
             name TEXT NOT NULL DEFAULT '',
             item_id INTEGER NOT NULL DEFAULT 0,
-            buttons_json TEXT NOT NULL DEFAULT '[]',
+            buttons TEXT NOT NULL DEFAULT '[]',
             default_material_key TEXT NOT NULL DEFAULT '',
             category TEXT NOT NULL DEFAULT '',
-            resources_json TEXT NOT NULL DEFAULT '[]',
+            resources TEXT NOT NULL DEFAULT '[]',
             PRIMARY KEY(server, profession, item_key)
         );
 
@@ -258,16 +477,65 @@ def _ensure_schema(conn):
             sort_order INTEGER NOT NULL DEFAULT 0,
             PRIMARY KEY(server, profession, category)
         );
+
+        CREATE TABLE IF NOT EXISTS resources (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            item_id INTEGER NOT NULL DEFAULT 0,
+            hue INTEGER
+        );
+
+        CREATE TABLE IF NOT EXISTS item_resource_costs (
+            server TEXT NOT NULL,
+            profession TEXT NOT NULL,
+            item_key TEXT NOT NULL,
+            slot INTEGER NOT NULL,
+            resource_id INTEGER NOT NULL,
+            per_item INTEGER NOT NULL,
+            PRIMARY KEY(server, profession, item_key, slot)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_item_resource_costs_lookup
+            ON item_resource_costs(server, profession, item_key);
         """
     )
     # Backward-compatible migration for existing databases.
     try:
-        cols = conn.execute("PRAGMA table_info(item_keys)").fetchall()
-        col_names = set(str(c[1] or "").lower() for c in cols)
+        _rename_column_if_present(conn, "recipes", "buttons_json", "buttons")
+        _rename_column_if_present(conn, "recipes", "materials_json", "materials")
+        _rename_column_if_present(conn, "recipes", "material_buttons_json", "material_buttons")
+        _rename_column_if_present(conn, "material_keys", "material_buttons_json", "material_buttons")
+        _rename_column_if_present(conn, "item_keys", "buttons_json", "buttons")
+        _rename_column_if_present(conn, "item_keys", "resources_json", "resources")
+
+        col_names = _table_columns(conn, "item_keys")
         if "category" not in col_names:
             conn.execute("ALTER TABLE item_keys ADD COLUMN category TEXT NOT NULL DEFAULT ''")
+        if "buttons" not in col_names:
+            conn.execute("ALTER TABLE item_keys ADD COLUMN buttons TEXT NOT NULL DEFAULT '[]'")
+        if "resources" not in col_names:
+            conn.execute("ALTER TABLE item_keys ADD COLUMN resources TEXT NOT NULL DEFAULT '[]'")
+
+        recipe_cols = _table_columns(conn, "recipes")
+        if "buttons" not in recipe_cols:
+            conn.execute("ALTER TABLE recipes ADD COLUMN buttons TEXT NOT NULL DEFAULT '[]'")
+        if "materials" not in recipe_cols:
+            conn.execute("ALTER TABLE recipes ADD COLUMN materials TEXT NOT NULL DEFAULT '[]'")
+        if "material_buttons" not in recipe_cols:
+            conn.execute("ALTER TABLE recipes ADD COLUMN material_buttons TEXT NOT NULL DEFAULT '[]'")
+
+        mat_cols = _table_columns(conn, "material_keys")
+        if "material_buttons" not in mat_cols:
+            conn.execute("ALTER TABLE material_keys ADD COLUMN material_buttons TEXT NOT NULL DEFAULT '[]'")
+        res_cols = _table_columns(conn, "resources")
+        if "item_id" not in res_cols:
+            conn.execute("ALTER TABLE resources ADD COLUMN item_id INTEGER NOT NULL DEFAULT 0")
+        if "hue" not in res_cols:
+            conn.execute("ALTER TABLE resources ADD COLUMN hue INTEGER")
     except Exception:
         pass
+    _seed_resource_item_ids(conn)
+    _bootstrap_item_resource_costs_from_item_keys(conn)
     conn.execute(
         "INSERT OR REPLACE INTO metadata(key, value) VALUES (?, ?)",
         ("schema_version", str(int(SCHEMA_VERSION))),
@@ -382,7 +650,7 @@ def _bootstrap_from_split_json_if_empty(conn):
             conn.execute(
                 """
                 INSERT OR REPLACE INTO material_keys
-                (server, profession, material_key, material, material_buttons_json)
+                (server, profession, material_key, material, material_buttons)
                 VALUES (?, ?, ?, ?, ?)
                 """,
                 (
@@ -398,7 +666,7 @@ def _bootstrap_from_split_json_if_empty(conn):
             conn.execute(
                 """
                 INSERT OR REPLACE INTO item_keys
-                (server, profession, item_key, name, item_id, buttons_json, default_material_key, category, resources_json)
+                (server, profession, item_key, name, item_id, buttons, default_material_key, category, resources)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -413,13 +681,14 @@ def _bootstrap_from_split_json_if_empty(conn):
                     _safe_json_dumps(_as_list(resources), []),
                 ),
             )
+            _write_item_resource_costs(conn, server, profession, item_key, resources)
 
         for row in _iter_recipes(recipes_raw):
             conn.execute(
                 """
                 INSERT OR REPLACE INTO recipes
-                (recipe_type, server, profession, name, item_id, buttons_json, material, material_key,
-                 materials_json, material_buttons_json, deed_key, start_at, stop_at)
+                (recipe_type, server, profession, name, item_id, buttons, material, material_key,
+                 materials, material_buttons, deed_key, start_at, stop_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
@@ -452,10 +721,12 @@ def init_store():
 def load_recipes():
     conn = _connect()
     try:
+        _ensure_schema(conn)
+        _bootstrap_from_split_json_if_empty(conn)
         cur = conn.execute(
             """
-            SELECT recipe_type, server, profession, name, item_id, buttons_json, material, material_key,
-                   materials_json, material_buttons_json, deed_key, start_at, stop_at
+            SELECT recipe_type, server, profession, name, item_id, buttons, material, material_key,
+                   materials, material_buttons, deed_key, start_at, stop_at
             FROM recipes
             """
         )
@@ -486,6 +757,7 @@ def load_recipes():
 def save_recipes(rows):
     conn = _connect()
     try:
+        _ensure_schema(conn)
         with conn:
             conn.execute("DELETE FROM recipes")
             for row in (rows or []):
@@ -494,8 +766,8 @@ def save_recipes(rows):
                 conn.execute(
                     """
                     INSERT OR REPLACE INTO recipes
-                    (recipe_type, server, profession, name, item_id, buttons_json, material, material_key,
-                     materials_json, material_buttons_json, deed_key, start_at, stop_at)
+                    (recipe_type, server, profession, name, item_id, buttons, material, material_key,
+                     materials, material_buttons, deed_key, start_at, stop_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
@@ -522,9 +794,11 @@ def save_recipes(rows):
 def load_key_maps():
     conn = _connect()
     try:
+        _ensure_schema(conn)
+        _bootstrap_from_split_json_if_empty(conn)
         out = {}
         cur = conn.execute(
-            "SELECT server, profession, material_key, material, material_buttons_json FROM material_keys"
+            "SELECT server, profession, material_key, material, material_buttons FROM material_keys"
         )
         for row in cur.fetchall():
             server = str(row[0] or "")
@@ -541,8 +815,9 @@ def load_key_maps():
                 "material_buttons": mbtns,
             }
 
+        item_resource_costs = _load_item_resource_costs(conn)
         cur = conn.execute(
-            "SELECT server, profession, item_key, name, item_id, buttons_json, default_material_key, category, resources_json FROM item_keys"
+            "SELECT server, profession, item_key, name, item_id, buttons, default_material_key, category, resources FROM item_keys"
         )
         for row in cur.fetchall():
             server = str(row[0] or "")
@@ -552,13 +827,54 @@ def load_key_maps():
                 out[server] = {}
             if profession not in out[server]:
                 out[server][profession] = {"material_keys": {}, "item_keys": {}}
-            out[server][profession]["item_keys"][item_key] = {
+            entry = {
                 "name": str(row[3] or ""),
                 "item_id": int(row[4] or 0),
                 "buttons": _safe_json_loads(row[5], []),
                 "default_material_key": str(row[6] or ""),
                 "category": str(row[7] or ""),
                 "resources": _safe_json_loads(row[8], []),
+            }
+            key = (server, profession, item_key)
+            if key in item_resource_costs and item_resource_costs.get(key):
+                entry["resources"] = list(item_resource_costs.get(key) or [])
+            out[server][profession]["item_keys"][item_key] = entry
+        return out
+    finally:
+        conn.close()
+
+
+def load_resource_item_map():
+    conn = _connect()
+    try:
+        _ensure_schema(conn)
+        out = {}
+        if not _has_columns(conn, "resources", ["id", "name"]):
+            return out
+        res_cols = _table_columns(conn, "resources")
+        iid_expr = "item_id" if "item_id" in res_cols else "0 AS item_id"
+        hue_expr = "hue" if "hue" in res_cols else "NULL AS hue"
+        cur = conn.execute(
+            "SELECT id, name, " + str(iid_expr) + ", " + str(hue_expr) + " FROM resources"
+        )
+        for row in cur.fetchall():
+            name = _norm_resource_name(row[1])
+            if not name:
+                continue
+            try:
+                iid = int(row[2] or 0)
+            except Exception:
+                iid = 0
+            hue = row[3]
+            if hue is not None:
+                try:
+                    hue = int(hue)
+                except Exception:
+                    hue = None
+            out[name] = {
+                "resource_id": int(row[0] or 0),
+                "item_id": int(iid),
+                "hue": hue,
             }
         return out
     finally:
@@ -568,9 +884,12 @@ def load_key_maps():
 def save_key_maps(key_maps):
     conn = _connect()
     try:
+        _ensure_schema(conn)
         with conn:
             conn.execute("DELETE FROM material_keys")
             conn.execute("DELETE FROM item_keys")
+            if _has_columns(conn, "item_resource_costs", ["server", "profession", "item_key"]):
+                conn.execute("DELETE FROM item_resource_costs")
             km = dict(key_maps or {}) if isinstance(key_maps, dict) else {}
             for server, srv_node in km.items():
                 if not isinstance(srv_node, dict):
@@ -586,7 +905,7 @@ def save_key_maps(key_maps):
                             conn.execute(
                                 """
                                 INSERT OR REPLACE INTO material_keys
-                                (server, profession, material_key, material, material_buttons_json)
+                                (server, profession, material_key, material, material_buttons)
                                 VALUES (?, ?, ?, ?, ?)
                                 """,
                                 (
@@ -605,7 +924,7 @@ def save_key_maps(key_maps):
                             conn.execute(
                                 """
                                 INSERT OR REPLACE INTO item_keys
-                                (server, profession, item_key, name, item_id, buttons_json, default_material_key, category, resources_json)
+                                (server, profession, item_key, name, item_id, buttons, default_material_key, category, resources)
                                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """,
                                 (
@@ -619,6 +938,13 @@ def save_key_maps(key_maps):
                                     str(ent.get("category", "") or ""),
                                     _safe_json_dumps(_as_list(ent.get("resources", [])), []),
                                 ),
+                            )
+                            _write_item_resource_costs(
+                                conn,
+                                str(server or ""),
+                                str(profession or ""),
+                                str(ik or ""),
+                                _as_list(ent.get("resources", [])),
                             )
         return True
     finally:
@@ -639,11 +965,15 @@ def health_summary(selected_server=None):
             "material_keys_total": 0,
             "item_keys_total": 0,
             "item_categories_total": 0,
+            "resources_total": 0,
+            "resources_with_item_id": 0,
+            "item_resource_costs_total": 0,
             "selected_server": str(selected_server or ""),
             "selected_server_recipes": 0,
             "selected_server_material_keys": 0,
             "selected_server_item_keys": 0,
             "selected_server_item_categories": 0,
+            "selected_server_item_resource_costs": 0,
         }
         cur = conn.execute("SELECT value FROM metadata WHERE key='schema_version'")
         row = cur.fetchone()
@@ -667,6 +997,15 @@ def health_summary(selected_server=None):
         out["item_keys_total"] = int((cur.fetchone() or [0])[0] or 0)
         cur = conn.execute("SELECT COUNT(1) FROM item_categories")
         out["item_categories_total"] = int((cur.fetchone() or [0])[0] or 0)
+        if _has_columns(conn, "resources", ["id", "name"]):
+            cur = conn.execute("SELECT COUNT(1) FROM resources")
+            out["resources_total"] = int((cur.fetchone() or [0])[0] or 0)
+            if "item_id" in _table_columns(conn, "resources"):
+                cur = conn.execute("SELECT COUNT(1) FROM resources WHERE coalesce(item_id,0) > 0")
+                out["resources_with_item_id"] = int((cur.fetchone() or [0])[0] or 0)
+        if _has_columns(conn, "item_resource_costs", ["server", "profession", "item_key"]):
+            cur = conn.execute("SELECT COUNT(1) FROM item_resource_costs")
+            out["item_resource_costs_total"] = int((cur.fetchone() or [0])[0] or 0)
 
         cur = conn.execute(
             """
@@ -702,6 +1041,9 @@ def health_summary(selected_server=None):
             out["selected_server_item_keys"] = int((cur.fetchone() or [0])[0] or 0)
             cur = conn.execute("SELECT COUNT(1) FROM item_categories WHERE server=?", (sel,))
             out["selected_server_item_categories"] = int((cur.fetchone() or [0])[0] or 0)
+            if _has_columns(conn, "item_resource_costs", ["server"]):
+                cur = conn.execute("SELECT COUNT(1) FROM item_resource_costs WHERE server=?", (sel,))
+                out["selected_server_item_resource_costs"] = int((cur.fetchone() or [0])[0] or 0)
         return out
     finally:
         conn.close()

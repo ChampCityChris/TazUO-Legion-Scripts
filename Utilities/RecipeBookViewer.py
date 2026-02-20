@@ -294,15 +294,25 @@ def _load_rows():
 
         item_records = []
         if item_cols:
+            item_buttons_expr = (
+                "buttons"
+                if "buttons" in item_cols
+                else ("buttons_json AS buttons" if "buttons_json" in item_cols else "'[]' AS buttons")
+            )
+            item_resources_expr = (
+                "resources"
+                if "resources" in item_cols
+                else ("resources_json AS resources" if "resources_json" in item_cols else "'[]' AS resources")
+            )
             item_select = [
                 "server",
                 "profession",
                 "item_key",
                 "name",
                 "category" if "category" in item_cols else "'' AS category",
-                "buttons_json" if "buttons_json" in item_cols else "'[]' AS buttons_json",
+                item_buttons_expr,
                 "default_material_key" if "default_material_key" in item_cols else "'' AS default_material_key",
-                "resources_json" if "resources_json" in item_cols else "'[]' AS resources_json",
+                item_resources_expr,
             ]
             item_sql = "SELECT " + ", ".join(item_select) + " FROM item_keys ORDER BY server, profession, category, name"
             cur = conn.execute(item_sql)
@@ -312,9 +322,9 @@ def _load_rows():
                 item_key = str(r["item_key"] or "")
                 name = str(r["name"] or "")
                 category = str(r["category"] or "")
-                buttons = _safe_buttons(r["buttons_json"])
+                buttons = _safe_buttons(r["buttons"])
                 default_mk = _norm_text(r["default_material_key"])
-                resources = _safe_resources(r["resources_json"])
+                resources = _safe_resources(r["resources"])
                 if not str(name or "").strip():
                     continue
                 rk = (_norm_text(server), _norm_text(profession), _norm_text(item_key))
@@ -341,18 +351,23 @@ def _load_rows():
         material_by_prof = {}
         material_buttons_by_key = {}
         if mat_cols and "server" in mat_cols and "profession" in mat_cols and "material_key" in mat_cols:
+            mat_buttons_expr = (
+                "material_buttons"
+                if "material_buttons" in mat_cols
+                else ("material_buttons_json AS material_buttons" if "material_buttons_json" in mat_cols else "'[]' AS material_buttons")
+            )
             mat_select = [
                 "server",
                 "profession",
                 "material_key",
-                "material_buttons_json" if "material_buttons_json" in mat_cols else "'[]' AS material_buttons_json",
+                mat_buttons_expr,
             ]
             cur = conn.execute("SELECT " + ", ".join(mat_select) + " FROM material_keys")
             for r in cur.fetchall():
                 sk = _norm_text(r["server"])
                 pk = _norm_text(r["profession"])
                 mk = _norm_text(r["material_key"])
-                mb = _safe_buttons(r["material_buttons_json"])
+                mb = _safe_buttons(r["material_buttons"])
                 if not mk:
                     continue
                 k = (sk, pk)
@@ -369,6 +384,11 @@ def _load_rows():
         recipe_materials = {}
         recipe_buttons = {}
         if recipe_cols and "server" in recipe_cols and "profession" in recipe_cols and "name" in recipe_cols:
+            recipe_buttons_expr = (
+                "buttons"
+                if "buttons" in recipe_cols
+                else ("buttons_json AS buttons" if "buttons_json" in recipe_cols else "'[]' AS buttons")
+            )
             recipe_select = [
                 "recipe_type" if "recipe_type" in recipe_cols else "'' AS recipe_type",
                 "server",
@@ -376,7 +396,7 @@ def _load_rows():
                 "name",
                 "material_key" if "material_key" in recipe_cols else "'' AS material_key",
                 "deed_key" if "deed_key" in recipe_cols else "'' AS deed_key",
-                "buttons_json" if "buttons_json" in recipe_cols else "'[]' AS buttons_json",
+                recipe_buttons_expr,
             ]
             where_sql = ""
             if "recipe_type" in recipe_cols:
@@ -396,7 +416,7 @@ def _load_rows():
                 nk = _norm_text(r["name"])
                 mk = _norm_text(r["material_key"])
                 dkey = str(r["deed_key"] or "").strip()
-                btns = _safe_buttons(r["buttons_json"])
+                btns = _safe_buttons(r["buttons"])
                 if not (sk and pk and nk):
                     continue
                 by_item = recipe_materials.get((sk, pk, nk))
