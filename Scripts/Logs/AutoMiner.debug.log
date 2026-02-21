@@ -1,0 +1,107 @@
+[2026-02-21 12:08:36] [RUN] AutoMiner loaded. Press Start on the gump to begin.
+[2026-02-21 12:08:38] [RUN] Tile caches cleared for fresh run start
+[2026-02-21 12:08:38] [RUN] Craftables.db caches cleared; forcing fresh craft-path prime
+[2026-02-21 12:08:38] [RUN] Recipe DB path: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Databases\craftables.db
+[2026-02-21 12:08:39] [RUN] Recipe DB open failed mode=uri_ro strategy=auto err=connect() got an unexpected keyword argument 'uri'
+[2026-02-21 12:08:39] [RUN] Recipe DB open success mode=path_query_only strategy=auto
+[2026-02-21 12:08:39] [RUN] Recipe prime server=UOAlive shovel=[41, 202] tools=[41, 62] material=[]
+[2026-02-21 12:08:39] [RUN] Mining: ON
+[2026-02-21 12:08:39] [RUN] Mining started...
+[2026-02-21 12:08:39] [RUN] Tooling check complete.
+[2026-02-21 12:08:39] [RUN] Recalling to first mining spot.
+[2026-02-21 12:08:39] [RUN] Recalling to mining rune 76.
+[2026-02-21 12:08:43] [TARGET] MineTarget: set center=(1792,456,-90)
+[2026-02-21 12:08:43] [TARGET] MineTarget: attempt target=(1792,456,-90) rel=(0,0)
+[2026-02-21 12:08:43] [TARGET] System: MineTarget: tile graphic=0x053D in_list=True
+[2026-02-21 12:08:43] [TARGET] MineTarget: rel=(0,0) graphic=0x053D land=True has_target=True
+[2026-02-21 12:08:43] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:44] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:44] [TARGET] MineTarget: attempt target=(1792,455,-90) rel=(0,-1)
+[2026-02-21 12:08:44] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 12:08:44] [TARGET] MineTarget: rel=(0,-1) graphic=0x053C land=True has_target=True
+[2026-02-21 12:08:44] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:45] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:45] [TARGET] MineTarget: attempt target=(1792,457,-90) rel=(0,1)
+[2026-02-21 12:08:45] [TARGET] System: MineTarget: tile graphic=0x053F in_list=True
+[2026-02-21 12:08:45] [TARGET] MineTarget: rel=(0,1) graphic=0x053F land=True has_target=True
+[2026-02-21 12:08:45] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:46] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:46] [TARGET] MineTarget: attempt target=(1791,456,-90) rel=(-1,0)
+[2026-02-21 12:08:46] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 12:08:46] [TARGET] MineTarget: rel=(-1,0) graphic=0x053C land=True has_target=True
+[2026-02-21 12:08:47] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:47] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:48] [TARGET] MineTarget: attempt target=(1793,456,-90) rel=(1,0)
+[2026-02-21 12:08:48] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 12:08:48] [TARGET] MineTarget: rel=(1,0) graphic=0x053C land=True has_target=True
+[2026-02-21 12:08:48] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:49] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:49] [TARGET] MineTarget: attempt target=(1791,455,-90) rel=(-1,-1)
+[2026-02-21 12:08:49] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 12:08:49] [TARGET] MineTarget: rel=(-1,-1) graphic=0x053C land=True has_target=True
+[2026-02-21 12:08:49] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:50] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:50] [TARGET] MineTarget: attempt target=(1791,457,-90) rel=(-1,1)
+[2026-02-21 12:08:50] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 12:08:50] [TARGET] MineTarget: rel=(-1,1) graphic=0x053C land=True has_target=True
+[2026-02-21 12:08:50] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:51] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:51] [TARGET] MineTarget: attempt target=(1793,455,-90) rel=(1,-1)
+[2026-02-21 12:08:51] [TARGET] System: MineTarget: tile graphic=0x053E in_list=True
+[2026-02-21 12:08:51] [TARGET] MineTarget: rel=(1,-1) graphic=0x053E land=True has_target=True
+[2026-02-21 12:08:51] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:52] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:52] [TARGET] MineTarget: attempt target=(1793,457,-90) rel=(1,1)
+[2026-02-21 12:08:52] [TARGET] System: MineTarget: tile graphic=0x053E in_list=True
+[2026-02-21 12:08:52] [TARGET] MineTarget: rel=(1,1) graphic=0x053E land=True has_target=True
+[2026-02-21 12:08:53] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:53] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:54] [TARGET] MineTarget: attempt target=(1792,456,-90) rel=(0,0)
+[2026-02-21 12:08:54] [TARGET] System: MineTarget: tile graphic=0x053D in_list=True
+[2026-02-21 12:08:54] [TARGET] MineTarget: rel=(0,0) graphic=0x053D land=True has_target=True
+[2026-02-21 12:08:54] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:55] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:55] [TARGET] MineTarget: attempt target=(1792,455,-90) rel=(0,-1)
+[2026-02-21 12:08:55] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 12:08:55] [TARGET] MineTarget: rel=(0,-1) graphic=0x053C land=True has_target=True
+[2026-02-21 12:08:55] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:56] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:56] [TARGET] MineTarget: attempt target=(1792,457,-90) rel=(0,1)
+[2026-02-21 12:08:56] [TARGET] System: MineTarget: tile graphic=0x053F in_list=True
+[2026-02-21 12:08:56] [TARGET] MineTarget: rel=(0,1) graphic=0x053F land=True has_target=True
+[2026-02-21 12:08:56] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:08:57] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:08:57] [TARGET] MineTarget: attempt target=(1791,456,-90) rel=(-1,0)
+[2026-02-21 12:08:57] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 12:08:57] [TARGET] MineTarget: rel=(-1,0) graphic=0x053C land=True has_target=True
+[2026-02-21 12:08:58] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:09:00] [TARGET] MineTarget: attempt target=(1793,456,-90) rel=(1,0)
+[2026-02-21 12:09:00] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 12:09:00] [TARGET] MineTarget: rel=(1,0) graphic=0x053C land=True has_target=True
+[2026-02-21 12:09:00] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:09:01] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:09:01] [TARGET] MineTarget: attempt target=(1791,455,-90) rel=(-1,-1)
+[2026-02-21 12:09:01] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 12:09:01] [TARGET] MineTarget: rel=(-1,-1) graphic=0x053C land=True has_target=True
+[2026-02-21 12:09:01] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 12:09:02] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 12:09:02] [RUN] Overweight detected.
+[2026-02-21 12:09:02] [RUN] Overweight: recall to unload.
+[2026-02-21 12:09:02] [RUN] Recalling home to unload.
+[2026-02-21 13:01:40] [RUN] AutoMiner loaded. Press Start on the gump to begin.
+[2026-02-21 13:02:03] [RUN] Tile caches cleared for fresh run start
+[2026-02-21 13:02:03] [RUN] Craftables.db caches cleared; forcing fresh craft-path prime
+[2026-02-21 13:02:03] [RUN] Recipe DB path: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Databases\craftables.db
+[2026-02-21 13:02:03] [RUN] Recipe DB open success mode=path_query_only
+[2026-02-21 13:02:03] [RUN] Recipe prime server=UOAlive shovel=[41, 202] tools=[41, 62] material=[]
+[2026-02-21 13:02:03] [RUN] Mining: ON
+[2026-02-21 13:02:03] [RUN] Mining started...
+[2026-02-21 13:02:03] [RUN] Tooling check complete.
+[2026-02-21 13:02:03] [RUN] Recalling to first mining spot.
+[2026-02-21 13:02:03] [RUN] Recalling to mining rune 76.
+[2026-02-21 13:02:07] [RUN] Overweight detected.
+[2026-02-21 13:02:07] [RUN] Overweight: recall to unload.
+[2026-02-21 13:02:07] [RUN] Recalling home to unload.
+[2026-02-21 13:02:14] [RUN] Unloading resources to containers.
+[2026-02-21 13:02:14] [RUN] Unload: 23 items in backpack.
+[2026-02-21 13:02:19] [RUN] Mining: OFF

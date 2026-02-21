@@ -227,6 +227,18 @@ When writing scripts for TazUO:
 - Document assumptions about game state
 - Avoid hidden automation behavior
 
+### Runtime Entrypoint Note (`__name__` in TazUO)
+The TazUO/LegionScripts script manager may execute files with `__name__` set to `"<module>"` (not always `"__main__"`).
+
+For LegionScripts entrypoints, support both runtime contexts:
+- `"__main__"`
+- `"<module>"`
+- Any additional known module-name variant your script runner uses
+
+Preferred pattern:
+- Wrap startup logic in a helper like `_should_autostart_main()`
+- Call `main()` when the helper confirms the current `__name__` is an allowed entrypoint context
+
 ### Safety / Control
 Scripts should be easy for a junior developer to understand, run, and stop.
 

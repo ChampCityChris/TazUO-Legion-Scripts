@@ -27,6 +27,41 @@ import os
 import time
 import sys
 import sqlite3
+import traceback
+
+# Early startup heartbeat for diagnosing silent launch failures.
+# This runs at import-time before gump/UI code.
+def _write_boot_heartbeat():
+    """Write a minimal import-time heartbeat to the startup log.
+
+    Args:
+        None.
+
+    Returns:
+        None: Best-effort write used only for startup diagnostics.
+
+    Side Effects:
+        Appends one line to `Logs/AutoMiner.startup.log` when possible.
+    """
+    try:
+        base = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
+    except Exception:
+        base = os.getcwd()
+    try:
+        if os.path.basename(base).lower() in ("resources", "utilities", "skills", "scripts"):
+            base = os.path.dirname(base)
+        logs_dir = os.path.join(base, "Logs")
+        os.makedirs(logs_dir, exist_ok=True)
+        path = os.path.join(logs_dir, "AutoMiner.startup.log")
+        ts = time.strftime("%Y-%m-%d %H:%M:%S")
+        mod_name = str(globals().get("__name__", "unknown"))
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"[{ts}] BOOT module_import __name__={mod_name}\n")
+    except Exception:
+        pass
+
+
+_write_boot_heartbeat()
 
 # Use custom gump image background when True; fallback to colorbox when False.
 CUSTOM_GUMP = False
@@ -720,18 +755,24 @@ def _recipe_db_path():
             cands.append(str(RECIPE_STORE._db_path() or ""))
     except Exception:
         pass
+    def _project_root(path_value):
+        """Return likely LegionScripts project root for a local path value."""
+        root = str(path_value or "").strip()
+        # Climb out of common script subfolders used by the script runner.
+        while root and os.path.basename(root).lower() in ("resources", "utilities", "skills", "scripts"):
+            root = os.path.dirname(root)
+        return root
+
     try:
-        uroot = os.path.dirname(_util_dir) if os.path.basename(str(_util_dir or "")).lower() == "utilities" else _util_dir
+        uroot = _project_root(_util_dir)
     except Exception:
         uroot = _util_dir
     try:
-        sroot = os.path.dirname(_script_dir) if os.path.basename(str(_script_dir or "")).lower() in ("resources", "utilities", "skills") else _script_dir
+        sroot = _project_root(_script_dir)
     except Exception:
         sroot = _script_dir
     try:
-        croot = os.getcwd()
-        if os.path.basename(str(croot or "")).lower() in ("resources", "utilities", "skills"):
-            croot = os.path.dirname(croot)
+        croot = _project_root(os.getcwd())
     except Exception:
         croot = ""
     for root in (uroot, sroot, croot):
@@ -745,7 +786,8 @@ def _recipe_db_path():
 
 
 def _connect_recipe_db_ro():
-    # Match RecipeBookViewer open strategy (URI ro first, then query_only fallback).
+    # Runtime sqlite in this environment does not support sqlite URI open kwargs.
+    # Use plain path + query_only so behavior is simple and consistent.
     """Open the craftables database in read-only mode for recipe lookup.
 
     Args:
@@ -760,27 +802,18 @@ def _connect_recipe_db_ro():
     p = _recipe_db_path()
     if not p:
         raise Exception("db path not found")
-    uri = "file:" + str(p).replace("\\", "/") + "?mode=ro"
-    errs = []
-    try:
-        conn = sqlite3.connect(uri, uri=True, timeout=0.5)
-        try:
-            conn.execute("PRAGMA query_only=1;")
-        except Exception:
-            pass
-        return conn, p
-    except Exception as ex:
-        errs.append("uri_ro=" + str(ex))
+
     try:
         conn = sqlite3.connect(p, timeout=0.5)
         try:
             conn.execute("PRAGMA query_only=1;")
         except Exception:
             pass
+        _diag_info("Recipe DB open success mode=path_query_only")
         return conn, p
     except Exception as ex:
-        errs.append("path=" + str(ex))
-    raise Exception("; ".join(errs) if errs else "unknown sqlite open error")
+        _diag_info("Recipe DB open failed mode=path_query_only err={0}".format(str(ex)))
+        raise Exception("path=" + str(ex))
 
 
 def _now_s():
@@ -1994,6 +2027,10 @@ def _toggle_running():
         _update_control_gump()
         return
 
+    # Run one-time config migration only when user clicks Start.
+    # This keeps initial script load focused on showing the control gump.
+    _reset_persisted_config_for_json_migration_once()
+
     if not _can_start_mining():
         RUNNING = False
         NEEDS_TOOL_CHECK = False
@@ -2491,7 +2528,7 @@ def _debug_log_path():
         base = os.path.dirname(__file__)
     except Exception:
         base = os.getcwd()
-    if os.path.basename(base).lower() in ("resources", "utilities", "skills"):
+    if os.path.basename(base).lower() in ("resources", "utilities", "skills", "scripts"):
         base = os.path.dirname(base)
     logs_dir = os.path.join(base, "Logs")
     return os.path.join(logs_dir, DEBUG_LOG_FILE)
@@ -2539,9 +2576,20 @@ def _diag_msg(msg, hue=DIAG_HUE):
     Side Effects:
         Interacts with the TazUO client through API calls.
     """
-    API.SysMsg(msg, hue)
-    _append_log(msg)
-    _write_debug_log(msg)
+    # Startup can occur before all UI/message channels are ready, so each
+    # diagnostic sink is wrapped independently to avoid hard startup failure.
+    try:
+        API.SysMsg(msg, hue)
+    except Exception:
+        pass
+    try:
+        _append_log(msg)
+    except Exception:
+        pass
+    try:
+        _write_debug_log(msg)
+    except Exception:
+        pass
 
 
 # Standardized phase-tagged diagnostic wrapper.
@@ -2631,6 +2679,90 @@ def _diag_debug(msg, phase="TARGET", hue=None):
         No side effects beyond local calculations.
     """
     _diag_emit(msg, phase=phase, hue=hue, debug_only=True)
+
+
+def _startup_error_log_path():
+    """Resolve the startup error log path for early-launch failures.
+
+    Args:
+        None.
+
+    Returns:
+        str: Full path to the startup error log file.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
+    try:
+        base = os.path.dirname(__file__)
+    except Exception:
+        base = os.getcwd()
+    if os.path.basename(base).lower() in ("resources", "utilities", "skills", "scripts"):
+        base = os.path.dirname(base)
+    logs_dir = os.path.join(base, "Logs")
+    return os.path.join(logs_dir, "AutoMiner.startup.log")
+
+
+def _report_startup_exception(startup_step, ex):
+    """Report startup exceptions so script-manager failures are not silent.
+
+    Args:
+        startup_step: Human-readable startup step that failed.
+        ex: Exception instance raised by the failed startup step.
+
+    Returns:
+        None: Emits visible messages and writes a startup log entry.
+
+    Side Effects:
+        Sends system messages and appends a traceback to disk.
+    """
+    step_text = str(startup_step or "unknown startup step")
+    err_text = str(ex) if ex is not None else "unknown error"
+    try:
+        API.SysMsg(f"[AutoMiner][STARTUP] Failed at: {step_text}", 33)
+        API.SysMsg(f"[AutoMiner][STARTUP] {err_text}", 33)
+    except Exception:
+        pass
+
+    try:
+        tb_text = traceback.format_exc()
+    except Exception:
+        tb_text = "traceback unavailable"
+
+    try:
+        path = _startup_error_log_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        ts = time.strftime("%Y-%m-%d %H:%M:%S")
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"[{ts}] Startup step: {step_text}\n")
+            f.write(f"[{ts}] Error: {err_text}\n")
+            f.write(tb_text + "\n")
+            f.write("-" * 80 + "\n")
+    except Exception:
+        # Startup diagnostics should never create a second crash path.
+        pass
+
+
+def _write_startup_trace(step_text):
+    """Write startup progress breadcrumbs to disk for silent-launch debugging.
+
+    Args:
+        step_text: Human-readable startup stage name.
+
+    Returns:
+        None: Appends one timestamped line to the startup log.
+
+    Side Effects:
+        Writes to `Logs/AutoMiner.startup.log`.
+    """
+    try:
+        path = _startup_error_log_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        ts = time.strftime("%Y-%m-%d %H:%M:%S")
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(f"[{ts}] STEP {str(step_text or 'unknown')}\n")
+    except Exception:
+        pass
 
 
 def _diag_target_event(msg):
@@ -3106,7 +3238,7 @@ def _get_log_export_dir():
         base = os.path.dirname(__file__)
     except Exception:
         base = os.getcwd()
-    if os.path.basename(base).lower() in ("resources", "utilities", "skills"):
+    if os.path.basename(base).lower() in ("resources", "utilities", "skills", "scripts"):
         base = os.path.dirname(base)
     LOG_EXPORT_BASE = os.path.join(base, "Logs")
     return LOG_EXPORT_BASE
@@ -4787,11 +4919,25 @@ def main():
     Side Effects:
         Creates UI gumps, loads persisted settings, and sends game actions.
     """
-    _reset_persisted_config_for_json_migration_once()
-    _create_control_gump()
-    _load_config()
-    _load_log_config()
-    _rebuild_control_gump()
+    startup_step = "initializing startup state"
+    try:
+        startup_step = "create control gump"
+        _write_startup_trace(startup_step)
+        _create_control_gump()
+        startup_step = "load persisted config"
+        _write_startup_trace(startup_step)
+        _load_config()
+        startup_step = "load log config"
+        _write_startup_trace(startup_step)
+        _load_log_config()
+        startup_step = "rebuild control gump"
+        _write_startup_trace(startup_step)
+        _rebuild_control_gump()
+    except Exception as ex:
+        # We intentionally catch broad startup failures so users get a clear
+        # message instead of a silent script-manager launch failure.
+        _report_startup_exception(startup_step, ex)
+        raise
 
     mine_tools = _get_mine_tool()
     if not mine_tools:
@@ -4806,5 +4952,33 @@ def main():
         mine_tools = _tick_mining_cycle(mine_tools)
 
 
-if __name__ == "__main__":
+def _should_autostart_main():
+    """Decide whether script runtime should auto-start `main()`.
+
+    Args:
+        None.
+
+    Returns:
+        bool: True when launched as script-manager entrypoint.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
+    module_name = str(globals().get("__name__", ""))
+    if module_name == "__main__":
+        return True
+    if module_name == "<module>":
+        return True
+    # Some launchers import scripts with module names like "Resources.AutoMiner".
+    return module_name.endswith(".AutoMiner") or module_name.endswith("AutoMiner")
+
+
+_AUTO_START_MAIN = _should_autostart_main()
+_write_startup_trace(
+    "entrypoint_check __name__={0} autostart={1}".format(
+        str(globals().get("__name__", "")),
+        str(_AUTO_START_MAIN),
+    )
+)
+if _AUTO_START_MAIN:
     main()
