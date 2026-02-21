@@ -3,6 +3,8 @@ import json
 import ast
 import os
 import time
+import sys
+import sqlite3
 
 # Use custom gump image background when True; fallback to colorbox when False.
 CUSTOM_GUMP = False
@@ -419,14 +421,222 @@ def _save_config():
     }
     API.SavePersistentVar(DATA_KEY, json.dumps(data), API.PersistentVar.Char)
 
+# RecipeStore key-map integration (shared with Databases/craftables.db).
+RECIPE_STORE = None
+RECIPE_KEY_MAPS = None
+RECIPE_KEY_MAPS_LAST_GOOD = None
+RECIPE_DB_NEXT_RETRY_AT = 0.0
+RECIPE_DB_WARN_SLOW_S = 0.35
+RECIPE_DB_LOGGED_NO_STORE = False
+TINKER_CRAFT_PATHS_BY_SERVER = {}
+_script_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
+_util_dir = ""
+_util_candidates = []
+if _script_dir:
+    _util_candidates.append(_script_dir)
+    _util_candidates.append(os.path.join(_script_dir, "Utilities"))
+    _util_candidates.append(os.path.join(os.path.dirname(_script_dir), "Utilities"))
+_cwd = os.getcwd()
+if _cwd:
+    _util_candidates.append(_cwd)
+    _util_candidates.append(os.path.join(_cwd, "Utilities"))
+    _util_candidates.append(os.path.join(os.path.dirname(_cwd), "Utilities"))
+for _cand in _util_candidates:
+    try:
+        c = os.path.normpath(str(_cand or ""))
+    except Exception:
+        c = ""
+    if not c or not os.path.isdir(c):
+        continue
+    if os.path.basename(c).lower() == "utilities" and os.path.isfile(os.path.join(c, "RecipeStore.py")):
+        _util_dir = c
+        break
+if not _util_dir:
+    _util_dir = _script_dir
+if _util_dir and _util_dir not in sys.path:
+    sys.path.insert(0, _util_dir)
+try:
+    import RecipeStore as RECIPE_STORE
+    try:
+        RECIPE_STORE.set_base_dir(_util_dir)
+    except Exception:
+        pass
+except Exception:
+    RECIPE_STORE = None
+
+
+def _active_recipe_server_name():
+    return "UOAlive" if USE_UOALIVE_SHARD else "OSI"
+
+
+def _normalize_recipe_name(text):
+    return " ".join(str(text or "").strip().lower().split())
+
+
+def _now_s():
+    try:
+        return float(time.time())
+    except Exception:
+        return 0.0
+
+
+def _load_recipe_key_maps(force=False):
+    global RECIPE_KEY_MAPS, RECIPE_KEY_MAPS_LAST_GOOD, RECIPE_DB_NEXT_RETRY_AT, RECIPE_DB_LOGGED_NO_STORE
+    if RECIPE_STORE is None:
+        if not RECIPE_DB_LOGGED_NO_STORE:
+            _diag_info("Recipe DB unavailable: RecipeStore module not loaded.")
+            RECIPE_DB_LOGGED_NO_STORE = True
+        return {}
+    if isinstance(RECIPE_KEY_MAPS, dict) and not bool(force):
+        return RECIPE_KEY_MAPS
+    now = _now_s()
+    if not bool(force) and now < float(RECIPE_DB_NEXT_RETRY_AT or 0.0):
+        if isinstance(RECIPE_KEY_MAPS_LAST_GOOD, dict):
+            return RECIPE_KEY_MAPS_LAST_GOOD
+        return {}
+    t0 = now
+    try:
+        if hasattr(RECIPE_STORE, "try_init_store"):
+            ok = bool(RECIPE_STORE.try_init_store(bool(force)))
+            if not ok:
+                RECIPE_DB_NEXT_RETRY_AT = _now_s() + 1.5
+                if isinstance(RECIPE_KEY_MAPS_LAST_GOOD, dict):
+                    RECIPE_KEY_MAPS = RECIPE_KEY_MAPS_LAST_GOOD
+                    return RECIPE_KEY_MAPS
+                RECIPE_KEY_MAPS = {}
+                return RECIPE_KEY_MAPS
+        loaded = dict(RECIPE_STORE.load_key_maps() or {})
+        RECIPE_KEY_MAPS = loaded
+        RECIPE_KEY_MAPS_LAST_GOOD = loaded
+        RECIPE_DB_NEXT_RETRY_AT = 0.0
+        elapsed = _now_s() - t0
+        if elapsed >= float(RECIPE_DB_WARN_SLOW_S):
+            _diag_info("Recipe DB load_key_maps slow ({0:.2f}s).".format(float(elapsed)))
+    except Exception:
+        RECIPE_DB_NEXT_RETRY_AT = _now_s() + 1.5
+        if isinstance(RECIPE_KEY_MAPS_LAST_GOOD, dict):
+            RECIPE_KEY_MAPS = RECIPE_KEY_MAPS_LAST_GOOD
+        else:
+            RECIPE_KEY_MAPS = {}
+    return RECIPE_KEY_MAPS
+
+
+def _material_buttons_for_key_from_maps(maps, server, profession, material_key):
+    by_server = maps.get(str(server or ""), {}) if isinstance(maps, dict) else {}
+    by_prof = by_server.get(str(profession or ""), {}) if isinstance(by_server, dict) else {}
+    mk_node = by_prof.get("material_keys", {}) if isinstance(by_prof, dict) else {}
+    ent = mk_node.get(str(material_key or ""), {}) if isinstance(mk_node, dict) else {}
+    out = []
+    for x in (ent.get("material_buttons", []) if isinstance(ent, dict) else []):
+        try:
+            n = int(x)
+            if n > 0:
+                out.append(n)
+        except Exception:
+            pass
+    return out
+
+
+def _prime_tinker_craft_path_cache(force=False):
+    global TINKER_CRAFT_PATHS_BY_SERVER
+    try:
+        db_path = ""
+        try:
+            if RECIPE_STORE and hasattr(RECIPE_STORE, "_db_path"):
+                db_path = str(RECIPE_STORE._db_path() or "")
+        except Exception:
+            db_path = ""
+        if not db_path:
+            try:
+                _root = os.path.dirname(_util_dir) if os.path.basename(str(_util_dir or "")).lower() == "utilities" else _util_dir
+            except Exception:
+                _root = _util_dir
+            db_path = os.path.join(_root, "Databases", "craftables.db")
+        if not os.path.isfile(db_path):
+            return TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
+
+        def _json_ints(raw):
+            vals = []
+            if raw is None:
+                return vals
+            try:
+                seq = ast.literal_eval(str(raw))
+            except Exception:
+                seq = []
+            for x in (seq or []):
+                try:
+                    n = int(x)
+                    if n > 0:
+                        vals.append(n)
+                except Exception:
+                    pass
+            return vals
+
+        out = {}
+        conn = sqlite3.connect(db_path, timeout=0.15)
+        try:
+            try:
+                conn.execute("PRAGMA query_only=1;")
+            except Exception:
+                pass
+            cur = conn.execute(
+                "SELECT server, material_buttons FROM material_keys "
+                "WHERE profession=? AND material_key=?",
+                ("Tinker", "ingot_iron"),
+            )
+            for server, mraw in (cur.fetchall() or []):
+                s = str(server or "")
+                if s not in out:
+                    out[s] = {"material_buttons": [], "items": {}}
+                out[s]["material_buttons"] = _json_ints(mraw)
+
+            cur = conn.execute(
+                "SELECT server, name, buttons FROM item_keys "
+                "WHERE profession=?",
+                ("Tinker",),
+            )
+            for server, name, braw in (cur.fetchall() or []):
+                s = str(server or "")
+                n = _normalize_recipe_name(name)
+                if n not in ("shovel", "tinker's tools"):
+                    continue
+                if s not in out:
+                    out[s] = {"material_buttons": [], "items": {}}
+                out[s]["items"][n] = _json_ints(braw)
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+        # Default iron buttons for UOAlive if not present in DB material map.
+        if "UOAlive" in out and not out["UOAlive"].get("material_buttons"):
+            out["UOAlive"]["material_buttons"] = [7, 6]
+
+        if out:
+            TINKER_CRAFT_PATHS_BY_SERVER = out
+        return TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
+    except Exception:
+        # Never let DB/cache issues break startup or gump callbacks.
+        if not isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict):
+            TINKER_CRAFT_PATHS_BY_SERVER = {}
+        return TINKER_CRAFT_PATHS_BY_SERVER
+
+
+def _resolve_tinker_recipe_paths(item_name):
+    server = _active_recipe_server_name()
+    node = TINKER_CRAFT_PATHS_BY_SERVER.get(server, {}) if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
+    items = node.get("items", {}) if isinstance(node, dict) else {}
+    item_buttons = list(items.get(_normalize_recipe_name(item_name), []) if isinstance(items, dict) else [])
+    material_buttons = list(node.get("material_buttons", []) if isinstance(node, dict) else [])
+    if not material_buttons and server == "UOAlive":
+        material_buttons = [7, 6]
+    return item_buttons, material_buttons
+
 # Tinker gump + button ids.
 TINKER_GUMP_ID_OSI = 0x1CC  # Tinker gump id (OSI).
-TINKER_BTN_SHOVEL_OSI = 18  # Craft shovel button (OSI).
-TINKER_BTN_TINKER_TOOL_OSI = 11  # Craft tinker tool button (OSI).
 TINKER_GUMP_ID_UOALIVE = 0xD466EA9C  # Tinker gump id (UOAlive).
-TINKER_BTN_TOOLS_UOALIVE = 41  # Tools category (UOAlive).
-TINKER_BTN_TINKER_TOOL_UOALIVE = 62  # Tinker tool button (UOAlive).
-TINKER_BTN_SHOVEL_UOALIVE = 202  # Shovel button (UOAlive).
+TINKER_IRON_MATERIAL_BUTTONS_UOALIVE = [7, 6]  # Ingot -> Iron (UOAlive).
 
 
 # Select the next smeltable ore stack from backpack contents.
@@ -471,55 +681,66 @@ def _find_tinker_tool():
             return tool
     return None
 
-def _craft_with_tinker(button_id):
-    # Craft an item using the tinker's tool gump.
-    tool = _find_tinker_tool()
-    if not tool:
+def _click_tinker_button_path(gump_id, buttons):
+    path = [int(x) for x in (buttons or []) if int(x) > 0]
+    if not path:
         return False
-    API.UseObject(tool.Serial)
-    gump_id = TINKER_GUMP_ID_OSI
-    if not API.WaitForGump(gump_id, 3):
-        _diag_info("Tinker gump not found.")
-        return False
-    _sleep(0.5)
-    API.ReplyGump(int(button_id), gump_id)
-    _sleep(0.5)
-    API.CloseGump(gump_id)
-    API.CloseGump()
+    for idx, button_id in enumerate(path):
+        API.ReplyGump(int(button_id), int(gump_id))
+        _sleep(0.35)
+        if idx < (len(path) - 1):
+            if not API.WaitForGump(int(gump_id), 2):
+                return False
     return True
 
-def _craft_with_tinker_uoalive(button_id):
-    # Craft an item using the UOAlive tools category flow.
+
+def _craft_with_tinker_path(gump_id, item_buttons, material_buttons=None):
+    # Craft an item using a full gump button path (optional material selection first).
     tool = _find_tinker_tool()
     if not tool:
         return False
     API.UseObject(tool.Serial)
-    if not API.WaitForGump(TINKER_GUMP_ID_UOALIVE, 3):
+    if not API.WaitForGump(int(gump_id), 3):
         _diag_info("Tinker gump not found.")
         return False
     _sleep(0.5)
-    API.ReplyGump(int(TINKER_BTN_TOOLS_UOALIVE), TINKER_GUMP_ID_UOALIVE)
-    if not API.WaitForGump(TINKER_GUMP_ID_UOALIVE, 3):
-        _diag_info("Tinker gump not found after Tools category.")
+    if material_buttons:
+        if not _click_tinker_button_path(int(gump_id), material_buttons):
+            _diag_info("Tinker material selection failed.")
+            return False
+        if not API.WaitForGump(int(gump_id), 2):
+            _diag_info("Tinker gump not found after material selection.")
+            return False
+        _sleep(0.25)
+    if not _click_tinker_button_path(int(gump_id), item_buttons):
+        _diag_info("Tinker craft path failed.")
         return False
     _sleep(0.5)
-    API.ReplyGump(int(button_id), TINKER_GUMP_ID_UOALIVE)
-    _sleep(0.5)
-    API.CloseGump(TINKER_GUMP_ID_UOALIVE)
+    API.CloseGump(int(gump_id))
     API.CloseGump()
     return True
 
 def _craft_tinker_tool():
     # Craft a spare tinker's tool using shard-specific gump buttons.
-    if USE_UOALIVE_SHARD:
-        return _craft_with_tinker_uoalive(TINKER_BTN_TINKER_TOOL_UOALIVE)
-    return _craft_with_tinker(TINKER_BTN_TINKER_TOOL_OSI)
+    gump_id = TINKER_GUMP_ID_UOALIVE if USE_UOALIVE_SHARD else TINKER_GUMP_ID_OSI
+    item_buttons, material_buttons = _resolve_tinker_recipe_paths("tinker's tools")
+    if not item_buttons:
+        _diag_info("No DB craft path found for Tinker's tools.")
+        return False
+    if not material_buttons:
+        material_buttons = list(TINKER_IRON_MATERIAL_BUTTONS_UOALIVE)
+    return _craft_with_tinker_path(gump_id, item_buttons, material_buttons)
 
 def _craft_shovel():
     # Craft a shovel using the shard-appropriate button flow.
-    if USE_UOALIVE_SHARD:
-        return _craft_with_tinker_uoalive(TINKER_BTN_SHOVEL_UOALIVE)
-    return _craft_with_tinker(TINKER_BTN_SHOVEL_OSI)
+    gump_id = TINKER_GUMP_ID_UOALIVE if USE_UOALIVE_SHARD else TINKER_GUMP_ID_OSI
+    item_buttons, material_buttons = _resolve_tinker_recipe_paths("shovel")
+    if not item_buttons:
+        _diag_info("No DB craft path found for shovel.")
+        return False
+    if not material_buttons:
+        material_buttons = list(TINKER_IRON_MATERIAL_BUTTONS_UOALIVE)
+    return _craft_with_tinker_path(gump_id, item_buttons, material_buttons)
 
 def _ensure_tooling_in_backpack():
     # Ensure required tools exist before mining.
@@ -591,6 +812,8 @@ def _toggle_running():
     RUNNING = not RUNNING
     state = "ON" if RUNNING else "OFF"
     if RUNNING:
+        _diag_info("Craftables.db primes crafting paths")
+        _prime_tinker_craft_path_cache(False)
         API.Dismount()
         API.ToggleFly()
         NEEDS_TOOL_CHECK = True
@@ -807,7 +1030,10 @@ def _debug_log_path():
         base = os.path.dirname(__file__)
     except Exception:
         base = os.getcwd()
-    return os.path.join(base, DEBUG_LOG_FILE)
+    if os.path.basename(base).lower() in ("resources", "utilities", "skills"):
+        base = os.path.dirname(base)
+    logs_dir = os.path.join(base, "Logs")
+    return os.path.join(logs_dir, DEBUG_LOG_FILE)
 
 
 # Write one timestamped debug line to disk (best-effort).
@@ -819,7 +1045,9 @@ def _write_debug_log(line):
     except Exception:
         ts = "unknown-time"
     try:
-        with open(_debug_log_path(), "a", encoding="utf-8") as f:
+        path = _debug_log_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "a", encoding="utf-8") as f:
             f.write(f"[{ts}] {line}\n")
     except Exception:
         pass
@@ -1140,7 +1368,9 @@ def _get_log_export_dir():
         base = os.path.dirname(__file__)
     except Exception:
         base = os.getcwd()
-    LOG_EXPORT_BASE = os.path.join(base, "AutoMinerLogs")
+    if os.path.basename(base).lower() in ("resources", "utilities", "skills"):
+        base = os.path.dirname(base)
+    LOG_EXPORT_BASE = os.path.join(base, "Logs")
     return LOG_EXPORT_BASE
 
 

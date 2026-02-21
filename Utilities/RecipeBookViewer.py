@@ -7,7 +7,7 @@ import sqlite3
 """
 RecipeBookViewer (read-only)
 
-Key-driven viewer for recipe data in craftables.db.
+Key-driven viewer for recipe data in Databases/craftables.db.
 Selection flow:
 Server -> Profession -> Material Key -> Category -> Item Name
 
@@ -186,7 +186,12 @@ def _base_dir():
 
 
 def _db_path():
-    return os.path.join(_base_dir(), DB_FILE)
+    base = _base_dir()
+    try:
+        root = os.path.dirname(base) if os.path.basename(str(base or "")).lower() == "utilities" else base
+    except Exception:
+        root = base
+    return os.path.join(root, "Databases", DB_FILE)
 
 
 def _connect_ro():
@@ -247,6 +252,23 @@ def _load_rows():
     try:
         conn.row_factory = sqlite3.Row
 
+        server_by_id = {}
+        prof_by_id = {}
+        if _table_columns(conn, "servers"):
+            try:
+                cur = conn.execute("SELECT id, name FROM servers")
+                for r in cur.fetchall():
+                    server_by_id[int(r["id"] or 0)] = str(r["name"] or "")
+            except Exception:
+                pass
+        if _table_columns(conn, "professions"):
+            try:
+                cur = conn.execute("SELECT id, name FROM professions")
+                for r in cur.fetchall():
+                    prof_by_id[int(r["id"] or 0)] = str(r["name"] or "")
+            except Exception:
+                pass
+
         item_cols = _table_columns(conn, "item_keys")
         recipe_cols = _table_columns(conn, "recipes")
         mat_cols = _table_columns(conn, "material_keys")
@@ -257,8 +279,8 @@ def _load_rows():
         if (
             irc_cols
             and res_cols
-            and "server" in irc_cols
-            and "profession" in irc_cols
+            and "server_id" in irc_cols
+            and "profession_id" in irc_cols
             and "item_key" in irc_cols
             and "slot" in irc_cols
             and "per_item" in irc_cols
@@ -268,15 +290,15 @@ def _load_rows():
         ):
             cur = conn.execute(
                 """
-                SELECT irc.server, irc.profession, irc.item_key, irc.slot, irc.per_item, res.name
+                SELECT irc.server_id, irc.profession_id, irc.item_key, irc.slot, irc.per_item, res.name
                 FROM item_resource_costs irc
                 JOIN resources res ON res.id = irc.resource_id
-                ORDER BY irc.server, irc.profession, irc.item_key, irc.slot
+                ORDER BY irc.server_id, irc.profession_id, irc.item_key, irc.slot
                 """
             )
             for r in cur.fetchall():
-                sk = _norm_text(r["server"])
-                pk = _norm_text(r["profession"])
+                sk = _norm_text(server_by_id.get(int(r["server_id"] or 0), ""))
+                pk = _norm_text(prof_by_id.get(int(r["profession_id"] or 0), ""))
                 ik = _norm_text(r["item_key"])
                 nm = str(r["name"] or "").strip().lower()
                 try:
@@ -292,42 +314,68 @@ def _load_rows():
                     item_resource_costs[k] = arr
                 arr.append({"material": nm, "per_item": qty})
 
+        item_key_buttons = {}
+        ikb_cols = _table_columns(conn, "item_key_buttons")
+        if (
+            ikb_cols
+            and "server_id" in ikb_cols
+            and "profession_id" in ikb_cols
+            and "item_key" in ikb_cols
+            and "slot" in ikb_cols
+            and "button_id" in ikb_cols
+        ):
+            cur = conn.execute(
+                """
+                SELECT server_id, profession_id, item_key, slot, button_id
+                FROM item_key_buttons
+                ORDER BY server_id, profession_id, item_key, slot
+                """
+            )
+            for r in cur.fetchall():
+                k = (
+                    _norm_text(server_by_id.get(int(r["server_id"] or 0), "")),
+                    _norm_text(prof_by_id.get(int(r["profession_id"] or 0), "")),
+                    _norm_text(r["item_key"]),
+                )
+                if not (k[0] and k[1] and k[2]):
+                    continue
+                arr = item_key_buttons.get(k)
+                if arr is None:
+                    arr = []
+                    item_key_buttons[k] = arr
+                try:
+                    bid = int(r["button_id"] or 0)
+                except Exception:
+                    bid = 0
+                if bid > 0:
+                    arr.append(bid)
+
         item_records = []
         if item_cols:
-            item_buttons_expr = (
-                "buttons"
-                if "buttons" in item_cols
-                else ("buttons_json AS buttons" if "buttons_json" in item_cols else "'[]' AS buttons")
-            )
-            item_resources_expr = (
-                "resources"
-                if "resources" in item_cols
-                else ("resources_json AS resources" if "resources_json" in item_cols else "'[]' AS resources")
-            )
             item_select = [
-                "server",
-                "profession",
+                "server_id",
+                "profession_id",
                 "item_key",
                 "name",
                 "category" if "category" in item_cols else "'' AS category",
-                item_buttons_expr,
                 "default_material_key" if "default_material_key" in item_cols else "'' AS default_material_key",
-                item_resources_expr,
             ]
-            item_sql = "SELECT " + ", ".join(item_select) + " FROM item_keys ORDER BY server, profession, category, name"
+            item_sql = "SELECT " + ", ".join(item_select) + " FROM item_keys ORDER BY server_id, profession_id, category, name"
             cur = conn.execute(item_sql)
             for r in cur.fetchall():
-                server = str(r["server"] or "")
-                profession = str(r["profession"] or "")
+                server = str(server_by_id.get(int(r["server_id"] or 0), "") or "")
+                profession = str(prof_by_id.get(int(r["profession_id"] or 0), "") or "")
                 item_key = str(r["item_key"] or "")
                 name = str(r["name"] or "")
                 category = str(r["category"] or "")
-                buttons = _safe_buttons(r["buttons"])
+                buttons = []
                 default_mk = _norm_text(r["default_material_key"])
-                resources = _safe_resources(r["resources"])
+                resources = []
                 if not str(name or "").strip():
                     continue
                 rk = (_norm_text(server), _norm_text(profession), _norm_text(item_key))
+                if rk in item_key_buttons and item_key_buttons.get(rk):
+                    buttons = list(item_key_buttons.get(rk) or [])
                 if rk in item_resource_costs and item_resource_costs.get(rk):
                     resources = list(item_resource_costs.get(rk) or [])
 
@@ -350,24 +398,26 @@ def _load_rows():
 
         material_by_prof = {}
         material_buttons_by_key = {}
-        if mat_cols and "server" in mat_cols and "profession" in mat_cols and "material_key" in mat_cols:
-            mat_buttons_expr = (
-                "material_buttons"
-                if "material_buttons" in mat_cols
-                else ("material_buttons_json AS material_buttons" if "material_buttons_json" in mat_cols else "'[]' AS material_buttons")
+        mkb_cols = _table_columns(conn, "material_key_buttons")
+        if (
+            mkb_cols
+            and "server_id" in mkb_cols
+            and "profession_id" in mkb_cols
+            and "material_key" in mkb_cols
+            and "slot" in mkb_cols
+            and "button_id" in mkb_cols
+        ):
+            cur = conn.execute(
+                """
+                SELECT server_id, profession_id, material_key, slot, button_id
+                FROM material_key_buttons
+                ORDER BY server_id, profession_id, material_key, slot
+                """
             )
-            mat_select = [
-                "server",
-                "profession",
-                "material_key",
-                mat_buttons_expr,
-            ]
-            cur = conn.execute("SELECT " + ", ".join(mat_select) + " FROM material_keys")
             for r in cur.fetchall():
-                sk = _norm_text(r["server"])
-                pk = _norm_text(r["profession"])
+                sk = _norm_text(server_by_id.get(int(r["server_id"] or 0), ""))
+                pk = _norm_text(prof_by_id.get(int(r["profession_id"] or 0), ""))
                 mk = _norm_text(r["material_key"])
-                mb = _safe_buttons(r["material_buttons"])
                 if not mk:
                     continue
                 k = (sk, pk)
@@ -376,27 +426,74 @@ def _load_rows():
                     s = set()
                     material_by_prof[k] = s
                 s.add(mk)
-                material_buttons_by_key[(sk, pk, mk)] = list(mb)
+                mk_key = (sk, pk, mk)
+                arr = material_buttons_by_key.get(mk_key)
+                if arr is None:
+                    arr = []
+                    material_buttons_by_key[mk_key] = arr
+                try:
+                    bid = int(r["button_id"] or 0)
+                except Exception:
+                    bid = 0
+                if bid > 0:
+                    arr.append(bid)
+
+        if mat_cols and "server_id" in mat_cols and "profession_id" in mat_cols and "material_key" in mat_cols:
+            mat_select = [
+                "server_id",
+                "profession_id",
+                "material_key",
+            ]
+            cur = conn.execute("SELECT " + ", ".join(mat_select) + " FROM material_keys")
+            for r in cur.fetchall():
+                sk = _norm_text(server_by_id.get(int(r["server_id"] or 0), ""))
+                pk = _norm_text(prof_by_id.get(int(r["profession_id"] or 0), ""))
+                mk = _norm_text(r["material_key"])
+                if not mk:
+                    continue
+                k = (sk, pk)
+                s = material_by_prof.get(k)
+                if s is None:
+                    s = set()
+                    material_by_prof[k] = s
+                s.add(mk)
 
         # Aggregate recipe linkage counts by key.
         bod_sets = {}
         training_counts = {}
         recipe_materials = {}
         recipe_buttons = {}
-        if recipe_cols and "server" in recipe_cols and "profession" in recipe_cols and "name" in recipe_cols:
-            recipe_buttons_expr = (
-                "buttons"
-                if "buttons" in recipe_cols
-                else ("buttons_json AS buttons" if "buttons_json" in recipe_cols else "'[]' AS buttons")
-            )
+        rb_cols = _table_columns(conn, "recipe_buttons")
+        recipe_buttons_by_id = {}
+        if rb_cols and "recipe_id" in rb_cols and "slot" in rb_cols and "button_id" in rb_cols:
+            cur = conn.execute("SELECT recipe_id, slot, button_id FROM recipe_buttons ORDER BY recipe_id, slot")
+            for r in cur.fetchall():
+                try:
+                    rid = int(r["recipe_id"] or 0)
+                except Exception:
+                    rid = 0
+                if rid <= 0:
+                    continue
+                arr = recipe_buttons_by_id.get(rid)
+                if arr is None:
+                    arr = []
+                    recipe_buttons_by_id[rid] = arr
+                try:
+                    bid = int(r["button_id"] or 0)
+                except Exception:
+                    bid = 0
+                if bid > 0:
+                    arr.append(bid)
+
+        if recipe_cols and "server_id" in recipe_cols and "profession_id" in recipe_cols and "name" in recipe_cols:
             recipe_select = [
+                "id",
                 "recipe_type" if "recipe_type" in recipe_cols else "'' AS recipe_type",
-                "server",
-                "profession",
+                "server_id",
+                "profession_id",
                 "name",
                 "material_key" if "material_key" in recipe_cols else "'' AS material_key",
                 "deed_key" if "deed_key" in recipe_cols else "'' AS deed_key",
-                recipe_buttons_expr,
             ]
             where_sql = ""
             if "recipe_type" in recipe_cols:
@@ -406,17 +503,21 @@ def _load_rows():
                 + ", ".join(recipe_select)
                 + " FROM recipes"
                 + where_sql
-                + " ORDER BY server, profession, name, material_key"
+                + " ORDER BY server_id, profession_id, name, material_key"
             )
             cur = conn.execute(recipe_sql)
             for r in cur.fetchall():
                 recipe_type = _norm_text(r["recipe_type"])
-                sk = _norm_text(r["server"])
-                pk = _norm_text(r["profession"])
+                sk = _norm_text(server_by_id.get(int(r["server_id"] or 0), ""))
+                pk = _norm_text(prof_by_id.get(int(r["profession_id"] or 0), ""))
                 nk = _norm_text(r["name"])
                 mk = _norm_text(r["material_key"])
                 dkey = str(r["deed_key"] or "").strip()
-                btns = _safe_buttons(r["buttons"])
+                try:
+                    rid = int(r["id"] or 0)
+                except Exception:
+                    rid = 0
+                btns = list(recipe_buttons_by_id.get(rid, []))
                 if not (sk and pk and nk):
                     continue
                 by_item = recipe_materials.get((sk, pk, nk))

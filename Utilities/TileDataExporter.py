@@ -10,7 +10,7 @@ Last Updated: 2026-02-01
 
 Features:
 - Target a tile and display its attributes.
-- Export tile data to a text file in TileDataExport.
+- Export tile data to a text file in LegionScripts\\Logs.
 - Results persist in the gump until you scan another tile.
 
 How to use:
@@ -18,7 +18,7 @@ How to use:
 2) Click "Target Tile" and select a tile in-game.
 3) Review the results in the scroll area.
 4) Click "Export" to save the data to a file.
-   - If Save Path is blank, the current working directory is used.
+   - If Save Path is blank, LegionScripts\\Logs is used.
 """
 
 # Gump layout.
@@ -122,7 +122,9 @@ def _get_export_dir():
         base = os.path.dirname(__file__)
     except Exception:
         base = os.getcwd()
-    EXPORT_BASE = os.path.join(base, "TileDataExport")
+    if os.path.basename(base).lower() in ("resources", "utilities", "skills"):
+        base = os.path.dirname(base)
+    EXPORT_BASE = os.path.join(base, "Logs")
     return EXPORT_BASE
 
 

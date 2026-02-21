@@ -22,7 +22,7 @@ Implemented:
 - Run Prep/Sort (current behavior): recall home and move to Crafting Station.
 - Fill engine for Blacksmith/Tailor/Carpentry/Tinker:
   - Parses deed tooltip for profession/material/quality/amount.
-  - Uses recipe mappings from `Utilities/craftables.db`.
+  - Uses recipe mappings from `Databases/craftables.db`.
   - Runs helperized fill phases (Travel -> Move -> Materials -> Tools -> Context -> Craft -> Combine/Recount).
 - Learn Mode is manual-only (shared `RecipeBookEditor.py`).
   - Pulls resources from Resource Container.
@@ -43,7 +43,7 @@ Setup:
 - Set `BOD Item Container` where crafted items are staged for deed combine/turn-in combine targeting.
 - Optional: set `Salvage Bag` and `Trash Container` for exceptional failures and recycle overflow.
 - Learn Mode is manual-only: use `Manual Recipe` to open `RecipeBookEditor.py` and enter recipe/material data.
-- Recipes are stored in `Utilities/craftables.db` for shared editing across scripts.
+- Recipes are stored in `Databases/craftables.db` for shared editing across scripts.
 
 Not implemented yet:
 - Turn-In automation.
@@ -415,7 +415,10 @@ def _debug_log_path():
         base = os.path.dirname(__file__)
     except Exception:
         base = os.getcwd()
-    return os.path.join(base, DEBUG_LOG_FILE)
+    if os.path.basename(base).lower() in ("resources", "utilities", "skills"):
+        base = os.path.dirname(base)
+    logs_dir = os.path.join(base, "Logs")
+    return os.path.join(logs_dir, DEBUG_LOG_FILE)
 
 
 def _write_debug_log(line):
@@ -426,7 +429,9 @@ def _write_debug_log(line):
     except Exception:
         ts = "unknown-time"
     try:
-        with open(_debug_log_path(), "a", encoding="utf-8") as f:
+        path = _debug_log_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "a", encoding="utf-8") as f:
             f.write(f"[{ts}] {line}\n")
     except Exception:
         pass
@@ -4149,7 +4154,7 @@ def _ensure_material_for_recipe(recipe, required_items=1):
         if iid <= 0:
             _say(
                 f"Missing resource item-id mapping for '{mat}' "
-                "(set resources.item_id in craftables.db).",
+                "(set resources.item_id in Databases/craftables.db).",
                 33
             )
             return False

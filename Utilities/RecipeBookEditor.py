@@ -155,7 +155,15 @@ def _write_debug_log(msg):
     try:
         from datetime import datetime
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        path = os.path.join(_util_dir, DEBUG_LOG_FILE)
+        try:
+            base = os.path.dirname(__file__)
+        except Exception:
+            base = os.getcwd()
+        if os.path.basename(base).lower() in ("resources", "utilities", "skills"):
+            base = os.path.dirname(base)
+        logs_dir = os.path.join(base, "Logs")
+        os.makedirs(logs_dir, exist_ok=True)
+        path = os.path.join(logs_dir, DEBUG_LOG_FILE)
         with open(path, "a", encoding="utf-8") as f:
             f.write("[{0}] {1}\n".format(ts, str(msg)))
     except Exception:
@@ -274,20 +282,33 @@ def _resources_to_text(resources):
     return ";".join(parts)
 
 
+def _db_candidate_paths():
+    out = []
+    try:
+        _root = os.path.dirname(_util_dir) if os.path.basename(str(_util_dir or "")).lower() == "utilities" else _util_dir
+    except Exception:
+        _root = _util_dir
+    try:
+        out.append(os.path.join(_root, "Databases", "craftables.db"))
+    except Exception:
+        pass
+    try:
+        out.append(os.path.join(_util_dir, "craftables.db"))
+    except Exception:
+        pass
+    try:
+        out.append(os.path.join(_script_dir, "craftables.db"))
+    except Exception:
+        pass
+    try:
+        out.append(os.path.join(os.getcwd(), "craftables.db"))
+    except Exception:
+        pass
+    return out
+
+
 def _load_resource_name_options():
-    candidates = []
-    try:
-        candidates.append(os.path.join(_util_dir, "craftables.db"))
-    except Exception:
-        pass
-    try:
-        candidates.append(os.path.join(_script_dir, "craftables.db"))
-    except Exception:
-        pass
-    try:
-        candidates.append(os.path.join(os.getcwd(), "craftables.db"))
-    except Exception:
-        pass
+    candidates = _db_candidate_paths()
     seen = set()
     out = []
     for p in candidates:
@@ -358,19 +379,7 @@ def _load_item_name_options(server, profession):
     if not prof:
         return []
 
-    candidates = []
-    try:
-        candidates.append(os.path.join(_util_dir, "craftables.db"))
-    except Exception:
-        pass
-    try:
-        candidates.append(os.path.join(_script_dir, "craftables.db"))
-    except Exception:
-        pass
-    try:
-        candidates.append(os.path.join(os.getcwd(), "craftables.db"))
-    except Exception:
-        pass
+    candidates = _db_candidate_paths()
 
     seen_paths = set()
     out = []
@@ -390,17 +399,39 @@ def _load_item_name_options(server, profession):
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
             cur.execute("PRAGMA busy_timeout=350")
-            cur.execute(
-                """
-                SELECT name
-                FROM item_keys
-                WHERE lower(coalesce(server,''))=lower(?)
-                  AND lower(coalesce(profession,''))=lower(?)
-                  AND trim(coalesce(name,''))<>''
-                ORDER BY name COLLATE NOCASE
-                """,
-                (srv, prof),
-            )
+            item_cols = set()
+            try:
+                cur.execute("PRAGMA table_info(item_keys)")
+                for rr in (cur.fetchall() or []):
+                    item_cols.add(str(rr[1] or "").strip().lower())
+            except Exception:
+                item_cols = set()
+            if "server_id" in item_cols and "profession_id" in item_cols:
+                cur.execute(
+                    """
+                    SELECT ik.name
+                    FROM item_keys ik
+                    JOIN servers s ON s.id = ik.server_id
+                    JOIN professions p ON p.id = ik.profession_id
+                    WHERE lower(coalesce(s.name,''))=lower(?)
+                      AND lower(coalesce(p.name,''))=lower(?)
+                      AND trim(coalesce(ik.name,''))<>''
+                    ORDER BY ik.name COLLATE NOCASE
+                    """,
+                    (srv, prof),
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT name
+                    FROM item_keys
+                    WHERE lower(coalesce(server,''))=lower(?)
+                      AND lower(coalesce(profession,''))=lower(?)
+                      AND trim(coalesce(name,''))<>''
+                    ORDER BY name COLLATE NOCASE
+                    """,
+                    (srv, prof),
+                )
             rows = cur.fetchall()
             out = [str(r["name"] or "").strip() for r in rows if str(r["name"] or "").strip()]
             if out:
