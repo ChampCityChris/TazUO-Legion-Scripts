@@ -22,7 +22,6 @@ Risks:
 
 import API
 import json
-import ast
 import os
 import time
 import sys
@@ -646,13 +645,8 @@ def _save_config():
     }
     API.SavePersistentVar(DATA_KEY, json.dumps(data), API.PersistentVar.Char)
 
-# RecipeStore key-map integration (shared with Databases/craftables.db).
+# RecipeStore database path helper (shared with Databases/craftables.db).
 RECIPE_STORE = None
-RECIPE_KEY_MAPS = None
-RECIPE_KEY_MAPS_LAST_GOOD = None
-RECIPE_DB_NEXT_RETRY_AT = 0.0
-RECIPE_DB_WARN_SLOW_S = 0.35
-RECIPE_DB_LOGGED_NO_STORE = False
 TINKER_CRAFT_PATHS_BY_SERVER = {}
 _script_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
 _util_dir = ""
@@ -816,78 +810,8 @@ def _connect_recipe_db_ro():
         raise Exception("path=" + str(ex))
 
 
-def _now_s():
-    """Now s for the AutoMiner workflow.
-
-    Args:
-        None.
-
-    Returns:
-        object: Result value produced for the caller.
-
-    Side Effects:
-        No side effects beyond local calculations.
-    """
-    try:
-        return float(time.time())
-    except Exception:
-        return 0.0
-
-
-def _load_recipe_key_maps(force=False):
-    """Load and cache recipe key maps used by tool-crafting navigation.
-
-    Args:
-        force: When `True`, bypass in-memory cache and force a reload attempt.
-
-    Returns:
-        dict: Recipe key-map payload, or last-known-good data when available.
-
-    Side Effects:
-        Updates cache globals and backoff timers for database retry behavior.
-    """
-    global RECIPE_KEY_MAPS, RECIPE_KEY_MAPS_LAST_GOOD, RECIPE_DB_NEXT_RETRY_AT, RECIPE_DB_LOGGED_NO_STORE
-    if RECIPE_STORE is None:
-        if not RECIPE_DB_LOGGED_NO_STORE:
-            _diag_info("Recipe DB unavailable: RecipeStore module not loaded.")
-            RECIPE_DB_LOGGED_NO_STORE = True
-        return {}
-    if isinstance(RECIPE_KEY_MAPS, dict) and not bool(force):
-        return RECIPE_KEY_MAPS
-    now = _now_s()
-    if not bool(force) and now < float(RECIPE_DB_NEXT_RETRY_AT or 0.0):
-        if isinstance(RECIPE_KEY_MAPS_LAST_GOOD, dict):
-            return RECIPE_KEY_MAPS_LAST_GOOD
-        return {}
-    t0 = now
-    try:
-        if hasattr(RECIPE_STORE, "try_init_store"):
-            ok = bool(RECIPE_STORE.try_init_store(bool(force)))
-            if not ok:
-                RECIPE_DB_NEXT_RETRY_AT = _now_s() + 1.5
-                if isinstance(RECIPE_KEY_MAPS_LAST_GOOD, dict):
-                    RECIPE_KEY_MAPS = RECIPE_KEY_MAPS_LAST_GOOD
-                    return RECIPE_KEY_MAPS
-                RECIPE_KEY_MAPS = {}
-                return RECIPE_KEY_MAPS
-        loaded = dict(RECIPE_STORE.load_key_maps() or {})
-        RECIPE_KEY_MAPS = loaded
-        RECIPE_KEY_MAPS_LAST_GOOD = loaded
-        RECIPE_DB_NEXT_RETRY_AT = 0.0
-        elapsed = _now_s() - t0
-        if elapsed >= float(RECIPE_DB_WARN_SLOW_S):
-            _diag_info("Recipe DB load_key_maps slow ({0:.2f}s).".format(float(elapsed)))
-    except Exception:
-        RECIPE_DB_NEXT_RETRY_AT = _now_s() + 1.5
-        if isinstance(RECIPE_KEY_MAPS_LAST_GOOD, dict):
-            RECIPE_KEY_MAPS = RECIPE_KEY_MAPS_LAST_GOOD
-        else:
-            RECIPE_KEY_MAPS = {}
-    return RECIPE_KEY_MAPS
-
-
 def _clear_recipe_caches():
-    # Clear in-memory recipe/key-map caches so next lookup reloads from DB.
+    # Clear in-memory recipe caches so next lookup reloads from the database.
     """Clear recipe caches for the AutoMiner workflow.
 
     Args:
@@ -899,56 +823,25 @@ def _clear_recipe_caches():
     Side Effects:
         Updates module-level runtime state.
     """
-    global RECIPE_KEY_MAPS, RECIPE_KEY_MAPS_LAST_GOOD, TINKER_CRAFT_PATHS_BY_SERVER, RECIPE_DB_NEXT_RETRY_AT
-    RECIPE_KEY_MAPS = None
-    RECIPE_KEY_MAPS_LAST_GOOD = None
+    global TINKER_CRAFT_PATHS_BY_SERVER
     TINKER_CRAFT_PATHS_BY_SERVER = {}
-    RECIPE_DB_NEXT_RETRY_AT = 0.0
-
-
-def _material_buttons_for_key_from_maps(maps, server, profession, material_key):
-    """Material buttons for key from maps for the AutoMiner workflow.
-
-    Args:
-        maps: Input value used by this helper.
-        server: Input value used by this helper.
-        profession: Input value used by this helper.
-        material_key: Input value used by this helper.
-
-    Returns:
-        object: Result value produced for the caller.
-
-    Side Effects:
-        No side effects beyond local calculations.
-    """
-    by_server = maps.get(str(server or ""), {}) if isinstance(maps, dict) else {}
-    by_prof = by_server.get(str(profession or ""), {}) if isinstance(by_server, dict) else {}
-    mk_node = by_prof.get("material_keys", {}) if isinstance(by_prof, dict) else {}
-    ent = mk_node.get(str(material_key or ""), {}) if isinstance(mk_node, dict) else {}
-    out = []
-    for x in (ent.get("material_buttons", []) if isinstance(ent, dict) else []):
-        try:
-            n = int(x)
-            if n > 0:
-                out.append(n)
-        except Exception:
-            pass
-    return out
 
 
 def _prime_tinker_craft_path_cache(force=False):
     """Prime tinker craft path cache for the AutoMiner workflow.
 
     Args:
-        force: Input value used by this helper.
+        force: When `True`, rebuild the cache from database queries.
 
     Returns:
-        object: Result value produced for the caller.
+        dict: Per-server tinker craft paths using canonical craftables tables.
 
     Side Effects:
         Updates module-level runtime state.
     """
     global TINKER_CRAFT_PATHS_BY_SERVER
+    _ = bool(force)  # Parameter kept for call-site compatibility.
+
     try:
         db_path = _recipe_db_path()
         if not db_path:
@@ -956,100 +849,8 @@ def _prime_tinker_craft_path_cache(force=False):
             return TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
         _diag_info("Recipe DB path: {0}".format(str(db_path)))
 
-        def _json_ints(raw):
-            """Json ints for the AutoMiner workflow.
-
-            Args:
-                raw: Input value used by this helper.
-
-            Returns:
-                object: Result value produced for the caller.
-
-            Side Effects:
-                No side effects beyond local calculations.
-            """
-            vals = []
-            if raw is None:
-                return vals
-            try:
-                seq = ast.literal_eval(str(raw))
-            except Exception:
-                seq = []
-            for x in (seq or []):
-                try:
-                    n = int(x)
-                    if n > 0:
-                        vals.append(n)
-                except Exception:
-                    pass
-            return vals
-
-        def _int_list(seq):
-            """Int list for the AutoMiner workflow.
-
-            Args:
-                seq: Input value used by this helper.
-
-            Returns:
-                object: Result value produced for the caller.
-
-            Side Effects:
-                No side effects beyond local calculations.
-            """
-            vals = []
-            for x in (seq or []):
-                try:
-                    n = int(x)
-                    if n > 0:
-                        vals.append(n)
-                except Exception:
-                    pass
-            return vals
-
         out = {}
-        found_target_item = False
-
-        # Prefer normalized key-map API first (works across legacy + normalized schemas).
-        try:
-            if RECIPE_STORE and hasattr(RECIPE_STORE, "load_key_maps"):
-                km = RECIPE_STORE.load_key_maps() or {}
-                if isinstance(km, dict):
-                    for server, srv_node in km.items():
-                        s = str(server or "")
-                        if not s or not isinstance(srv_node, dict):
-                            continue
-                        pnode = {}
-                        for prof_key, prof_node in (srv_node.items() if isinstance(srv_node, dict) else []):
-                            if _is_tinker_profession_name(prof_key) and isinstance(prof_node, dict):
-                                pnode = prof_node
-                                break
-                        if not pnode:
-                            continue
-                        if s not in out:
-                            out[s] = {"material_buttons": [], "items": {}}
-                        mk_node = pnode.get("material_keys", {}) if isinstance(pnode.get("material_keys"), dict) else {}
-                        ik_node = pnode.get("item_keys", {}) if isinstance(pnode.get("item_keys"), dict) else {}
-                        ingot = mk_node.get("ingot_iron", {}) if isinstance(mk_node, dict) else {}
-                        if isinstance(ingot, dict):
-                            out[s]["material_buttons"] = _int_list(ingot.get("material_buttons", []) or [])
-                        if isinstance(ik_node, dict):
-                            for ik_key, ent in ik_node.items():
-                                if not isinstance(ent, dict):
-                                    continue
-                                nk = _normalize_recipe_name(ik_key)
-                                if nk not in ("shovel", "tinker's tools"):
-                                    nk = _normalize_recipe_name(ent.get("name", ""))
-                                if nk not in ("shovel", "tinker's tools"):
-                                    continue
-                                btns = _int_list(ent.get("buttons", []) or [])
-                                if btns:
-                                    out[s]["items"][nk] = btns
-                                    found_target_item = True
-                if out and found_target_item:
-                    TINKER_CRAFT_PATHS_BY_SERVER = out
-                    return TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
-        except Exception:
-            pass
+        material_option_by_server = {}
 
         conn = None
         try:
@@ -1058,283 +859,74 @@ def _prime_tinker_craft_path_cache(force=False):
                 conn.execute("PRAGMA query_only=1;")
             except Exception:
                 pass
-            mk_cols = {}
-            try:
-                for _c in (conn.execute("PRAGMA table_info(material_keys)").fetchall() or []):
-                    mk_cols[str(_c[1] or "").strip().lower()] = True
-            except Exception:
-                mk_cols = {}
-            ik_cols = {}
-            try:
-                for _c in (conn.execute("PRAGMA table_info(item_keys)").fetchall() or []):
-                    ik_cols[str(_c[1] or "").strip().lower()] = True
-            except Exception:
-                ik_cols = {}
 
-            mkb_cols = {}
-            try:
-                for _c in (conn.execute("PRAGMA table_info(material_key_buttons)").fetchall() or []):
-                    mkb_cols[str(_c[1] or "").strip().lower()] = True
-            except Exception:
-                mkb_cols = {}
-            ikb_cols = {}
-            try:
-                for _c in (conn.execute("PRAGMA table_info(item_key_buttons)").fetchall() or []):
-                    ikb_cols[str(_c[1] or "").strip().lower()] = True
-            except Exception:
-                ikb_cols = {}
-
-            mk_btns = {}
-            if mkb_cols:
-                if ("server" in mkb_cols) and ("profession" in mkb_cols):
-                    cur = conn.execute(
-                        "SELECT server, profession, material_key, slot, button_id FROM material_key_buttons "
-                        "ORDER BY server, profession, material_key, slot"
-                    )
-                    for server, prof, mk, _slot, bid in (cur.fetchall() or []):
-                        k = (str(server or ""), str(prof or ""), str(mk or ""))
-                        mk_btns[k] = mk_btns.get(k, []) + _int_list([bid])
-                elif ("server_id" in mkb_cols) and ("profession_id" in mkb_cols):
-                    cur = conn.execute(
-                        """
-                        SELECT s.name, p.name, mkb.material_key, mkb.slot, mkb.button_id
-                        FROM material_key_buttons mkb
-                        JOIN servers s ON s.id = mkb.server_id
-                        JOIN professions p ON p.id = mkb.profession_id
-                        ORDER BY s.name, p.name, mkb.material_key, mkb.slot
-                        """
-                    )
-                    for server, prof, mk, _slot, bid in (cur.fetchall() or []):
-                        k = (str(server or ""), str(prof or ""), str(mk or ""))
-                        mk_btns[k] = mk_btns.get(k, []) + _int_list([bid])
-
-            ik_btns = {}
-            if ikb_cols:
-                if ("server" in ikb_cols) and ("profession" in ikb_cols):
-                    cur = conn.execute(
-                        "SELECT server, profession, item_key, slot, button_id FROM item_key_buttons "
-                        "ORDER BY server, profession, item_key, slot"
-                    )
-                    for server, prof, ik, _slot, bid in (cur.fetchall() or []):
-                        k = (str(server or ""), str(prof or ""), str(ik or ""))
-                        ik_btns[k] = ik_btns.get(k, []) + _int_list([bid])
-                elif ("server_id" in ikb_cols) and ("profession_id" in ikb_cols):
-                    cur = conn.execute(
-                        """
-                        SELECT s.name, p.name, ikb.item_key, ikb.slot, ikb.button_id
-                        FROM item_key_buttons ikb
-                        JOIN servers s ON s.id = ikb.server_id
-                        JOIN professions p ON p.id = ikb.profession_id
-                        ORDER BY s.name, p.name, ikb.item_key, ikb.slot
-                        """
-                    )
-                    for server, prof, ik, _slot, bid in (cur.fetchall() or []):
-                        k = (str(server or ""), str(prof or ""), str(ik or ""))
-                        ik_btns[k] = ik_btns.get(k, []) + _int_list([bid])
-
-            def _lookup_btns(btn_map, server_name, key_name):
-                """Lookup btns for the AutoMiner workflow.
-
-                Args:
-                    btn_map: Input value used by this helper.
-                    server_name: Input value used by this helper.
-                    key_name: Input value used by this helper.
-
-                Returns:
-                    object: Result value produced for the caller.
-
-                Side Effects:
-                    No side effects beyond local calculations.
+            # Build item navigation paths for shovel and tinker's tools.
+            cur = conn.execute(
                 """
-                out_vals = []
-                s_norm = _normalize_recipe_name(server_name)
-                k_norm = _normalize_recipe_name(key_name)
-                for k, vals in (btn_map.items() if isinstance(btn_map, dict) else []):
-                    try:
-                        s_k, p_k, item_k = k
-                    except Exception:
-                        continue
-                    if _normalize_recipe_name(s_k) != s_norm:
-                        continue
-                    if not _is_tinker_profession_name(p_k):
-                        continue
-                    if _normalize_recipe_name(item_k) != k_norm:
-                        continue
-                    out_vals = _int_list(vals or [])
-                    if out_vals:
-                        return out_vals
-                return out_vals
+                SELECT gs.server_name,
+                       ci.item_key_slug,
+                       ci.item_display_name,
+                       ci.default_material_option_id,
+                       cins.gump_button_id
+                FROM craftable_items ci
+                JOIN crafting_contexts cc ON cc.context_id = ci.context_id
+                JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                JOIN craftable_item_navigation_steps cins ON cins.craftable_item_id = ci.craftable_item_id
+                WHERE lower(trim(cp.profession_name)) IN (?, ?)
+                  AND (
+                      lower(trim(ci.item_key_slug)) IN (?, ?)
+                      OR lower(trim(ci.item_display_name)) IN (?, ?)
+                  )
+                ORDER BY gs.server_name, ci.craftable_item_id, cins.step_number
+                """,
+                ("tinker", "tinkering", "shovel", "tinker's tools", "shovel", "tinker's tools"),
+            )
+            for server, item_key, item_name, material_option_id, button_id in (cur.fetchall() or []):
+                s = str(server or "")
+                n = _normalize_recipe_name(item_key or item_name)
+                if n not in ("shovel", "tinker's tools"):
+                    n = _normalize_recipe_name(item_name or item_key)
+                if n not in ("shovel", "tinker's tools"):
+                    continue
 
-            if ("server" in mk_cols) and ("profession" in mk_cols):
-                sel = "server, material_key"
-                if "material_buttons" in mk_cols:
-                    sel = sel + ", material_buttons"
-                cur = conn.execute(
-                    "SELECT " + str(sel) + " FROM material_keys "
-                    "WHERE lower(trim(profession)) IN (?, ?) AND material_key=?",
-                    ("tinker", "tinkering", "ingot_iron"),
-                )
-                for row in (cur.fetchall() or []):
-                    server = row[0]
-                    mk = row[1]
-                    mraw = row[2] if len(row) > 2 else None
-                    s = str(server or "")
-                    if s not in out:
-                        out[s] = {"material_buttons": [], "items": {}}
-                    btns = _json_ints(mraw)
-                    if not btns:
-                        btns = _lookup_btns(mk_btns, s, str(mk or ""))
-                    out[s]["material_buttons"] = btns
-            elif ("server_id" in mk_cols) and ("profession_id" in mk_cols):
-                sel = "s.name, mk.material_key"
-                if "material_buttons" in mk_cols:
-                    sel = sel + ", mk.material_buttons"
-                cur = conn.execute(
-                    """
-                    SELECT """ + str(sel) + """
-                    FROM material_keys mk
-                    JOIN servers s ON s.id = mk.server_id
-                    JOIN professions p ON p.id = mk.profession_id
-                    WHERE lower(trim(p.name)) IN (?, ?) AND mk.material_key=?
-                    """,
-                    ("tinker", "tinkering", "ingot_iron"),
-                )
-                for row in (cur.fetchall() or []):
-                    server = row[0]
-                    mk = row[1]
-                    mraw = row[2] if len(row) > 2 else None
-                    s = str(server or "")
-                    if s not in out:
-                        out[s] = {"material_buttons": [], "items": {}}
-                    btns = _json_ints(mraw)
-                    if not btns:
-                        btns = _lookup_btns(mk_btns, s, str(mk or ""))
-                    out[s]["material_buttons"] = btns
-
-            if ("server" in ik_cols) and ("profession" in ik_cols):
-                sel = "server, item_key, name"
-                if "buttons" in ik_cols:
-                    sel = sel + ", buttons"
-                cur = conn.execute(
-                    "SELECT " + str(sel) + " FROM item_keys "
-                    "WHERE lower(trim(profession)) IN (?, ?)",
-                    ("tinker", "tinkering"),
-                )
-                for row in (cur.fetchall() or []):
-                    server = row[0]
-                    item_key = row[1]
-                    name = row[2]
-                    braw = row[3] if len(row) > 3 else None
-                    s = str(server or "")
-                    n = _normalize_recipe_name(item_key)
-                    if n not in ("shovel", "tinker's tools"):
-                        n = _normalize_recipe_name(name)
-                    if n not in ("shovel", "tinker's tools"):
-                        continue
-                    if s not in out:
-                        out[s] = {"material_buttons": [], "items": {}}
-                    btns = _json_ints(braw)
-                    if not btns:
-                        btns = _lookup_btns(ik_btns, s, str(item_key or ""))
-                    if btns:
-                        out[s]["items"][n] = btns
-            elif ("server_id" in ik_cols) and ("profession_id" in ik_cols):
-                sel = "s.name, ik.item_key, ik.name"
-                if "buttons" in ik_cols:
-                    sel = sel + ", ik.buttons"
-                cur = conn.execute(
-                    """
-                    SELECT """ + str(sel) + """
-                    FROM item_keys ik
-                    JOIN servers s ON s.id = ik.server_id
-                    JOIN professions p ON p.id = ik.profession_id
-                    WHERE lower(trim(p.name)) IN (?, ?)
-                    """,
-                    ("tinker", "tinkering"),
-                )
-                for row in (cur.fetchall() or []):
-                    server = row[0]
-                    item_key = row[1]
-                    name = row[2]
-                    braw = row[3] if len(row) > 3 else None
-                    s = str(server or "")
-                    n = _normalize_recipe_name(item_key)
-                    if n not in ("shovel", "tinker's tools"):
-                        n = _normalize_recipe_name(name)
-                    if n not in ("shovel", "tinker's tools"):
-                        continue
-                    if s not in out:
-                        out[s] = {"material_buttons": [], "items": {}}
-                    btns = _json_ints(braw)
-                    if not btns:
-                        btns = _lookup_btns(ik_btns, s, str(item_key or ""))
-                    if btns:
-                        out[s]["items"][n] = btns
-
-            # Schema-v8+ direct path: rely on *_key_buttons joins, not legacy inline JSON columns.
-            need_direct = True
-            for _srv, _node in (out.items() if isinstance(out, dict) else []):
+                if s not in out:
+                    out[s] = {"material_buttons": [], "items": {}}
+                if n not in out[s]["items"]:
+                    out[s]["items"][n] = []
                 try:
-                    _items = _node.get("items", {}) if isinstance(_node, dict) else {}
-                    if _items.get("shovel", []) or _items.get("tinker's tools", []):
-                        need_direct = False
-                        break
+                    bid = int(button_id)
+                    if bid > 0:
+                        out[s]["items"][n].append(bid)
                 except Exception:
                     pass
-            if need_direct:
+
+                try:
+                    moid = int(material_option_id or 0)
+                except Exception:
+                    moid = 0
+                if moid > 0:
+                    # Prefer shovel's default material option when both targets exist.
+                    if (s not in material_option_by_server) or (n == "shovel"):
+                        material_option_by_server[s] = moid
+
+            # Resolve material navigation using each server's default material option id.
+            for s, moid in (material_option_by_server.items() if isinstance(material_option_by_server, dict) else []):
                 try:
                     cur = conn.execute(
                         """
-                        SELECT gs.server_name, ci.item_key_slug, ci.item_display_name, cins.step_number, cins.gump_button_id
-                        FROM craftable_items ci
-                        JOIN crafting_contexts cc ON cc.context_id = ci.context_id
-                        JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
-                        JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
-                        JOIN craftable_item_navigation_steps cins ON cins.craftable_item_id = ci.craftable_item_id
-                        WHERE lower(trim(cp.profession_name)) IN (?, ?)
-                          AND (
-                              lower(trim(ci.item_key_slug)) IN (?, ?)
-                              OR lower(trim(ci.item_display_name)) IN (?, ?)
-                          )
-                        ORDER BY gs.server_name, ci.item_key_slug, cins.step_number
+                        SELECT mons.gump_button_id
+                        FROM material_option_navigation_steps mons
+                        WHERE mons.material_option_id=?
+                        ORDER BY mons.step_number
                         """,
-                        ("tinker", "tinkering", "shovel", "tinker's tools", "shovel", "tinker's tools"),
+                        (int(moid),),
                     )
-                    for server, item_key, name, _slot, bid in (cur.fetchall() or []):
-                        s = str(server or "")
-                        n = _normalize_recipe_name(item_key or name)
-                        if n not in ("shovel", "tinker's tools"):
-                            n = _normalize_recipe_name(name or item_key)
-                        if n not in ("shovel", "tinker's tools"):
-                            continue
-                        if s not in out:
-                            out[s] = {"material_buttons": [], "items": {}}
-                        out[s]["items"][n] = out[s]["items"].get(n, []) + _int_list([bid])
+                    out[s]["material_buttons"] = [
+                        int(r[0]) for r in (cur.fetchall() or []) if int(r[0]) > 0
+                    ]
                 except Exception:
-                    pass
-
-                try:
-                    cur = conn.execute(
-                        """
-                        SELECT gs.server_name, mons.step_number, mons.gump_button_id
-                        FROM material_options mo
-                        JOIN crafting_contexts cc ON cc.context_id = mo.context_id
-                        JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
-                        JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
-                        JOIN material_option_navigation_steps mons ON mons.material_option_id = mo.material_option_id
-                        WHERE lower(trim(cp.profession_name)) IN (?, ?)
-                          AND lower(trim(mo.material_option_key)) = ?
-                        ORDER BY gs.server_name, mons.step_number
-                        """,
-                        ("tinker", "tinkering", "ingot_iron"),
-                    )
-                    for server, _slot, bid in (cur.fetchall() or []):
-                        s = str(server or "")
-                        if s not in out:
-                            out[s] = {"material_buttons": [], "items": {}}
-                        out[s]["material_buttons"] = out[s]["material_buttons"] + _int_list([bid])
-                except Exception:
-                    pass
+                    out[s]["material_buttons"] = []
         finally:
             try:
                 conn.close()
@@ -1356,9 +948,8 @@ def _prime_tinker_craft_path_cache(force=False):
         except Exception:
             pass
 
-        if out:
-            TINKER_CRAFT_PATHS_BY_SERVER = out
-        return TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
+        TINKER_CRAFT_PATHS_BY_SERVER = out if isinstance(out, dict) else {}
+        return TINKER_CRAFT_PATHS_BY_SERVER
     except Exception:
         # Never let DB/cache issues break startup or gump callbacks.
         if not isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict):

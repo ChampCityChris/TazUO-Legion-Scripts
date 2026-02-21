@@ -36,3 +36,15 @@
 [2026-02-21 13:01:40] STEP load persisted config
 [2026-02-21 13:01:40] STEP load log config
 [2026-02-21 13:01:40] STEP rebuild control gump
+[2026-02-21 17:45:20] BOOT module_import __name__=<module>
+[2026-02-21 17:45:20] STEP entrypoint_check __name__=<module> autostart=True
+[2026-02-21 17:45:20] STEP create control gump
+[2026-02-21 17:45:21] STEP load persisted config
+[2026-02-21 17:45:21] STEP load log config
+[2026-02-21 17:45:21] STEP rebuild control gump
+[2026-02-21 18:11:41] BOOT module_import __name__=<module>
+[2026-02-21 18:11:41] STEP entrypoint_check __name__=<module> autostart=True
+[2026-02-21 18:11:41] STEP create control gump
+[2026-02-21 18:11:42] STEP load persisted config
+[2026-02-21 18:11:42] STEP load log config
+[2026-02-21 18:11:42] STEP rebuild control gump

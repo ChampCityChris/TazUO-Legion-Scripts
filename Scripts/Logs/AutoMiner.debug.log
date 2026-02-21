@@ -105,3 +105,337 @@
 [2026-02-21 13:02:14] [RUN] Unloading resources to containers.
 [2026-02-21 13:02:14] [RUN] Unload: 23 items in backpack.
 [2026-02-21 13:02:19] [RUN] Mining: OFF
+[2026-02-21 17:45:21] [RUN] AutoMiner loaded. Press Start on the gump to begin.
+[2026-02-21 17:45:23] [RUN] Tile caches cleared for fresh run start
+[2026-02-21 17:45:23] [RUN] Craftables.db caches cleared; forcing fresh craft-path prime
+[2026-02-21 17:45:23] [RUN] Recipe DB path: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Databases\craftables.db
+[2026-02-21 17:45:24] [RUN] Recipe DB open success mode=path_query_only
+[2026-02-21 17:45:24] [RUN] Recipe prime server=UOAlive shovel=[41, 202] tools=[41, 62] material=[]
+[2026-02-21 17:45:24] [RUN] Mining: ON
+[2026-02-21 17:45:24] [RUN] Mining started...
+[2026-02-21 17:45:24] [RUN] Tooling check complete.
+[2026-02-21 17:45:24] [RUN] Recalling to first mining spot.
+[2026-02-21 17:45:24] [RUN] Recalling to mining rune 76.
+[2026-02-21 17:45:28] [TARGET] MineTarget: set center=(1792,456,-90)
+[2026-02-21 17:45:28] [TARGET] MineTarget: attempt target=(1792,456,-90) rel=(0,0)
+[2026-02-21 17:45:28] [TARGET] System: MineTarget: tile graphic=0x053D in_list=True
+[2026-02-21 17:45:28] [TARGET] MineTarget: rel=(0,0) graphic=0x053D land=True has_target=True
+[2026-02-21 17:45:28] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:29] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:29] [TARGET] MineTarget: attempt target=(1792,455,-90) rel=(0,-1)
+[2026-02-21 17:45:29] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 17:45:29] [TARGET] MineTarget: rel=(0,-1) graphic=0x053C land=True has_target=True
+[2026-02-21 17:45:29] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:30] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:30] [TARGET] MineTarget: attempt target=(1792,457,-90) rel=(0,1)
+[2026-02-21 17:45:30] [TARGET] System: MineTarget: tile graphic=0x053F in_list=True
+[2026-02-21 17:45:30] [TARGET] MineTarget: rel=(0,1) graphic=0x053F land=True has_target=True
+[2026-02-21 17:45:31] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:31] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:32] [TARGET] MineTarget: attempt target=(1791,456,-90) rel=(-1,0)
+[2026-02-21 17:45:32] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 17:45:32] [TARGET] MineTarget: rel=(-1,0) graphic=0x053C land=True has_target=True
+[2026-02-21 17:45:32] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:33] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:33] [TARGET] MineTarget: attempt target=(1793,456,-90) rel=(1,0)
+[2026-02-21 17:45:33] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 17:45:33] [TARGET] MineTarget: rel=(1,0) graphic=0x053C land=True has_target=True
+[2026-02-21 17:45:33] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:34] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:34] [TARGET] MineTarget: attempt target=(1791,455,-90) rel=(-1,-1)
+[2026-02-21 17:45:34] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 17:45:34] [TARGET] MineTarget: rel=(-1,-1) graphic=0x053C land=True has_target=True
+[2026-02-21 17:45:34] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:35] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:35] [TARGET] MineTarget: attempt target=(1791,457,-90) rel=(-1,1)
+[2026-02-21 17:45:35] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 17:45:35] [TARGET] MineTarget: rel=(-1,1) graphic=0x053C land=True has_target=True
+[2026-02-21 17:45:36] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:36] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:37] [TARGET] MineTarget: attempt target=(1793,455,-90) rel=(1,-1)
+[2026-02-21 17:45:37] [TARGET] System: MineTarget: tile graphic=0x053E in_list=True
+[2026-02-21 17:45:37] [TARGET] MineTarget: rel=(1,-1) graphic=0x053E land=True has_target=True
+[2026-02-21 17:45:37] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:38] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:38] [TARGET] MineTarget: attempt target=(1793,457,-90) rel=(1,1)
+[2026-02-21 17:45:38] [TARGET] System: MineTarget: tile graphic=0x053E in_list=True
+[2026-02-21 17:45:38] [TARGET] MineTarget: rel=(1,1) graphic=0x053E land=True has_target=True
+[2026-02-21 17:45:38] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:39] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:39] [TARGET] MineTarget: attempt target=(1792,456,-90) rel=(0,0)
+[2026-02-21 17:45:39] [TARGET] System: MineTarget: tile graphic=0x053D in_list=True
+[2026-02-21 17:45:39] [TARGET] MineTarget: rel=(0,0) graphic=0x053D land=True has_target=True
+[2026-02-21 17:45:39] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:40] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:40] [TARGET] MineTarget: attempt target=(1792,455,-90) rel=(0,-1)
+[2026-02-21 17:45:40] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 17:45:40] [TARGET] MineTarget: rel=(0,-1) graphic=0x053C land=True has_target=True
+[2026-02-21 17:45:40] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:41] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:41] [TARGET] MineTarget: attempt target=(1792,457,-90) rel=(0,1)
+[2026-02-21 17:45:41] [TARGET] System: MineTarget: tile graphic=0x053F in_list=True
+[2026-02-21 17:45:41] [TARGET] MineTarget: rel=(0,1) graphic=0x053F land=True has_target=True
+[2026-02-21 17:45:42] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:42] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:43] [TARGET] MineTarget: attempt target=(1791,456,-90) rel=(-1,0)
+[2026-02-21 17:45:43] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 17:45:43] [TARGET] MineTarget: rel=(-1,0) graphic=0x053C land=True has_target=True
+[2026-02-21 17:45:43] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:44] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:44] [TARGET] MineTarget: attempt target=(1793,456,-90) rel=(1,0)
+[2026-02-21 17:45:44] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 17:45:44] [TARGET] MineTarget: rel=(1,0) graphic=0x053C land=True has_target=True
+[2026-02-21 17:45:44] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 17:45:45] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 17:45:45] [RUN] Overweight detected.
+[2026-02-21 17:45:45] [RUN] Overweight: recall to unload.
+[2026-02-21 17:45:45] [RUN] Recalling home to unload.
+[2026-02-21 18:11:42] [RUN] AutoMiner loaded. Press Start on the gump to begin.
+[2026-02-21 18:11:45] [RUN] Tile caches cleared for fresh run start
+[2026-02-21 18:11:45] [RUN] Craftables.db caches cleared; forcing fresh craft-path prime
+[2026-02-21 18:11:45] [RUN] Recipe DB path: F:\Games\Ultima Online\Clients\TazUO\TazUO\LegionScripts\Databases\craftables.db
+[2026-02-21 18:11:45] [RUN] Recipe DB open success mode=path_query_only
+[2026-02-21 18:11:45] [RUN] Recipe prime server=UOAlive shovel=[41, 202] tools=[41, 62] material=[7, 6]
+[2026-02-21 18:11:45] [RUN] Mining: ON
+[2026-02-21 18:11:45] [RUN] Mining started...
+[2026-02-21 18:11:45] [RUN] Tooling check complete.
+[2026-02-21 18:11:45] [RUN] Recalling to first mining spot.
+[2026-02-21 18:11:45] [RUN] Recalling to mining rune 76.
+[2026-02-21 18:11:49] [RUN] Overweight detected.
+[2026-02-21 18:11:49] [RUN] Overweight: recall to unload.
+[2026-02-21 18:11:49] [RUN] Recalling home to unload.
+[2026-02-21 18:11:56] [RUN] Unloading resources to containers.
+[2026-02-21 18:11:56] [RUN] Unload: 22 items in backpack.
+[2026-02-21 18:12:01] [RUN] Restocking ingots from drop container.
+[2026-02-21 18:12:02] [RUN] Ensuring at least two shovels.
+[2026-02-21 18:12:03] [RUN] Recalling to mining rune 77.
+[2026-02-21 18:12:07] [TARGET] MineTarget: set center=(1776,456,-90)
+[2026-02-21 18:12:07] [TARGET] MineTarget: attempt target=(1776,456,-90) rel=(0,0)
+[2026-02-21 18:12:07] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 18:12:07] [TARGET] MineTarget: rel=(0,0) graphic=0x053C land=True has_target=True
+[2026-02-21 18:12:08] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:08] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:08] [CACHE] MineTarget: cached no-ore tile (1776,456).
+[2026-02-21 18:12:08] [TARGET] MineTarget: attempt target=(1776,455,-90) rel=(0,-1)
+[2026-02-21 18:12:08] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 18:12:08] [TARGET] MineTarget: rel=(0,-1) graphic=0x053C land=True has_target=True
+[2026-02-21 18:12:08] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:08] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:08] [CACHE] MineTarget: cached no-ore tile (1776,455).
+[2026-02-21 18:12:09] [TARGET] MineTarget: attempt target=(1776,457,-90) rel=(0,1)
+[2026-02-21 18:12:09] [TARGET] System: MineTarget: tile graphic=0x053E in_list=True
+[2026-02-21 18:12:09] [TARGET] MineTarget: rel=(0,1) graphic=0x053E land=True has_target=True
+[2026-02-21 18:12:09] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:09] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:09] [CACHE] MineTarget: cached no-ore tile (1776,457).
+[2026-02-21 18:12:09] [TARGET] MineTarget: attempt target=(1775,456,-90) rel=(-1,0)
+[2026-02-21 18:12:09] [TARGET] System: MineTarget: tile graphic=0x054C in_list=True
+[2026-02-21 18:12:09] [TARGET] MineTarget: rel=(-1,0) graphic=0x054C land=True has_target=True
+[2026-02-21 18:12:09] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:10] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:10] [TARGET] MineTarget: attempt target=(1777,456,-90) rel=(1,0)
+[2026-02-21 18:12:10] [TARGET] System: MineTarget: tile graphic=0x053F in_list=True
+[2026-02-21 18:12:10] [TARGET] MineTarget: rel=(1,0) graphic=0x053F land=True has_target=True
+[2026-02-21 18:12:11] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:11] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:11] [CACHE] MineTarget: cached no-ore tile (1777,456).
+[2026-02-21 18:12:11] [TARGET] MineTarget: attempt target=(1775,455,-90) rel=(-1,-1)
+[2026-02-21 18:12:11] [TARGET] System: MineTarget: tile graphic=0x054C in_list=True
+[2026-02-21 18:12:11] [TARGET] MineTarget: rel=(-1,-1) graphic=0x054C land=True has_target=True
+[2026-02-21 18:12:11] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:11] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:11] [CACHE] MineTarget: cached no-ore tile (1775,455).
+[2026-02-21 18:12:12] [TARGET] MineTarget: attempt target=(1775,457,-90) rel=(-1,1)
+[2026-02-21 18:12:12] [TARGET] System: MineTarget: tile graphic=0x0547 in_list=True
+[2026-02-21 18:12:12] [TARGET] MineTarget: rel=(-1,1) graphic=0x0547 land=True has_target=True
+[2026-02-21 18:12:12] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:13] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:13] [TARGET] MineTarget: attempt target=(1777,455,-90) rel=(1,-1)
+[2026-02-21 18:12:13] [TARGET] System: MineTarget: tile graphic=0x053D in_list=True
+[2026-02-21 18:12:13] [TARGET] MineTarget: rel=(1,-1) graphic=0x053D land=True has_target=True
+[2026-02-21 18:12:13] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:13] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:13] [CACHE] MineTarget: cached no-ore tile (1777,455).
+[2026-02-21 18:12:13] [TARGET] MineTarget: attempt target=(1777,457,-90) rel=(1,1)
+[2026-02-21 18:12:13] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 18:12:13] [TARGET] MineTarget: rel=(1,1) graphic=0x053C land=True has_target=True
+[2026-02-21 18:12:14] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:14] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:14] [CACHE] MineTarget: cached no-ore tile (1777,457).
+[2026-02-21 18:12:14] [TARGET] MineTarget: attempt target=(1775,456,-90) rel=(-1,0)
+[2026-02-21 18:12:14] [TARGET] System: MineTarget: tile graphic=0x054C in_list=True
+[2026-02-21 18:12:14] [TARGET] MineTarget: rel=(-1,0) graphic=0x054C land=True has_target=True
+[2026-02-21 18:12:14] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:15] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:15] [TARGET] MineTarget: attempt target=(1775,457,-90) rel=(-1,1)
+[2026-02-21 18:12:15] [TARGET] System: MineTarget: tile graphic=0x0547 in_list=True
+[2026-02-21 18:12:15] [TARGET] MineTarget: rel=(-1,1) graphic=0x0547 land=True has_target=True
+[2026-02-21 18:12:16] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:16] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:17] [TARGET] MineTarget: attempt target=(1775,456,-90) rel=(-1,0)
+[2026-02-21 18:12:17] [TARGET] System: MineTarget: tile graphic=0x054C in_list=True
+[2026-02-21 18:12:17] [TARGET] MineTarget: rel=(-1,0) graphic=0x054C land=True has_target=True
+[2026-02-21 18:12:17] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:18] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:18] [TARGET] MineTarget: attempt target=(1775,457,-90) rel=(-1,1)
+[2026-02-21 18:12:18] [TARGET] System: MineTarget: tile graphic=0x0547 in_list=True
+[2026-02-21 18:12:18] [TARGET] MineTarget: rel=(-1,1) graphic=0x0547 land=True has_target=True
+[2026-02-21 18:12:18] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:19] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:19] [TARGET] MineTarget: attempt target=(1775,456,-90) rel=(-1,0)
+[2026-02-21 18:12:19] [TARGET] System: MineTarget: tile graphic=0x054C in_list=True
+[2026-02-21 18:12:19] [TARGET] MineTarget: rel=(-1,0) graphic=0x054C land=True has_target=True
+[2026-02-21 18:12:19] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:20] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:20] [TARGET] MineTarget: attempt target=(1775,457,-90) rel=(-1,1)
+[2026-02-21 18:12:20] [TARGET] System: MineTarget: tile graphic=0x0547 in_list=True
+[2026-02-21 18:12:20] [TARGET] MineTarget: rel=(-1,1) graphic=0x0547 land=True has_target=True
+[2026-02-21 18:12:21] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:21] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:22] [TARGET] MineTarget: attempt target=(1775,456,-90) rel=(-1,0)
+[2026-02-21 18:12:22] [TARGET] System: MineTarget: tile graphic=0x054C in_list=True
+[2026-02-21 18:12:22] [TARGET] MineTarget: rel=(-1,0) graphic=0x054C land=True has_target=True
+[2026-02-21 18:12:22] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:23] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:23] [TARGET] MineTarget: attempt target=(1775,457,-90) rel=(-1,1)
+[2026-02-21 18:12:23] [TARGET] System: MineTarget: tile graphic=0x0547 in_list=True
+[2026-02-21 18:12:23] [TARGET] MineTarget: rel=(-1,1) graphic=0x0547 land=True has_target=True
+[2026-02-21 18:12:23] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:24] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:24] [TARGET] MineTarget: attempt target=(1775,456,-90) rel=(-1,0)
+[2026-02-21 18:12:24] [TARGET] System: MineTarget: tile graphic=0x054C in_list=True
+[2026-02-21 18:12:24] [TARGET] MineTarget: rel=(-1,0) graphic=0x054C land=True has_target=True
+[2026-02-21 18:12:24] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:25] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:25] [TARGET] MineTarget: attempt target=(1775,457,-90) rel=(-1,1)
+[2026-02-21 18:12:25] [TARGET] System: MineTarget: tile graphic=0x0547 in_list=True
+[2026-02-21 18:12:25] [TARGET] MineTarget: rel=(-1,1) graphic=0x0547 land=True has_target=True
+[2026-02-21 18:12:25] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:26] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:26] [TARGET] Journal: You loosen some rocks but fail to find any useable ore.
+[2026-02-21 18:12:27] [TARGET] MineTarget: attempt target=(1775,456,-90) rel=(-1,0)
+[2026-02-21 18:12:27] [TARGET] System: MineTarget: tile graphic=0x054C in_list=True
+[2026-02-21 18:12:27] [TARGET] MineTarget: rel=(-1,0) graphic=0x054C land=True has_target=True
+[2026-02-21 18:12:27] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:28] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:28] [TARGET] MineTarget: attempt target=(1775,457,-90) rel=(-1,1)
+[2026-02-21 18:12:28] [TARGET] System: MineTarget: tile graphic=0x0547 in_list=True
+[2026-02-21 18:12:28] [TARGET] MineTarget: rel=(-1,1) graphic=0x0547 land=True has_target=True
+[2026-02-21 18:12:28] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:29] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:29] [TARGET] MineTarget: attempt target=(1775,456,-90) rel=(-1,0)
+[2026-02-21 18:12:29] [TARGET] System: MineTarget: tile graphic=0x054C in_list=True
+[2026-02-21 18:12:29] [TARGET] MineTarget: rel=(-1,0) graphic=0x054C land=True has_target=True
+[2026-02-21 18:12:29] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:30] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:30] [TARGET] MineTarget: attempt target=(1775,457,-90) rel=(-1,1)
+[2026-02-21 18:12:30] [TARGET] System: MineTarget: tile graphic=0x0547 in_list=True
+[2026-02-21 18:12:30] [TARGET] MineTarget: rel=(-1,1) graphic=0x0547 land=True has_target=True
+[2026-02-21 18:12:30] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:31] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:31] [TARGET] MineTarget: attempt target=(1775,456,-90) rel=(-1,0)
+[2026-02-21 18:12:31] [TARGET] System: MineTarget: tile graphic=0x054C in_list=True
+[2026-02-21 18:12:31] [TARGET] MineTarget: rel=(-1,0) graphic=0x054C land=True has_target=True
+[2026-02-21 18:12:32] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:32] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:32] [RUN] Overweight detected.
+[2026-02-21 18:12:32] [RUN] Overweight: recall to unload.
+[2026-02-21 18:12:32] [RUN] Recalling home to unload.
+[2026-02-21 18:12:39] [RUN] Unloading resources to containers.
+[2026-02-21 18:12:39] [RUN] Unload: 24 items in backpack.
+[2026-02-21 18:12:47] [RUN] Restocking ingots from drop container.
+[2026-02-21 18:12:48] [RUN] Ensuring at least two shovels.
+[2026-02-21 18:12:49] [RUN] Recalling to mining rune 78.
+[2026-02-21 18:12:53] [TARGET] MineTarget: set center=(1808,448,-90)
+[2026-02-21 18:12:53] [TARGET] MineTarget: attempt target=(1808,448,-90) rel=(0,0)
+[2026-02-21 18:12:53] [TARGET] System: MineTarget: tile graphic=0x053B in_list=True
+[2026-02-21 18:12:53] [TARGET] MineTarget: rel=(0,0) graphic=0x053B land=True has_target=True
+[2026-02-21 18:12:53] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:54] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:54] [TARGET] MineTarget: attempt target=(1808,447,-90) rel=(0,-1)
+[2026-02-21 18:12:54] [TARGET] System: MineTarget: tile graphic=0x053E in_list=True
+[2026-02-21 18:12:54] [TARGET] MineTarget: rel=(0,-1) graphic=0x053E land=True has_target=True
+[2026-02-21 18:12:54] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:55] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:55] [TARGET] MineTarget: attempt target=(1808,449,-90) rel=(0,1)
+[2026-02-21 18:12:55] [TARGET] System: MineTarget: tile graphic=0x053D in_list=True
+[2026-02-21 18:12:55] [TARGET] MineTarget: rel=(0,1) graphic=0x053D land=True has_target=True
+[2026-02-21 18:12:56] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:56] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:57] [TARGET] MineTarget: attempt target=(1807,448,-90) rel=(-1,0)
+[2026-02-21 18:12:57] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 18:12:57] [TARGET] MineTarget: rel=(-1,0) graphic=0x053C land=True has_target=True
+[2026-02-21 18:12:57] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:58] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:58] [TARGET] MineTarget: attempt target=(1809,448,-90) rel=(1,0)
+[2026-02-21 18:12:58] [TARGET] System: MineTarget: tile graphic=0x053F in_list=True
+[2026-02-21 18:12:58] [TARGET] MineTarget: rel=(1,0) graphic=0x053F land=True has_target=True
+[2026-02-21 18:12:58] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:12:59] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:12:59] [TARGET] MineTarget: attempt target=(1808,448,-90) rel=(0,0)
+[2026-02-21 18:12:59] [TARGET] System: MineTarget: tile graphic=0x053B in_list=True
+[2026-02-21 18:12:59] [TARGET] MineTarget: rel=(0,0) graphic=0x053B land=True has_target=True
+[2026-02-21 18:12:59] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:00] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:00] [TARGET] MineTarget: attempt target=(1808,447,-90) rel=(0,-1)
+[2026-02-21 18:13:00] [TARGET] System: MineTarget: tile graphic=0x053E in_list=True
+[2026-02-21 18:13:00] [TARGET] MineTarget: rel=(0,-1) graphic=0x053E land=True has_target=True
+[2026-02-21 18:13:00] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:01] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:01] [TARGET] MineTarget: attempt target=(1808,449,-90) rel=(0,1)
+[2026-02-21 18:13:01] [TARGET] System: MineTarget: tile graphic=0x053D in_list=True
+[2026-02-21 18:13:01] [TARGET] MineTarget: rel=(0,1) graphic=0x053D land=True has_target=True
+[2026-02-21 18:13:02] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:02] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:03] [TARGET] MineTarget: attempt target=(1807,448,-90) rel=(-1,0)
+[2026-02-21 18:13:03] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 18:13:03] [TARGET] MineTarget: rel=(-1,0) graphic=0x053C land=True has_target=True
+[2026-02-21 18:13:03] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:04] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:04] [TARGET] MineTarget: attempt target=(1809,448,-90) rel=(1,0)
+[2026-02-21 18:13:04] [TARGET] System: MineTarget: tile graphic=0x053F in_list=True
+[2026-02-21 18:13:04] [TARGET] MineTarget: rel=(1,0) graphic=0x053F land=True has_target=True
+[2026-02-21 18:13:04] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:05] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:05] [TARGET] MineTarget: attempt target=(1807,447,-90) rel=(-1,-1)
+[2026-02-21 18:13:05] [TARGET] System: MineTarget: tile graphic=0x053F in_list=True
+[2026-02-21 18:13:05] [TARGET] MineTarget: rel=(-1,-1) graphic=0x053F land=True has_target=True
+[2026-02-21 18:13:06] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:06] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:06] [CACHE] MineTarget: cached no-ore tile (1807,447).
+[2026-02-21 18:13:06] [TARGET] MineTarget: attempt target=(1807,449,-90) rel=(-1,1)
+[2026-02-21 18:13:06] [TARGET] System: MineTarget: tile graphic=0x053F in_list=True
+[2026-02-21 18:13:06] [TARGET] MineTarget: rel=(-1,1) graphic=0x053F land=True has_target=True
+[2026-02-21 18:13:06] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:07] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:07] [TARGET] MineTarget: attempt target=(1809,447,-90) rel=(1,-1)
+[2026-02-21 18:13:07] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 18:13:07] [TARGET] MineTarget: rel=(1,-1) graphic=0x053C land=True has_target=True
+[2026-02-21 18:13:07] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:08] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:08] [TARGET] MineTarget: attempt target=(1809,449,-90) rel=(1,1)
+[2026-02-21 18:13:08] [TARGET] System: MineTarget: tile graphic=0x053C in_list=True
+[2026-02-21 18:13:08] [TARGET] MineTarget: rel=(1,1) graphic=0x053C land=True has_target=True
+[2026-02-21 18:13:09] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:09] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:10] [TARGET] MineTarget: attempt target=(1808,448,-90) rel=(0,0)
+[2026-02-21 18:13:10] [TARGET] System: MineTarget: tile graphic=0x053B in_list=True
+[2026-02-21 18:13:10] [TARGET] MineTarget: rel=(0,0) graphic=0x053B land=True has_target=True
+[2026-02-21 18:13:10] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:11] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:11] [TARGET] MineTarget: attempt target=(1808,447,-90) rel=(0,-1)
+[2026-02-21 18:13:11] [TARGET] System: MineTarget: tile graphic=0x053E in_list=True
+[2026-02-21 18:13:11] [TARGET] MineTarget: rel=(0,-1) graphic=0x053E land=True has_target=True
+[2026-02-21 18:13:11] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:12] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:12] [TARGET] MineTarget: attempt target=(1808,449,-90) rel=(0,1)
+[2026-02-21 18:13:12] [TARGET] System: MineTarget: tile graphic=0x053D in_list=True
+[2026-02-21 18:13:12] [TARGET] MineTarget: rel=(0,1) graphic=0x053D land=True has_target=True
+[2026-02-21 18:13:12] [TARGET] MineTarget: method=TargetTileRel has_target=False
+[2026-02-21 18:13:13] [TARGET] Journal: Where do you wish to dig?
+[2026-02-21 18:13:13] [RUN] Overweight detected.
+[2026-02-21 18:13:13] [RUN] Overweight: recall to unload.
+[2026-02-21 18:13:13] [RUN] Recalling home to unload.
+[2026-02-21 18:13:20] [RUN] Unloading resources to containers.
+[2026-02-21 18:13:20] [RUN] Unload: 22 items in backpack.
+[2026-02-21 18:13:26] [RUN] Restocking ingots from drop container.
