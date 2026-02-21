@@ -1,3 +1,4 @@
+import ast
 import json
 import os
 import sqlite3
@@ -5,7 +6,7 @@ import time
 
 DB_FILE = "craftables.db"
 DB_FOLDER = "Databases"
-SCHEMA_VERSION = 7
+SCHEMA_VERSION = 8
 RECIPES_JSON_FILE = "recipes.json"
 MATERIAL_KEYS_JSON_FILE = "material_keys.json"
 ITEM_KEYS_JSON_FILE = "item_keys.json"
@@ -101,11 +102,55 @@ def _connect_raw(db_path):
     return conn
 
 
+def _repair_legacy_saved_recipe_index(conn):
+    # Some embedded sqlite builds cannot parse expression-based index SQL from older DBs.
+    # If present, drop that index so schema parsing no longer fails.
+    try:
+        cur = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='index' AND name='uq_saved_recipe_natural'"
+        )
+        row = cur.fetchone()
+    except Exception:
+        return False
+    if not row:
+        return False
+    try:
+        sql = str((row[0] or "")).strip().lower()
+    except Exception:
+        sql = ""
+    if not sql:
+        return False
+    if ("coalesce(" not in sql) and ("ifnull(" not in sql):
+        return False
+    try:
+        conn.execute("DROP INDEX IF EXISTS uq_saved_recipe_natural")
+        conn.commit()
+        return True
+    except Exception:
+        pass
+    try:
+        conn.execute("PRAGMA writable_schema=ON;")
+        conn.execute("DELETE FROM sqlite_master WHERE type='index' AND name='uq_saved_recipe_natural'")
+        conn.execute("PRAGMA writable_schema=OFF;")
+        conn.commit()
+        return True
+    except Exception:
+        try:
+            conn.execute("PRAGMA writable_schema=OFF;")
+        except Exception:
+            pass
+        return False
+
+
 def _connect():
     db_path = _db_path()
     conn = None
     try:
         conn = _connect_raw(db_path)
+        try:
+            _repair_legacy_saved_recipe_index(conn)
+        except Exception:
+            pass
         # Touch schema immediately so header/format errors surface here.
         conn.execute("PRAGMA schema_version;").fetchone()
         return conn
@@ -295,10 +340,331 @@ def _normalize_resource_rows(resources):
     return out
 
 
+def _is_normalized_schema(conn):
+    return (
+        _has_columns(conn, "app_metadata", ["metadata_key", "metadata_value"])
+        and _has_columns(conn, "game_servers", ["game_server_id", "server_name"])
+        and _has_columns(conn, "crafting_professions", ["profession_id", "profession_name"])
+        and _has_columns(conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"])
+        and _has_columns(conn, "material_options", ["material_option_id", "context_id", "material_option_key"])
+        and _has_columns(conn, "craftable_items", ["craftable_item_id", "context_id", "item_key_slug"])
+        and _has_columns(conn, "saved_craft_recipes", ["saved_recipe_id", "context_id", "recipe_type_code"])
+    )
+
+
+def _ensure_context_id(conn, server_id, profession_id):
+    sid = int(server_id or 0)
+    pid = int(profession_id or 0)
+    if sid <= 0 or pid <= 0:
+        return 0
+    try:
+        cur = conn.execute(
+            """
+            SELECT context_id
+            FROM crafting_contexts
+            WHERE game_server_id=? AND profession_id=?
+            LIMIT 1
+            """,
+            (int(sid), int(pid)),
+        )
+        row = cur.fetchone()
+        if row:
+            return int(row[0] or 0)
+    except Exception:
+        pass
+    try:
+        conn.execute(
+            "INSERT OR IGNORE INTO crafting_contexts(game_server_id, profession_id) VALUES (?, ?)",
+            (int(sid), int(pid)),
+        )
+        cur = conn.execute(
+            """
+            SELECT context_id
+            FROM crafting_contexts
+            WHERE game_server_id=? AND profession_id=?
+            LIMIT 1
+            """,
+            (int(sid), int(pid)),
+        )
+        row = cur.fetchone()
+        return int(row[0] or 0) if row else 0
+    except Exception:
+        return 0
+
+
+def _ensure_material_family_id(conn, material):
+    code = _norm_resource_name(material)
+    if not code:
+        return 0
+    try:
+        cur = conn.execute(
+            "SELECT material_family_id FROM material_families WHERE lower(family_code)=lower(?) LIMIT 1",
+            (code,),
+        )
+        row = cur.fetchone()
+        if row:
+            return int(row[0] or 0)
+    except Exception:
+        pass
+    try:
+        label = code.replace("_", " ").strip()
+        if label:
+            label = label[:1].upper() + label[1:]
+        conn.execute(
+            "INSERT INTO material_families(family_code, family_name) VALUES (?, ?)",
+            (code, label or code),
+        )
+    except Exception:
+        pass
+    try:
+        cur = conn.execute(
+            "SELECT material_family_id FROM material_families WHERE lower(family_code)=lower(?) LIMIT 1",
+            (code,),
+        )
+        row = cur.fetchone()
+        return int(row[0] or 0) if row else 0
+    except Exception:
+        return 0
+
+
+def _lookup_material_option_id(conn, context_id, material_key):
+    ctx = int(context_id or 0)
+    mk = str(material_key or "").strip()
+    if ctx <= 0 or not mk:
+        return 0
+    try:
+        cur = conn.execute(
+            """
+            SELECT material_option_id
+            FROM material_options
+            WHERE context_id=? AND material_option_key=?
+            LIMIT 1
+            """,
+            (int(ctx), mk),
+        )
+        row = cur.fetchone()
+        return int(row[0] or 0) if row else 0
+    except Exception:
+        return 0
+
+
+def _ensure_material_option_id(conn, context_id, material_key, material):
+    ctx = int(context_id or 0)
+    mk = str(material_key or "").strip()
+    if ctx <= 0 or not mk:
+        return 0
+    mfid = int(_ensure_material_family_id(conn, material or "ingot") or 0)
+    if mfid <= 0:
+        return 0
+    try:
+        conn.execute(
+            """
+            INSERT INTO material_options(context_id, material_option_key, material_family_id)
+            VALUES (?, ?, ?)
+            ON CONFLICT(context_id, material_option_key) DO UPDATE
+            SET material_family_id=excluded.material_family_id
+            """,
+            (int(ctx), mk, int(mfid)),
+        )
+    except Exception:
+        pass
+    return int(_lookup_material_option_id(conn, int(ctx), mk) or 0)
+
+
+def _ensure_category_id(conn, context_id, category_name):
+    ctx = int(context_id or 0)
+    cat = str(category_name or "").strip()
+    if ctx <= 0 or not cat:
+        return 0
+    try:
+        cur = conn.execute(
+            """
+            SELECT category_id
+            FROM craft_categories
+            WHERE context_id=? AND category_name=?
+            LIMIT 1
+            """,
+            (int(ctx), cat),
+        )
+        row = cur.fetchone()
+        if row:
+            return int(row[0] or 0)
+    except Exception:
+        pass
+    try:
+        cur = conn.execute(
+            """
+            SELECT coalesce(MAX(display_sequence), 0) + 1,
+                   coalesce(MAX(legacy_sort_token), 0) + 1
+            FROM craft_categories
+            WHERE context_id=?
+            """,
+            (int(ctx),),
+        )
+        row = cur.fetchone()
+        disp = int((row[0] if row else 1) or 1)
+        legacy = int((row[1] if row else disp) or disp)
+        conn.execute(
+            """
+            INSERT INTO craft_categories(context_id, category_name, display_sequence, category_navigation_button_id, legacy_sort_token)
+            VALUES (?, ?, ?, NULL, ?)
+            ON CONFLICT(context_id, category_name) DO NOTHING
+            """,
+            (int(ctx), cat, int(disp), int(legacy)),
+        )
+    except Exception:
+        pass
+    try:
+        cur = conn.execute(
+            """
+            SELECT category_id
+            FROM craft_categories
+            WHERE context_id=? AND category_name=?
+            LIMIT 1
+            """,
+            (int(ctx), cat),
+        )
+        row = cur.fetchone()
+        return int(row[0] or 0) if row else 0
+    except Exception:
+        return 0
+
+
+def _lookup_craftable_item_id(conn, context_id, item_key):
+    ctx = int(context_id or 0)
+    ik = str(item_key or "").strip()
+    if ctx <= 0 or not ik:
+        return 0
+    try:
+        cur = conn.execute(
+            """
+            SELECT craftable_item_id
+            FROM craftable_items
+            WHERE context_id=? AND item_key_slug=?
+            LIMIT 1
+            """,
+            (int(ctx), ik),
+        )
+        row = cur.fetchone()
+        return int(row[0] or 0) if row else 0
+    except Exception:
+        return 0
+
+
+def _upsert_craftable_item(conn, context_id, item_key, name, item_id=0, category="", default_material_key=""):
+    ctx = int(context_id or 0)
+    ik = str(item_key or "").strip()
+    nm = str(name or "").strip() or ik
+    if ctx <= 0 or not ik:
+        return 0
+    cat_id = int(_ensure_category_id(conn, int(ctx), category) or 0) if str(category or "").strip() else None
+    mo_id = (
+        int(_lookup_material_option_id(conn, int(ctx), str(default_material_key or "").strip()) or 0)
+        if str(default_material_key or "").strip()
+        else 0
+    )
+    try:
+        conn.execute(
+            """
+            INSERT INTO craftable_items(context_id, item_key_slug, item_display_name, game_item_id, category_id, default_material_option_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(context_id, item_key_slug) DO UPDATE SET
+                item_display_name=excluded.item_display_name,
+                game_item_id=excluded.game_item_id,
+                category_id=excluded.category_id,
+                default_material_option_id=excluded.default_material_option_id
+            """,
+            (
+                int(ctx),
+                ik,
+                nm,
+                None if int(item_id or 0) <= 0 else int(item_id),
+                cat_id,
+                None if mo_id <= 0 else int(mo_id),
+            ),
+        )
+    except Exception:
+        pass
+    return int(_lookup_craftable_item_id(conn, int(ctx), ik) or 0)
+
+
+def _parse_recipe_material_text(raw_material):
+    text = str(raw_material or "").strip()
+    out = {
+        "material_name": _norm_resource_name(text),
+        "item_id": 0,
+        "min_in_pack": 0,
+        "pull_amount": 0,
+        "hue": None,
+        "legacy": text,
+    }
+    if not text:
+        return out
+    payload = None
+    try:
+        payload = json.loads(text)
+    except Exception:
+        payload = None
+    if payload is None and text.startswith("{") and text.endswith("}"):
+        try:
+            payload = json.loads(text.replace("'", '"').replace("None", "null"))
+        except Exception:
+            payload = None
+    if payload is None and text.startswith("{") and text.endswith("}"):
+        try:
+            payload = ast.literal_eval(text)
+        except Exception:
+            payload = None
+    if isinstance(payload, dict):
+        out["material_name"] = _norm_resource_name(payload.get("material", "") or out["material_name"])
+        try:
+            out["item_id"] = int(payload.get("item_id", 0) or 0)
+        except Exception:
+            out["item_id"] = 0
+        try:
+            out["min_in_pack"] = int(payload.get("min_in_pack", 0) or 0)
+        except Exception:
+            out["min_in_pack"] = 0
+        try:
+            out["pull_amount"] = int(payload.get("pull_amount", 0) or 0)
+        except Exception:
+            out["pull_amount"] = 0
+        hue = payload.get("hue", None)
+        try:
+            out["hue"] = int(hue) if hue is not None else None
+        except Exception:
+            out["hue"] = None
+    return out
+
+
 def _ensure_resource_name(conn, name):
     nm = str(name or "").strip()
     if not nm:
         return 0
+    if _is_normalized_schema(conn):
+        try:
+            cur = conn.execute(
+                "SELECT resource_id FROM resource_catalog WHERE lower(resource_name)=lower(?) LIMIT 1",
+                (nm,),
+            )
+            row = cur.fetchone()
+            if row:
+                return int(row[0] or 0)
+        except Exception:
+            pass
+        try:
+            conn.execute("INSERT INTO resource_catalog(resource_name) VALUES (?)", (nm,))
+        except Exception:
+            pass
+        try:
+            cur = conn.execute(
+                "SELECT resource_id FROM resource_catalog WHERE lower(resource_name)=lower(?) LIMIT 1",
+                (nm,),
+            )
+            row = cur.fetchone()
+            return int(row[0] or 0) if row else 0
+        except Exception:
+            return 0
     try:
         cur = conn.execute("SELECT id FROM resources WHERE lower(name)=lower(?) LIMIT 1", (nm,))
         row = cur.fetchone()
@@ -322,6 +688,30 @@ def _ensure_server_id(conn, server_name):
     nm = str(server_name or "").strip()
     if not nm:
         return 0
+    if _is_normalized_schema(conn):
+        try:
+            cur = conn.execute(
+                "SELECT game_server_id FROM game_servers WHERE lower(server_name)=lower(?) LIMIT 1",
+                (nm,),
+            )
+            row = cur.fetchone()
+            if row:
+                return int(row[0] or 0)
+        except Exception:
+            pass
+        try:
+            conn.execute("INSERT INTO game_servers(server_name) VALUES (?)", (nm,))
+        except Exception:
+            pass
+        try:
+            cur = conn.execute(
+                "SELECT game_server_id FROM game_servers WHERE lower(server_name)=lower(?) LIMIT 1",
+                (nm,),
+            )
+            row = cur.fetchone()
+            return int(row[0] or 0) if row else 0
+        except Exception:
+            return 0
     try:
         cur = conn.execute("SELECT id FROM servers WHERE lower(name)=lower(?) LIMIT 1", (nm,))
         row = cur.fetchone()
@@ -345,6 +735,16 @@ def _lookup_server_id(conn, server_name):
     nm = str(server_name or "").strip()
     if not nm:
         return 0
+    if _is_normalized_schema(conn):
+        try:
+            cur = conn.execute(
+                "SELECT game_server_id FROM game_servers WHERE lower(server_name)=lower(?) LIMIT 1",
+                (nm,),
+            )
+            row = cur.fetchone()
+            return int(row[0] or 0) if row else 0
+        except Exception:
+            return 0
     try:
         cur = conn.execute("SELECT id FROM servers WHERE lower(name)=lower(?) LIMIT 1", (nm,))
         row = cur.fetchone()
@@ -357,6 +757,30 @@ def _ensure_profession_id(conn, profession_name):
     nm = str(profession_name or "").strip()
     if not nm:
         return 0
+    if _is_normalized_schema(conn):
+        try:
+            cur = conn.execute(
+                "SELECT profession_id FROM crafting_professions WHERE lower(profession_name)=lower(?) LIMIT 1",
+                (nm,),
+            )
+            row = cur.fetchone()
+            if row:
+                return int(row[0] or 0)
+        except Exception:
+            pass
+        try:
+            conn.execute("INSERT INTO crafting_professions(profession_name) VALUES (?)", (nm,))
+        except Exception:
+            pass
+        try:
+            cur = conn.execute(
+                "SELECT profession_id FROM crafting_professions WHERE lower(profession_name)=lower(?) LIMIT 1",
+                (nm,),
+            )
+            row = cur.fetchone()
+            return int(row[0] or 0) if row else 0
+        except Exception:
+            return 0
     try:
         cur = conn.execute("SELECT id FROM professions WHERE lower(name)=lower(?) LIMIT 1", (nm,))
         row = cur.fetchone()
@@ -380,6 +804,16 @@ def _lookup_profession_id(conn, profession_name):
     nm = str(profession_name or "").strip()
     if not nm:
         return 0
+    if _is_normalized_schema(conn):
+        try:
+            cur = conn.execute(
+                "SELECT profession_id FROM crafting_professions WHERE lower(profession_name)=lower(?) LIMIT 1",
+                (nm,),
+            )
+            row = cur.fetchone()
+            return int(row[0] or 0) if row else 0
+        except Exception:
+            return 0
     try:
         cur = conn.execute("SELECT id FROM professions WHERE lower(name)=lower(?) LIMIT 1", (nm,))
         row = cur.fetchone()
@@ -390,6 +824,17 @@ def _lookup_profession_id(conn, profession_name):
 
 def _server_name_map(conn):
     out = {}
+    if _is_normalized_schema(conn):
+        try:
+            cur = conn.execute("SELECT game_server_id, server_name FROM game_servers")
+            for row in cur.fetchall():
+                sid = int(row[0] or 0)
+                if sid <= 0:
+                    continue
+                out[sid] = str(row[1] or "")
+            return out
+        except Exception:
+            return out
     if not _has_columns(conn, "servers", ["id", "name"]):
         return out
     cur = conn.execute("SELECT id, name FROM servers")
@@ -406,6 +851,17 @@ def _server_name_map(conn):
 
 def _profession_name_map(conn):
     out = {}
+    if _is_normalized_schema(conn):
+        try:
+            cur = conn.execute("SELECT profession_id, profession_name FROM crafting_professions")
+            for row in cur.fetchall():
+                pid = int(row[0] or 0)
+                if pid <= 0:
+                    continue
+                out[pid] = str(row[1] or "")
+            return out
+        except Exception:
+            return out
     if not _has_columns(conn, "professions", ["id", "name"]):
         return out
     cur = conn.execute("SELECT id, name FROM professions")
@@ -421,6 +877,40 @@ def _profession_name_map(conn):
 
 
 def _write_item_resource_costs(conn, server, profession, item_key, resources):
+    if _is_normalized_schema(conn):
+        srv_id = int(_ensure_server_id(conn, server) or 0)
+        prof_id = int(_ensure_profession_id(conn, profession) or 0)
+        ik = str(item_key or "")
+        if srv_id <= 0 or prof_id <= 0 or not ik:
+            return
+        ctx_id = int(_ensure_context_id(conn, int(srv_id), int(prof_id)) or 0)
+        if ctx_id <= 0:
+            return
+        ci_id = int(_lookup_craftable_item_id(conn, int(ctx_id), ik) or 0)
+        if ci_id <= 0:
+            ci_id = int(_upsert_craftable_item(conn, int(ctx_id), ik, ik, 0, "", "") or 0)
+        if ci_id <= 0:
+            return
+        rows = _normalize_resource_rows(resources)
+        conn.execute(
+            "DELETE FROM craftable_item_resource_requirements WHERE craftable_item_id=?",
+            (int(ci_id),),
+        )
+        slot = 0
+        for rr in rows:
+            slot += 1
+            rid = _ensure_resource_name(conn, rr.get("material", ""))
+            if int(rid) <= 0:
+                continue
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO craftable_item_resource_requirements
+                (craftable_item_id, requirement_sequence, resource_id, quantity_per_item)
+                VALUES (?, ?, ?, ?)
+                """,
+                (int(ci_id), int(slot), int(rid), int(rr.get("per_item", 0) or 0)),
+            )
+        return
     if not _has_columns(conn, "item_resource_costs", ["server_id", "profession_id", "item_key", "slot", "resource_id", "per_item"]):
         return
     if not _has_columns(conn, "resources", ["id", "name"]):
@@ -452,6 +942,26 @@ def _write_item_resource_costs(conn, server, profession, item_key, resources):
 
 
 def _seed_resource_item_ids(conn):
+    if _is_normalized_schema(conn):
+        if not _has_columns(conn, "resource_catalog", ["resource_name", "game_item_id"]):
+            return
+        for name, item_id in (RESOURCE_ITEM_ID_SEEDS or {}).items():
+            nm = _norm_resource_name(name)
+            iid = int(item_id or 0)
+            if not nm or iid <= 0:
+                continue
+            try:
+                conn.execute(
+                    """
+                    UPDATE resource_catalog
+                    SET game_item_id=?
+                    WHERE lower(resource_name)=lower(?) AND coalesce(game_item_id, 0) <= 0
+                    """,
+                    (iid, nm),
+                )
+            except Exception:
+                pass
+        return
     if not _has_columns(conn, "resources", ["name", "item_id"]):
         return
     for name, item_id in (RESOURCE_ITEM_ID_SEEDS or {}).items():
@@ -541,6 +1051,59 @@ def _bootstrap_item_resource_costs_from_item_keys(conn):
 def _write_recipe_child_lists(conn, recipe_id, buttons, materials, material_buttons):
     rid = int(recipe_id or 0)
     if rid <= 0:
+        return
+    if _is_normalized_schema(conn):
+        conn.execute("DELETE FROM saved_recipe_navigation_steps WHERE saved_recipe_id=?", (rid,))
+        conn.execute("DELETE FROM saved_recipe_material_requirements WHERE saved_recipe_id=?", (rid,))
+        conn.execute("DELETE FROM saved_recipe_material_navigation_steps WHERE saved_recipe_id=?", (rid,))
+
+        slot = 0
+        for btn in _as_int_list(buttons):
+            slot += 1
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO saved_recipe_navigation_steps(saved_recipe_id, step_number, gump_button_id)
+                VALUES (?, ?, ?)
+                """,
+                (rid, int(slot), int(btn)),
+            )
+
+        slot = 0
+        for raw_mat in _as_str_list(materials):
+            slot += 1
+            parsed = _parse_recipe_material_text(raw_mat)
+            material_name = _norm_resource_name(parsed.get("material_name", "") or "")
+            rid_res = int(_ensure_resource_name(conn, material_name) or 0) if material_name else 0
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO saved_recipe_material_requirements
+                (saved_recipe_id, requirement_sequence, material_name, resource_id, required_in_pack_quantity,
+                 pull_quantity, game_item_id_override, hue_override, legacy_material_payload)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    rid,
+                    int(slot),
+                    material_name,
+                    (int(rid_res) if int(rid_res) > 0 else None),
+                    int(parsed.get("min_in_pack", 0) or 0),
+                    int(parsed.get("pull_amount", 0) or 0),
+                    (int(parsed.get("item_id", 0) or 0) if int(parsed.get("item_id", 0) or 0) > 0 else None),
+                    parsed.get("hue", None),
+                    str(parsed.get("legacy", raw_mat) or ""),
+                ),
+            )
+
+        slot = 0
+        for btn in _as_int_list(material_buttons):
+            slot += 1
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO saved_recipe_material_navigation_steps(saved_recipe_id, step_number, gump_button_id)
+                VALUES (?, ?, ?)
+                """,
+                (rid, int(slot), int(btn)),
+            )
         return
 
     if _has_columns(conn, "recipe_buttons", ["recipe_id", "slot", "button_id"]):
@@ -635,6 +1198,33 @@ def _bootstrap_recipe_child_lists_from_recipes(conn):
 
 
 def _write_material_key_buttons(conn, server, profession, material_key, material_buttons):
+    if _is_normalized_schema(conn):
+        srv_id = int(_ensure_server_id(conn, server) or 0)
+        prof_id = int(_ensure_profession_id(conn, profession) or 0)
+        mk = str(material_key or "")
+        if srv_id <= 0 or prof_id <= 0 or not mk:
+            return
+        ctx_id = int(_ensure_context_id(conn, int(srv_id), int(prof_id)) or 0)
+        if ctx_id <= 0:
+            return
+        mo_id = int(_lookup_material_option_id(conn, int(ctx_id), mk) or 0)
+        if mo_id <= 0:
+            mo_id = int(_ensure_material_option_id(conn, int(ctx_id), mk, "ingot") or 0)
+        if mo_id <= 0:
+            return
+        conn.execute("DELETE FROM material_option_navigation_steps WHERE material_option_id=?", (int(mo_id),))
+        slot = 0
+        for btn in _as_int_list(material_buttons):
+            slot += 1
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO material_option_navigation_steps
+                (material_option_id, step_number, gump_button_id)
+                VALUES (?, ?, ?)
+                """,
+                (int(mo_id), int(slot), int(btn)),
+            )
+        return
     if not _has_columns(
         conn, "material_key_buttons", ["server_id", "profession_id", "material_key", "slot", "button_id"]
     ):
@@ -714,6 +1304,33 @@ def _bootstrap_material_key_buttons_from_material_keys(conn):
 
 
 def _write_item_key_buttons(conn, server, profession, item_key, buttons):
+    if _is_normalized_schema(conn):
+        srv_id = int(_ensure_server_id(conn, server) or 0)
+        prof_id = int(_ensure_profession_id(conn, profession) or 0)
+        ik = str(item_key or "")
+        if srv_id <= 0 or prof_id <= 0 or not ik:
+            return
+        ctx_id = int(_ensure_context_id(conn, int(srv_id), int(prof_id)) or 0)
+        if ctx_id <= 0:
+            return
+        ci_id = int(_lookup_craftable_item_id(conn, int(ctx_id), ik) or 0)
+        if ci_id <= 0:
+            ci_id = int(_upsert_craftable_item(conn, int(ctx_id), ik, ik, 0, "", "") or 0)
+        if ci_id <= 0:
+            return
+        conn.execute("DELETE FROM craftable_item_navigation_steps WHERE craftable_item_id=?", (int(ci_id),))
+        slot = 0
+        for btn in _as_int_list(buttons):
+            slot += 1
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO craftable_item_navigation_steps
+                (craftable_item_id, step_number, gump_button_id)
+                VALUES (?, ?, ?)
+                """,
+                (int(ci_id), int(slot), int(btn)),
+            )
+        return
     if not _has_columns(conn, "item_key_buttons", ["server_id", "profession_id", "item_key", "slot", "button_id"]):
         return
     srv_id = int(_ensure_server_id(conn, server) or 0)
@@ -1158,6 +1775,14 @@ def _hard_cutover_server_profession_ids(conn):
 
 
 def _ensure_schema(conn):
+    if _is_normalized_schema(conn):
+        _seed_resource_item_ids(conn)
+        conn.execute(
+            "INSERT OR REPLACE INTO app_metadata(metadata_key, metadata_value) VALUES (?, ?)",
+            ("schema_version", str(int(SCHEMA_VERSION))),
+        )
+        conn.commit()
+        return
     conn.executescript(
         """
         CREATE TABLE IF NOT EXISTS metadata (
@@ -1572,13 +2197,19 @@ def save_recipes(rows):
     try:
         _ensure_schema(conn)
         with conn:
-            conn.execute("DELETE FROM recipes")
-            if _has_columns(conn, "recipe_buttons", ["recipe_id"]):
-                conn.execute("DELETE FROM recipe_buttons")
-            if _has_columns(conn, "recipe_materials", ["recipe_id"]):
-                conn.execute("DELETE FROM recipe_materials")
-            if _has_columns(conn, "recipe_material_buttons", ["recipe_id"]):
-                conn.execute("DELETE FROM recipe_material_buttons")
+            if _is_normalized_schema(conn):
+                conn.execute("DELETE FROM saved_recipe_navigation_steps")
+                conn.execute("DELETE FROM saved_recipe_material_requirements")
+                conn.execute("DELETE FROM saved_recipe_material_navigation_steps")
+                conn.execute("DELETE FROM saved_craft_recipes")
+            else:
+                conn.execute("DELETE FROM recipes")
+                if _has_columns(conn, "recipe_buttons", ["recipe_id"]):
+                    conn.execute("DELETE FROM recipe_buttons")
+                if _has_columns(conn, "recipe_materials", ["recipe_id"]):
+                    conn.execute("DELETE FROM recipe_materials")
+                if _has_columns(conn, "recipe_material_buttons", ["recipe_id"]):
+                    conn.execute("DELETE FROM recipe_material_buttons")
             for row in (rows or []):
                 if not _is_valid_recipe_row(row):
                     continue
@@ -1586,28 +2217,100 @@ def save_recipes(rows):
                 pid = int(_ensure_profession_id(conn, row.get("profession", "")) or 0)
                 if sid <= 0 or pid <= 0:
                     continue
-                cur = conn.execute(
-                    """
-                    INSERT OR REPLACE INTO recipes
-                    (recipe_type, server_id, profession_id, name, item_id, material, material_key, deed_key, start_at, stop_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    (
-                        str(row.get("recipe_type", "") or ""),
-                        int(sid),
-                        int(pid),
-                        str(row.get("name", "") or ""),
-                        int(row.get("item_id", 0) or 0),
-                        str(row.get("material", "") or ""),
-                        str(row.get("material_key", "") or ""),
-                        str(row.get("deed_key", "") or ""),
-                        row.get("start_at", None),
-                        row.get("stop_at", None),
-                    ),
-                )
+                recipe_type = str(row.get("recipe_type", "") or "").strip().lower() or "bod"
+                recipe_name = str(row.get("name", "") or "")
+                material = str(row.get("material", "") or "")
+                material_key = str(row.get("material_key", "") or "")
+                rid = 0
+                if _is_normalized_schema(conn):
+                    ctx_id = int(_ensure_context_id(conn, int(sid), int(pid)) or 0)
+                    if ctx_id <= 0:
+                        continue
+                    conn.execute(
+                        "INSERT OR IGNORE INTO recipe_types(recipe_type_code) VALUES (?)",
+                        (recipe_type,),
+                    )
+                    mfid = int(_ensure_material_family_id(conn, material or "ingot") or 0) if material else 0
+                    mo_id = int(_lookup_material_option_id(conn, int(ctx_id), material_key) or 0)
+                    if mo_id <= 0 and material_key:
+                        mo_id = int(_ensure_material_option_id(conn, int(ctx_id), material_key, material or "ingot") or 0)
+                    ci_id = 0
+                    try:
+                        cur_item = conn.execute(
+                            """
+                            SELECT craftable_item_id
+                            FROM craftable_items
+                            WHERE context_id=? AND lower(item_display_name)=lower(?)
+                            LIMIT 1
+                            """,
+                            (int(ctx_id), recipe_name),
+                        )
+                        row_item = cur_item.fetchone()
+                        ci_id = int(row_item[0] or 0) if row_item else 0
+                    except Exception:
+                        ci_id = 0
+                    cur = conn.execute(
+                        """
+                        INSERT INTO saved_craft_recipes
+                        (context_id, recipe_type_code, craftable_item_id, recipe_name, selected_material_option_id,
+                         declared_material_family_id, deed_signature_text, game_item_id, min_skill, max_skill)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            int(ctx_id),
+                            recipe_type,
+                            (int(ci_id) if int(ci_id) > 0 else None),
+                            recipe_name,
+                            (int(mo_id) if int(mo_id) > 0 else None),
+                            (int(mfid) if int(mfid) > 0 else None),
+                            (str(row.get("deed_key", "") or "").strip() or None),
+                            (int(row.get("item_id", 0) or 0) if int(row.get("item_id", 0) or 0) > 0 else None),
+                            row.get("start_at", None),
+                            row.get("stop_at", None),
+                        ),
+                    )
+                    rid = int(getattr(cur, "lastrowid", 0) or 0)
+                    if rid <= 0:
+                        try:
+                            cur2 = conn.execute(
+                                """
+                                SELECT saved_recipe_id
+                                FROM saved_craft_recipes
+                                WHERE context_id=? AND recipe_type_code=? AND lower(recipe_name)=lower(?)
+                                  AND coalesce(selected_material_option_id,0)=?
+                                ORDER BY saved_recipe_id DESC
+                                LIMIT 1
+                                """,
+                                (int(ctx_id), recipe_type, recipe_name, int(mo_id or 0)),
+                            )
+                            row2 = cur2.fetchone()
+                            rid = int(row2[0] or 0) if row2 else 0
+                        except Exception:
+                            rid = 0
+                else:
+                    cur = conn.execute(
+                        """
+                        INSERT OR REPLACE INTO recipes
+                        (recipe_type, server_id, profession_id, name, item_id, material, material_key, deed_key, start_at, stop_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        (
+                            recipe_type,
+                            int(sid),
+                            int(pid),
+                            recipe_name,
+                            int(row.get("item_id", 0) or 0),
+                            material,
+                            material_key,
+                            str(row.get("deed_key", "") or ""),
+                            row.get("start_at", None),
+                            row.get("stop_at", None),
+                        ),
+                    )
+                    rid = int(getattr(cur, "lastrowid", 0) or 0)
                 _write_recipe_child_lists(
                     conn,
-                    int(getattr(cur, "lastrowid", 0) or 0),
+                    int(rid or 0),
                     row.get("buttons", []),
                     row.get("materials", []),
                     row.get("material_buttons", []),
@@ -1720,6 +2423,122 @@ def save_key_maps(key_maps):
     try:
         _ensure_schema(conn)
         with conn:
+            if _is_normalized_schema(conn):
+                conn.execute("DROP TABLE IF EXISTS temp._recipe_link_cache")
+                conn.execute(
+                    """
+                    CREATE TEMP TABLE _recipe_link_cache (
+                        saved_recipe_id INTEGER PRIMARY KEY,
+                        context_id INTEGER NOT NULL,
+                        material_key TEXT NOT NULL
+                    )
+                    """
+                )
+                conn.execute(
+                    """
+                    INSERT INTO _recipe_link_cache(saved_recipe_id, context_id, material_key)
+                    SELECT sr.saved_recipe_id, sr.context_id, coalesce(mo.material_option_key, '')
+                    FROM saved_craft_recipes sr
+                    LEFT JOIN material_options mo ON mo.material_option_id = sr.selected_material_option_id
+                    """
+                )
+                conn.execute("UPDATE saved_craft_recipes SET selected_material_option_id=NULL, craftable_item_id=NULL")
+                conn.execute("DELETE FROM craftable_item_resource_requirements")
+                conn.execute("DELETE FROM craftable_item_navigation_steps")
+                conn.execute("DELETE FROM craftable_items")
+                conn.execute("DELETE FROM material_option_navigation_steps")
+                conn.execute("DELETE FROM material_options")
+                conn.execute("DELETE FROM craft_categories")
+
+                km = dict(key_maps or {}) if isinstance(key_maps, dict) else {}
+                for server, srv_node in km.items():
+                    if not isinstance(srv_node, dict):
+                        continue
+                    for profession, prof_node in srv_node.items():
+                        if not isinstance(prof_node, dict):
+                            continue
+                        sid = int(_ensure_server_id(conn, server) or 0)
+                        pid = int(_ensure_profession_id(conn, profession) or 0)
+                        if sid <= 0 or pid <= 0:
+                            continue
+                        ctx_id = int(_ensure_context_id(conn, int(sid), int(pid)) or 0)
+                        if ctx_id <= 0:
+                            continue
+
+                        mats = prof_node.get("material_keys", {})
+                        if isinstance(mats, dict):
+                            for mk, ent in mats.items():
+                                if not isinstance(ent, dict):
+                                    ent = {}
+                                mk_text = str(mk or "")
+                                material_code = str(ent.get("material", "") or "").strip().lower()
+                                if not material_code and mk_text:
+                                    material_code = str(mk_text.split("_")[0] or "").strip().lower()
+                                if not material_code:
+                                    material_code = "ingot"
+                                _ensure_material_option_id(conn, int(ctx_id), mk_text, material_code)
+                                _write_material_key_buttons(
+                                    conn,
+                                    str(server or ""),
+                                    str(profession or ""),
+                                    mk_text,
+                                    _as_int_list(ent.get("material_buttons", []), 2),
+                                )
+
+                        items = prof_node.get("item_keys", {})
+                        if isinstance(items, dict):
+                            for ik, ent in items.items():
+                                if not isinstance(ent, dict):
+                                    ent = {}
+                                ik_text = str(ik or "")
+                                _upsert_craftable_item(
+                                    conn,
+                                    int(ctx_id),
+                                    ik_text,
+                                    str(ent.get("name", "") or ik_text),
+                                    int(ent.get("item_id", 0) or 0),
+                                    str(ent.get("category", "") or ""),
+                                    str(ent.get("default_material_key", "") or ""),
+                                )
+                                _write_item_key_buttons(
+                                    conn,
+                                    str(server or ""),
+                                    str(profession or ""),
+                                    ik_text,
+                                    _as_int_list(ent.get("buttons", []), 2),
+                                )
+                                _write_item_resource_costs(
+                                    conn,
+                                    str(server or ""),
+                                    str(profession or ""),
+                                    ik_text,
+                                    _as_list(ent.get("resources", [])),
+                                )
+
+                conn.execute(
+                    """
+                    UPDATE saved_craft_recipes
+                    SET selected_material_option_id = (
+                            SELECT mo.material_option_id
+                            FROM _recipe_link_cache c
+                            JOIN material_options mo
+                              ON mo.context_id = saved_craft_recipes.context_id
+                             AND mo.material_option_key = c.material_key
+                            WHERE c.saved_recipe_id = saved_craft_recipes.saved_recipe_id
+                            LIMIT 1
+                        ),
+                        craftable_item_id = (
+                            SELECT ci.craftable_item_id
+                            FROM craftable_items ci
+                            WHERE ci.context_id = saved_craft_recipes.context_id
+                              AND lower(ci.item_display_name) = lower(saved_craft_recipes.recipe_name)
+                            LIMIT 1
+                        )
+                    """
+                )
+                conn.execute("DROP TABLE IF EXISTS temp._recipe_link_cache")
+                return True
+
             conn.execute("DELETE FROM material_keys")
             conn.execute("DELETE FROM item_keys")
             if _has_columns(conn, "material_key_buttons", ["server_id", "profession_id", "material_key"]):

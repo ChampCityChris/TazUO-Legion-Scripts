@@ -1,4 +1,26 @@
-﻿import API
+"""
+AutoMiner script for TazUO using the LegionScripts API.
+
+Purpose:
+- Automate a recall-based mining route with optional smelting and tool crafting.
+- Provide a clear control gump so the script can be started, paused, and configured.
+
+When To Use:
+- You want to mine from a runebook route and unload resources at home.
+- You want optional ore smelting, ingot restocking, and shovel crafting.
+
+Assumptions:
+- `API.py` is available in this repository and loaded by the script engine.
+- You configure a runebook and, optionally, a secure drop container.
+- Your character has the required tools/reagents for selected travel mode.
+
+Risks:
+- The script moves items and can drop ore near the player during weight mitigation.
+- The script performs continuous targeting/gump/spell actions while running.
+- Incorrect runebook button setup can cause failed travel loops.
+"""
+
+import API
 import json
 import ast
 import os
@@ -15,41 +37,6 @@ LOG_TEXT = ""  # Rolling in-memory log text buffer.
 LOG_LINES = []  # Pre-split log lines used by the scroll area UI.
 LOG_EXPORT_BASE = None  # User-selected default export directory.
 LOG_PATH_TEXTBOX = None  # Textbox control reference from the log gump.
-"""
-Auto Recall Miner
-Last Updated: 2026-02-18
-
-Features:
-- Start/Pause control gump for mining runtime.
-- Configurable shard profile (OSI or UOAlive).
-- Configurable travel mode (Mage Recall or Sacred Journey).
-- Runebook-driven recall loop (home + mining route).
-- Weight mitigation with local ore drop when over encumbered, optional smelting via fire beetle, and home recall unload.
-- Auto unload/restock flow for ore, ingots, gems, and blackstone.
-- Optional tool crafting and shovel restock handling.
-- Mining target failover and per-spot tile cache behavior.
-- Built-in diagnostics and exportable debug log UI.
-
-Planned Updates:
-- Add support for mountainside mining.
-- Add Runic Atlas support.
-- Add support for giant beetle and other pack animals. 
-- Add auto defend/escape behaviors for mining in dangerous areas.
-
-Setup:
-1) Carry at least one mining tool in your backpack, and additional mining tools in drop off container if not using Auto Tool feature.
-2) If Auto Tooling is enabled, carry a tinker's tool and base ingots.
-3) Set shard mode and travel mode from the control gump.
-4) Set your runebook (home in slot 1, mining runes in slots 2-16).
-5) Set your drop container for unload/restock operations.
-6) Optional: enable fire beetle smelting
-7) Press Start to begin the mining route loop.
-
-Current Limitations:
-- Mountainside mining is not supported in the current version.
-- The script focuses on mining/unload loops only (no auto combat or escape features).
-
-"""
 
 # Journal texts that mark tiles as depleted.
 NO_ORE_CACHE_TEXTS = [
@@ -269,6 +256,7 @@ DEBUG_LOG_MAX_CHARS = 5000  # In-memory rolling log cap.
 DEBUG_LOG_FILE = "AutoMiner.debug.log"  # On-disk debug log filename.
 DEBUG_LOG_ENABLED = True  # Toggle file logging.
 LOG_DATA_KEY = "mining_bot_log_config"  # Persisted key for log UI settings.
+JSON_RESET_DONE_KEY = "mining_bot_json_reset_done"  # Migration flag for one-time JSON reset.
 HEADMSG_HUE = 1285  # Hue for overhead messages.
 RUNNING = False  # Script run state.
 CONTROL_GUMP = None  # Root gump reference.
@@ -321,9 +309,65 @@ SMELT_SUCCESS_TEXTS = [
 DATA_KEY = "mining_bot_config"  # Persisted key for core AutoMiner settings.
 
 
+# One-time migration reset for persisted config keys.
+def _reset_persisted_config_for_json_migration_once():
+    """Reset persisted config keys one time before JSON-only parsing.
+
+    Args:
+        None.
+
+    Returns:
+        None: Clears legacy persisted keys once and stores a migration flag.
+
+    Side Effects:
+        Writes to persistent storage and emits migration diagnostics.
+    """
+    reset_done = API.GetPersistentVar(JSON_RESET_DONE_KEY, "", API.PersistentVar.Char)
+    if str(reset_done).strip() == "1":
+        return
+
+    # We clear both persisted blobs so first load starts from known JSON defaults.
+    API.SavePersistentVar(DATA_KEY, "", API.PersistentVar.Char)
+    API.SavePersistentVar(LOG_DATA_KEY, "", API.PersistentVar.Char)
+    API.SavePersistentVar(JSON_RESET_DONE_KEY, "1", API.PersistentVar.Char)
+    _diag_warn(
+        "One-time config reset applied for JSON-only mode. "
+        "Please set runebook and drop container again.",
+        phase="CONFIG",
+    )
+
+
 # Lightweight data carrier for a single tile target attempt.
 class TileAttempt:
+    """Describe one mining-target attempt for a specific world tile.
+
+    Attributes:
+        tx: Absolute tile X coordinate in the world.
+        ty: Absolute tile Y coordinate in the world.
+        relx: Tile X offset from the player's current position.
+        rely: Tile Y offset from the player's current position.
+        tile: Tile object returned by `API.GetTile`, or `None`.
+        tile_is_mineable: `True` when the tile graphic is in the mineable list.
+        tile_is_land: `True` when the tile is a land tile (< `0x4000` graphic).
+    """
     def __init__(self, tx, ty, relx, rely, tile, tile_is_mineable, tile_is_land):
+        """Store tile-target context values for one mining attempt.
+
+        Args:
+            tx: Absolute target X coordinate.
+            ty: Absolute target Y coordinate.
+            relx: Relative target X offset from player.
+            rely: Relative target Y offset from player.
+            tile: Tile object returned by `API.GetTile`.
+            tile_is_mineable: Whether this tile is mineable for AutoMiner.
+            tile_is_land: Whether this tile should use land targeting logic.
+
+        Returns:
+            None: The constructor only stores values on the instance.
+
+        Side Effects:
+            Updates instance attributes used by later mining steps.
+        """
         self.tx = tx
         self.ty = ty
         self.relx = relx
@@ -335,14 +379,56 @@ class TileAttempt:
 
 # Lightweight result object for tile targeting status.
 class TileTargetResult:
+    """Capture the immediate result of a single target action.
+
+    Attributes:
+        target_timeout: `True` when no target cursor appeared in time.
+        used_failover: `True` when alternate target mode was used.
+    """
     def __init__(self, target_timeout=False, used_failover=False):
+        """Normalize result flags to booleans.
+
+        Args:
+            target_timeout: Raw timeout flag from targeting logic.
+            used_failover: Raw failover flag from targeting logic.
+
+        Returns:
+            None: The constructor only stores normalized values.
+
+        Side Effects:
+            Updates instance attributes for pass-level decision logic.
+        """
         self.target_timeout = bool(target_timeout)
         self.used_failover = bool(used_failover)
 
 
 # Journal classification output for one mining attempt.
 class TileJournalResult:
+    """Store mined-tile journal classification flags for one attempt.
+
+    Attributes:
+        no_ore_hit: `True` when journal says the tile is depleted.
+        cannot_see: `True` when target visibility failed.
+        dig_some: `True` when mining succeeded and ore was found.
+        fail_skill: `True` when mining attempt happened but skill failed.
+        cant_mine: `True` when journal reports invalid mining location.
+    """
     def __init__(self, no_ore_hit=False, cannot_see=False, dig_some=False, fail_skill=False, cant_mine=False):
+        """Normalize journal flags and compute a combined status bit.
+
+        Args:
+            no_ore_hit: Raw no-ore flag.
+            cannot_see: Raw cannot-see flag.
+            dig_some: Raw successful-dig flag.
+            fail_skill: Raw failed-skill flag.
+            cant_mine: Raw cannot-mine flag.
+
+        Returns:
+            None: The constructor only stores normalized values.
+
+        Side Effects:
+            Updates `any_msg` so callers can quickly test for journal activity.
+        """
         self.no_ore_hit = bool(no_ore_hit)
         self.cannot_see = bool(cannot_see)
         self.dig_some = bool(dig_some)
@@ -353,7 +439,26 @@ class TileJournalResult:
 
 # Pass-level counters used to decide whether to move to the next rune.
 class PassCounters:
+    """Track 3x3-pass counters used to decide whether to move runes.
+
+    Attributes:
+        no_ore_count: Number of tiles classified as no-ore/depleted.
+        cannot_see_count: Number of tiles still blocked after failover.
+        timeout_count: Number of target-cursor timeouts this pass.
+        dig_success: `True` after any successful or valid mining response.
+    """
     def __init__(self):
+        """Initialize pass counters to a clean state.
+
+        Args:
+            None.
+
+        Returns:
+            None: The constructor only stores initial values.
+
+        Side Effects:
+            Updates instance attributes read by mining-pass decision logic.
+        """
         self.no_ore_count = 0
         self.cannot_see_count = 0
         self.timeout_count = 0
@@ -363,6 +468,17 @@ class PassCounters:
 # Return default persisted settings payload.
 def _default_config():
     # Default persisted settings.
+    """Default config for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     return {
         "runebook_serial": 0,
         "drop_container_serial": 0,
@@ -374,42 +490,116 @@ def _default_config():
     }
 
 
+# Parse persisted settings text into a dictionary.
+def _parse_persisted_dict(raw_value, settings_name):
+    """Parse persisted settings text as JSON.
+
+    Args:
+        raw_value: Raw text loaded from persistent storage.
+        settings_name: Friendly settings label used in diagnostic messages.
+
+    Returns:
+        dict: Parsed settings dictionary when parsing succeeds.
+
+    Side Effects:
+        Emits a diagnostic warning when parsing fails.
+    """
+    try:
+        parsed = json.loads(raw_value)
+    except (TypeError, ValueError):
+        _diag_warn(
+            f"{settings_name} config parse failed (invalid JSON). Using defaults.",
+            phase="CONFIG",
+        )
+        return {}
+
+    if isinstance(parsed, dict):
+        return parsed
+
+    _diag_warn(
+        f"{settings_name} config was not a dictionary. Using defaults.",
+        phase="CONFIG",
+    )
+    return {}
+
+
 # Load persisted settings into runtime globals.
 def _load_config():
-    # Load persisted settings for runebook/drop.
-    global RUNBOOK_SERIAL, SECURE_CONTAINER_SERIAL, USE_TOOL_CRAFTING, USE_FIRE_BEETLE_SMELT, USE_SACRED_JOURNEY, DEBUG_TARGETING, USE_UOALIVE_SHARD
-    raw = API.GetPersistentVar(DATA_KEY, "", API.PersistentVar.Char)
-    if raw:
-        try:
-            try:
-                data = json.loads(raw)
-            except Exception:
-                data = ast.literal_eval(raw)
-            RUNBOOK_SERIAL = int(data.get("runebook_serial", 0) or 0)
-            SECURE_CONTAINER_SERIAL = int(data.get("drop_container_serial", 0) or 0)
-            USE_FIRE_BEETLE_SMELT = bool(data.get("use_fire_beetle_smelt", False))
-            USE_TOOL_CRAFTING = bool(data.get("use_tool_crafting", True))
-            USE_SACRED_JOURNEY = bool(data.get("use_sacred_journey", False))
-            DEBUG_TARGETING = bool(data.get("debug_targeting", True))
-            USE_UOALIVE_SHARD = bool(data.get("use_uoalive_shard", False))
-            _refresh_recall_buttons()
-            return
-        except Exception:
-            pass
-    data = _default_config()
-    RUNBOOK_SERIAL = data["runebook_serial"]
-    SECURE_CONTAINER_SERIAL = data["drop_container_serial"]
-    USE_FIRE_BEETLE_SMELT = data["use_fire_beetle_smelt"]
-    USE_TOOL_CRAFTING = data["use_tool_crafting"]
-    USE_SACRED_JOURNEY = data["use_sacred_journey"]
-    DEBUG_TARGETING = data["debug_targeting"]
-    USE_UOALIVE_SHARD = data["use_uoalive_shard"]
-    _refresh_recall_buttons()
+    """Load persisted AutoMiner settings into runtime variables.
 
+    Args:
+        None.
+
+    Returns:
+        None: Runtime configuration globals are updated in place.
+
+    Side Effects:
+        Reads persisted config data and updates module-level state.
+    """
+    global RUNBOOK_SERIAL, SECURE_CONTAINER_SERIAL, USE_TOOL_CRAFTING
+    global USE_FIRE_BEETLE_SMELT, USE_SACRED_JOURNEY, DEBUG_TARGETING
+    global USE_UOALIVE_SHARD
+
+    raw = API.GetPersistentVar(DATA_KEY, "", API.PersistentVar.Char)
+    data = _default_config()
+
+    if raw:
+        loaded = _parse_persisted_dict(raw, "AutoMiner")
+        if loaded:
+            data.update(loaded)
+
+    RUNBOOK_SERIAL = int(data.get("runebook_serial", 0) or 0)
+    SECURE_CONTAINER_SERIAL = int(data.get("drop_container_serial", 0) or 0)
+    USE_FIRE_BEETLE_SMELT = bool(data.get("use_fire_beetle_smelt", False))
+    USE_TOOL_CRAFTING = bool(data.get("use_tool_crafting", True))
+    USE_SACRED_JOURNEY = bool(data.get("use_sacred_journey", False))
+    DEBUG_TARGETING = bool(data.get("debug_targeting", True))
+    USE_UOALIVE_SHARD = bool(data.get("use_uoalive_shard", False))
+    _refresh_recall_buttons()
+    if not RUNBOOK_SERIAL:
+        _diag_warn("Runebook serial is not configured. Use Set before starting.", phase="CONFIG")
+    if not SECURE_CONTAINER_SERIAL:
+        _diag_warn(
+            "Drop container serial is not configured. Use Set before starting.",
+            phase="CONFIG",
+        )
+
+
+# Validate required serials before enabling the mining loop.
+def _can_start_mining():
+    """Check whether required configuration exists before start.
+
+    Args:
+        None.
+
+    Returns:
+        bool: `True` when both runebook and drop container are configured.
+
+    Side Effects:
+        Emits clear warnings when required values are missing.
+    """
+    if not RUNBOOK_SERIAL:
+        _diag_warn("Start blocked: runebook is not configured.", phase="CONFIG")
+        return False
+    if not SECURE_CONTAINER_SERIAL:
+        _diag_warn("Start blocked: drop container is not configured.", phase="CONFIG")
+        return False
+    return True
 
 # Save current runtime settings back to persistent storage.
 def _save_config():
     # Save persisted settings for runebook/drop.
+    """Save config for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     data = {
         "runebook_serial": int(RUNBOOK_SERIAL or 0),
         "drop_container_serial": int(SECURE_CONTAINER_SERIAL or 0),
@@ -466,14 +656,145 @@ except Exception:
 
 
 def _active_recipe_server_name():
+    """Active recipe server name for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     return "UOAlive" if USE_UOALIVE_SHARD else "OSI"
 
 
 def _normalize_recipe_name(text):
+    """Normalize recipe name for the AutoMiner workflow.
+
+    Args:
+        text: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     return " ".join(str(text or "").strip().lower().split())
 
 
+def _is_tinker_profession_name(text):
+    """Is tinker profession name for the AutoMiner workflow.
+
+    Args:
+        text: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
+    n = _normalize_recipe_name(text)
+    return n in ("tinker", "tinkering")
+
+
+def _recipe_db_path():
+    # Resolve the craftables DB path using the same root logic as viewer/editor utilities.
+    """Recipe db path for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
+    cands = []
+    try:
+        if RECIPE_STORE and hasattr(RECIPE_STORE, "_db_path"):
+            cands.append(str(RECIPE_STORE._db_path() or ""))
+    except Exception:
+        pass
+    try:
+        uroot = os.path.dirname(_util_dir) if os.path.basename(str(_util_dir or "")).lower() == "utilities" else _util_dir
+    except Exception:
+        uroot = _util_dir
+    try:
+        sroot = os.path.dirname(_script_dir) if os.path.basename(str(_script_dir or "")).lower() in ("resources", "utilities", "skills") else _script_dir
+    except Exception:
+        sroot = _script_dir
+    try:
+        croot = os.getcwd()
+        if os.path.basename(str(croot or "")).lower() in ("resources", "utilities", "skills"):
+            croot = os.path.dirname(croot)
+    except Exception:
+        croot = ""
+    for root in (uroot, sroot, croot):
+        if root:
+            cands.append(os.path.join(root, "Databases", "craftables.db"))
+    for cand in cands:
+        p = str(cand or "").strip()
+        if p and os.path.isfile(p):
+            return p
+    return ""
+
+
+def _connect_recipe_db_ro():
+    # Match RecipeBookViewer open strategy (URI ro first, then query_only fallback).
+    """Open the craftables database in read-only mode for recipe lookup.
+
+    Args:
+        None.
+
+    Returns:
+        tuple: `(sqlite_connection, db_path)` when opening succeeds.
+
+    Side Effects:
+        Opens a SQLite connection and may raise if no read-only path works.
+    """
+    p = _recipe_db_path()
+    if not p:
+        raise Exception("db path not found")
+    uri = "file:" + str(p).replace("\\", "/") + "?mode=ro"
+    errs = []
+    try:
+        conn = sqlite3.connect(uri, uri=True, timeout=0.5)
+        try:
+            conn.execute("PRAGMA query_only=1;")
+        except Exception:
+            pass
+        return conn, p
+    except Exception as ex:
+        errs.append("uri_ro=" + str(ex))
+    try:
+        conn = sqlite3.connect(p, timeout=0.5)
+        try:
+            conn.execute("PRAGMA query_only=1;")
+        except Exception:
+            pass
+        return conn, p
+    except Exception as ex:
+        errs.append("path=" + str(ex))
+    raise Exception("; ".join(errs) if errs else "unknown sqlite open error")
+
+
 def _now_s():
+    """Now s for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     try:
         return float(time.time())
     except Exception:
@@ -481,6 +802,17 @@ def _now_s():
 
 
 def _load_recipe_key_maps(force=False):
+    """Load and cache recipe key maps used by tool-crafting navigation.
+
+    Args:
+        force: When `True`, bypass in-memory cache and force a reload attempt.
+
+    Returns:
+        dict: Recipe key-map payload, or last-known-good data when available.
+
+    Side Effects:
+        Updates cache globals and backoff timers for database retry behavior.
+    """
     global RECIPE_KEY_MAPS, RECIPE_KEY_MAPS_LAST_GOOD, RECIPE_DB_NEXT_RETRY_AT, RECIPE_DB_LOGGED_NO_STORE
     if RECIPE_STORE is None:
         if not RECIPE_DB_LOGGED_NO_STORE:
@@ -521,7 +853,41 @@ def _load_recipe_key_maps(force=False):
     return RECIPE_KEY_MAPS
 
 
+def _clear_recipe_caches():
+    # Clear in-memory recipe/key-map caches so next lookup reloads from DB.
+    """Clear recipe caches for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
+    global RECIPE_KEY_MAPS, RECIPE_KEY_MAPS_LAST_GOOD, TINKER_CRAFT_PATHS_BY_SERVER, RECIPE_DB_NEXT_RETRY_AT
+    RECIPE_KEY_MAPS = None
+    RECIPE_KEY_MAPS_LAST_GOOD = None
+    TINKER_CRAFT_PATHS_BY_SERVER = {}
+    RECIPE_DB_NEXT_RETRY_AT = 0.0
+
+
 def _material_buttons_for_key_from_maps(maps, server, profession, material_key):
+    """Material buttons for key from maps for the AutoMiner workflow.
+
+    Args:
+        maps: Input value used by this helper.
+        server: Input value used by this helper.
+        profession: Input value used by this helper.
+        material_key: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     by_server = maps.get(str(server or ""), {}) if isinstance(maps, dict) else {}
     by_prof = by_server.get(str(profession or ""), {}) if isinstance(by_server, dict) else {}
     mk_node = by_prof.get("material_keys", {}) if isinstance(by_prof, dict) else {}
@@ -538,24 +904,37 @@ def _material_buttons_for_key_from_maps(maps, server, profession, material_key):
 
 
 def _prime_tinker_craft_path_cache(force=False):
+    """Prime tinker craft path cache for the AutoMiner workflow.
+
+    Args:
+        force: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global TINKER_CRAFT_PATHS_BY_SERVER
     try:
-        db_path = ""
-        try:
-            if RECIPE_STORE and hasattr(RECIPE_STORE, "_db_path"):
-                db_path = str(RECIPE_STORE._db_path() or "")
-        except Exception:
-            db_path = ""
+        db_path = _recipe_db_path()
         if not db_path:
-            try:
-                _root = os.path.dirname(_util_dir) if os.path.basename(str(_util_dir or "")).lower() == "utilities" else _util_dir
-            except Exception:
-                _root = _util_dir
-            db_path = os.path.join(_root, "Databases", "craftables.db")
-        if not os.path.isfile(db_path):
+            _diag_info("Recipe DB not found in expected paths; craft path cache unchanged.")
             return TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
+        _diag_info("Recipe DB path: {0}".format(str(db_path)))
 
         def _json_ints(raw):
+            """Json ints for the AutoMiner workflow.
+
+            Args:
+                raw: Input value used by this helper.
+
+            Returns:
+                object: Result value produced for the caller.
+
+            Side Effects:
+                No side effects beyond local calculations.
+            """
             vals = []
             if raw is None:
                 return vals
@@ -572,46 +951,377 @@ def _prime_tinker_craft_path_cache(force=False):
                     pass
             return vals
 
+        def _int_list(seq):
+            """Int list for the AutoMiner workflow.
+
+            Args:
+                seq: Input value used by this helper.
+
+            Returns:
+                object: Result value produced for the caller.
+
+            Side Effects:
+                No side effects beyond local calculations.
+            """
+            vals = []
+            for x in (seq or []):
+                try:
+                    n = int(x)
+                    if n > 0:
+                        vals.append(n)
+                except Exception:
+                    pass
+            return vals
+
         out = {}
-        conn = sqlite3.connect(db_path, timeout=0.15)
+        found_target_item = False
+
+        # Prefer normalized key-map API first (works across legacy + normalized schemas).
         try:
+            if RECIPE_STORE and hasattr(RECIPE_STORE, "load_key_maps"):
+                km = RECIPE_STORE.load_key_maps() or {}
+                if isinstance(km, dict):
+                    for server, srv_node in km.items():
+                        s = str(server or "")
+                        if not s or not isinstance(srv_node, dict):
+                            continue
+                        pnode = {}
+                        for prof_key, prof_node in (srv_node.items() if isinstance(srv_node, dict) else []):
+                            if _is_tinker_profession_name(prof_key) and isinstance(prof_node, dict):
+                                pnode = prof_node
+                                break
+                        if not pnode:
+                            continue
+                        if s not in out:
+                            out[s] = {"material_buttons": [], "items": {}}
+                        mk_node = pnode.get("material_keys", {}) if isinstance(pnode.get("material_keys"), dict) else {}
+                        ik_node = pnode.get("item_keys", {}) if isinstance(pnode.get("item_keys"), dict) else {}
+                        ingot = mk_node.get("ingot_iron", {}) if isinstance(mk_node, dict) else {}
+                        if isinstance(ingot, dict):
+                            out[s]["material_buttons"] = _int_list(ingot.get("material_buttons", []) or [])
+                        if isinstance(ik_node, dict):
+                            for ik_key, ent in ik_node.items():
+                                if not isinstance(ent, dict):
+                                    continue
+                                nk = _normalize_recipe_name(ik_key)
+                                if nk not in ("shovel", "tinker's tools"):
+                                    nk = _normalize_recipe_name(ent.get("name", ""))
+                                if nk not in ("shovel", "tinker's tools"):
+                                    continue
+                                btns = _int_list(ent.get("buttons", []) or [])
+                                if btns:
+                                    out[s]["items"][nk] = btns
+                                    found_target_item = True
+                if out and found_target_item:
+                    TINKER_CRAFT_PATHS_BY_SERVER = out
+                    return TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
+        except Exception:
+            pass
+
+        conn = None
+        try:
+            conn, _ = _connect_recipe_db_ro()
             try:
                 conn.execute("PRAGMA query_only=1;")
             except Exception:
                 pass
-            cur = conn.execute(
-                "SELECT server, material_buttons FROM material_keys "
-                "WHERE profession=? AND material_key=?",
-                ("Tinker", "ingot_iron"),
-            )
-            for server, mraw in (cur.fetchall() or []):
-                s = str(server or "")
-                if s not in out:
-                    out[s] = {"material_buttons": [], "items": {}}
-                out[s]["material_buttons"] = _json_ints(mraw)
+            mk_cols = {}
+            try:
+                for _c in (conn.execute("PRAGMA table_info(material_keys)").fetchall() or []):
+                    mk_cols[str(_c[1] or "").strip().lower()] = True
+            except Exception:
+                mk_cols = {}
+            ik_cols = {}
+            try:
+                for _c in (conn.execute("PRAGMA table_info(item_keys)").fetchall() or []):
+                    ik_cols[str(_c[1] or "").strip().lower()] = True
+            except Exception:
+                ik_cols = {}
 
-            cur = conn.execute(
-                "SELECT server, name, buttons FROM item_keys "
-                "WHERE profession=?",
-                ("Tinker",),
-            )
-            for server, name, braw in (cur.fetchall() or []):
-                s = str(server or "")
-                n = _normalize_recipe_name(name)
-                if n not in ("shovel", "tinker's tools"):
-                    continue
-                if s not in out:
-                    out[s] = {"material_buttons": [], "items": {}}
-                out[s]["items"][n] = _json_ints(braw)
+            mkb_cols = {}
+            try:
+                for _c in (conn.execute("PRAGMA table_info(material_key_buttons)").fetchall() or []):
+                    mkb_cols[str(_c[1] or "").strip().lower()] = True
+            except Exception:
+                mkb_cols = {}
+            ikb_cols = {}
+            try:
+                for _c in (conn.execute("PRAGMA table_info(item_key_buttons)").fetchall() or []):
+                    ikb_cols[str(_c[1] or "").strip().lower()] = True
+            except Exception:
+                ikb_cols = {}
+
+            mk_btns = {}
+            if mkb_cols:
+                if ("server" in mkb_cols) and ("profession" in mkb_cols):
+                    cur = conn.execute(
+                        "SELECT server, profession, material_key, slot, button_id FROM material_key_buttons "
+                        "ORDER BY server, profession, material_key, slot"
+                    )
+                    for server, prof, mk, _slot, bid in (cur.fetchall() or []):
+                        k = (str(server or ""), str(prof or ""), str(mk or ""))
+                        mk_btns[k] = mk_btns.get(k, []) + _int_list([bid])
+                elif ("server_id" in mkb_cols) and ("profession_id" in mkb_cols):
+                    cur = conn.execute(
+                        """
+                        SELECT s.name, p.name, mkb.material_key, mkb.slot, mkb.button_id
+                        FROM material_key_buttons mkb
+                        JOIN servers s ON s.id = mkb.server_id
+                        JOIN professions p ON p.id = mkb.profession_id
+                        ORDER BY s.name, p.name, mkb.material_key, mkb.slot
+                        """
+                    )
+                    for server, prof, mk, _slot, bid in (cur.fetchall() or []):
+                        k = (str(server or ""), str(prof or ""), str(mk or ""))
+                        mk_btns[k] = mk_btns.get(k, []) + _int_list([bid])
+
+            ik_btns = {}
+            if ikb_cols:
+                if ("server" in ikb_cols) and ("profession" in ikb_cols):
+                    cur = conn.execute(
+                        "SELECT server, profession, item_key, slot, button_id FROM item_key_buttons "
+                        "ORDER BY server, profession, item_key, slot"
+                    )
+                    for server, prof, ik, _slot, bid in (cur.fetchall() or []):
+                        k = (str(server or ""), str(prof or ""), str(ik or ""))
+                        ik_btns[k] = ik_btns.get(k, []) + _int_list([bid])
+                elif ("server_id" in ikb_cols) and ("profession_id" in ikb_cols):
+                    cur = conn.execute(
+                        """
+                        SELECT s.name, p.name, ikb.item_key, ikb.slot, ikb.button_id
+                        FROM item_key_buttons ikb
+                        JOIN servers s ON s.id = ikb.server_id
+                        JOIN professions p ON p.id = ikb.profession_id
+                        ORDER BY s.name, p.name, ikb.item_key, ikb.slot
+                        """
+                    )
+                    for server, prof, ik, _slot, bid in (cur.fetchall() or []):
+                        k = (str(server or ""), str(prof or ""), str(ik or ""))
+                        ik_btns[k] = ik_btns.get(k, []) + _int_list([bid])
+
+            def _lookup_btns(btn_map, server_name, key_name):
+                """Lookup btns for the AutoMiner workflow.
+
+                Args:
+                    btn_map: Input value used by this helper.
+                    server_name: Input value used by this helper.
+                    key_name: Input value used by this helper.
+
+                Returns:
+                    object: Result value produced for the caller.
+
+                Side Effects:
+                    No side effects beyond local calculations.
+                """
+                out_vals = []
+                s_norm = _normalize_recipe_name(server_name)
+                k_norm = _normalize_recipe_name(key_name)
+                for k, vals in (btn_map.items() if isinstance(btn_map, dict) else []):
+                    try:
+                        s_k, p_k, item_k = k
+                    except Exception:
+                        continue
+                    if _normalize_recipe_name(s_k) != s_norm:
+                        continue
+                    if not _is_tinker_profession_name(p_k):
+                        continue
+                    if _normalize_recipe_name(item_k) != k_norm:
+                        continue
+                    out_vals = _int_list(vals or [])
+                    if out_vals:
+                        return out_vals
+                return out_vals
+
+            if ("server" in mk_cols) and ("profession" in mk_cols):
+                sel = "server, material_key"
+                if "material_buttons" in mk_cols:
+                    sel = sel + ", material_buttons"
+                cur = conn.execute(
+                    "SELECT " + str(sel) + " FROM material_keys "
+                    "WHERE lower(trim(profession)) IN (?, ?) AND material_key=?",
+                    ("tinker", "tinkering", "ingot_iron"),
+                )
+                for row in (cur.fetchall() or []):
+                    server = row[0]
+                    mk = row[1]
+                    mraw = row[2] if len(row) > 2 else None
+                    s = str(server or "")
+                    if s not in out:
+                        out[s] = {"material_buttons": [], "items": {}}
+                    btns = _json_ints(mraw)
+                    if not btns:
+                        btns = _lookup_btns(mk_btns, s, str(mk or ""))
+                    out[s]["material_buttons"] = btns
+            elif ("server_id" in mk_cols) and ("profession_id" in mk_cols):
+                sel = "s.name, mk.material_key"
+                if "material_buttons" in mk_cols:
+                    sel = sel + ", mk.material_buttons"
+                cur = conn.execute(
+                    """
+                    SELECT """ + str(sel) + """
+                    FROM material_keys mk
+                    JOIN servers s ON s.id = mk.server_id
+                    JOIN professions p ON p.id = mk.profession_id
+                    WHERE lower(trim(p.name)) IN (?, ?) AND mk.material_key=?
+                    """,
+                    ("tinker", "tinkering", "ingot_iron"),
+                )
+                for row in (cur.fetchall() or []):
+                    server = row[0]
+                    mk = row[1]
+                    mraw = row[2] if len(row) > 2 else None
+                    s = str(server or "")
+                    if s not in out:
+                        out[s] = {"material_buttons": [], "items": {}}
+                    btns = _json_ints(mraw)
+                    if not btns:
+                        btns = _lookup_btns(mk_btns, s, str(mk or ""))
+                    out[s]["material_buttons"] = btns
+
+            if ("server" in ik_cols) and ("profession" in ik_cols):
+                sel = "server, item_key, name"
+                if "buttons" in ik_cols:
+                    sel = sel + ", buttons"
+                cur = conn.execute(
+                    "SELECT " + str(sel) + " FROM item_keys "
+                    "WHERE lower(trim(profession)) IN (?, ?)",
+                    ("tinker", "tinkering"),
+                )
+                for row in (cur.fetchall() or []):
+                    server = row[0]
+                    item_key = row[1]
+                    name = row[2]
+                    braw = row[3] if len(row) > 3 else None
+                    s = str(server or "")
+                    n = _normalize_recipe_name(item_key)
+                    if n not in ("shovel", "tinker's tools"):
+                        n = _normalize_recipe_name(name)
+                    if n not in ("shovel", "tinker's tools"):
+                        continue
+                    if s not in out:
+                        out[s] = {"material_buttons": [], "items": {}}
+                    btns = _json_ints(braw)
+                    if not btns:
+                        btns = _lookup_btns(ik_btns, s, str(item_key or ""))
+                    if btns:
+                        out[s]["items"][n] = btns
+            elif ("server_id" in ik_cols) and ("profession_id" in ik_cols):
+                sel = "s.name, ik.item_key, ik.name"
+                if "buttons" in ik_cols:
+                    sel = sel + ", ik.buttons"
+                cur = conn.execute(
+                    """
+                    SELECT """ + str(sel) + """
+                    FROM item_keys ik
+                    JOIN servers s ON s.id = ik.server_id
+                    JOIN professions p ON p.id = ik.profession_id
+                    WHERE lower(trim(p.name)) IN (?, ?)
+                    """,
+                    ("tinker", "tinkering"),
+                )
+                for row in (cur.fetchall() or []):
+                    server = row[0]
+                    item_key = row[1]
+                    name = row[2]
+                    braw = row[3] if len(row) > 3 else None
+                    s = str(server or "")
+                    n = _normalize_recipe_name(item_key)
+                    if n not in ("shovel", "tinker's tools"):
+                        n = _normalize_recipe_name(name)
+                    if n not in ("shovel", "tinker's tools"):
+                        continue
+                    if s not in out:
+                        out[s] = {"material_buttons": [], "items": {}}
+                    btns = _json_ints(braw)
+                    if not btns:
+                        btns = _lookup_btns(ik_btns, s, str(item_key or ""))
+                    if btns:
+                        out[s]["items"][n] = btns
+
+            # Schema-v8+ direct path: rely on *_key_buttons joins, not legacy inline JSON columns.
+            need_direct = True
+            for _srv, _node in (out.items() if isinstance(out, dict) else []):
+                try:
+                    _items = _node.get("items", {}) if isinstance(_node, dict) else {}
+                    if _items.get("shovel", []) or _items.get("tinker's tools", []):
+                        need_direct = False
+                        break
+                except Exception:
+                    pass
+            if need_direct:
+                try:
+                    cur = conn.execute(
+                        """
+                        SELECT gs.server_name, ci.item_key_slug, ci.item_display_name, cins.step_number, cins.gump_button_id
+                        FROM craftable_items ci
+                        JOIN crafting_contexts cc ON cc.context_id = ci.context_id
+                        JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                        JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                        JOIN craftable_item_navigation_steps cins ON cins.craftable_item_id = ci.craftable_item_id
+                        WHERE lower(trim(cp.profession_name)) IN (?, ?)
+                          AND (
+                              lower(trim(ci.item_key_slug)) IN (?, ?)
+                              OR lower(trim(ci.item_display_name)) IN (?, ?)
+                          )
+                        ORDER BY gs.server_name, ci.item_key_slug, cins.step_number
+                        """,
+                        ("tinker", "tinkering", "shovel", "tinker's tools", "shovel", "tinker's tools"),
+                    )
+                    for server, item_key, name, _slot, bid in (cur.fetchall() or []):
+                        s = str(server or "")
+                        n = _normalize_recipe_name(item_key or name)
+                        if n not in ("shovel", "tinker's tools"):
+                            n = _normalize_recipe_name(name or item_key)
+                        if n not in ("shovel", "tinker's tools"):
+                            continue
+                        if s not in out:
+                            out[s] = {"material_buttons": [], "items": {}}
+                        out[s]["items"][n] = out[s]["items"].get(n, []) + _int_list([bid])
+                except Exception:
+                    pass
+
+                try:
+                    cur = conn.execute(
+                        """
+                        SELECT gs.server_name, mons.step_number, mons.gump_button_id
+                        FROM material_options mo
+                        JOIN crafting_contexts cc ON cc.context_id = mo.context_id
+                        JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                        JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                        JOIN material_option_navigation_steps mons ON mons.material_option_id = mo.material_option_id
+                        WHERE lower(trim(cp.profession_name)) IN (?, ?)
+                          AND lower(trim(mo.material_option_key)) = ?
+                        ORDER BY gs.server_name, mons.step_number
+                        """,
+                        ("tinker", "tinkering", "ingot_iron"),
+                    )
+                    for server, _slot, bid in (cur.fetchall() or []):
+                        s = str(server or "")
+                        if s not in out:
+                            out[s] = {"material_buttons": [], "items": {}}
+                        out[s]["material_buttons"] = out[s]["material_buttons"] + _int_list([bid])
+                except Exception:
+                    pass
         finally:
             try:
                 conn.close()
             except Exception:
                 pass
 
-        # Default iron buttons for UOAlive if not present in DB material map.
-        if "UOAlive" in out and not out["UOAlive"].get("material_buttons"):
-            out["UOAlive"]["material_buttons"] = [7, 6]
+        try:
+            _srv = _active_recipe_server_name()
+            _node = out.get(_srv, {}) if isinstance(out, dict) else {}
+            _items = _node.get("items", {}) if isinstance(_node, dict) else {}
+            _diag_info(
+                "Recipe prime server={0} shovel={1} tools={2} material={3}".format(
+                    _srv,
+                    list(_items.get("shovel", []) if isinstance(_items, dict) else []),
+                    list(_items.get("tinker's tools", []) if isinstance(_items, dict) else []),
+                    list(_node.get("material_buttons", []) if isinstance(_node, dict) else []),
+                )
+            )
+        except Exception:
+            pass
 
         if out:
             TINKER_CRAFT_PATHS_BY_SERVER = out
@@ -623,26 +1333,205 @@ def _prime_tinker_craft_path_cache(force=False):
         return TINKER_CRAFT_PATHS_BY_SERVER
 
 
+def _db_direct_tinker_paths(server, item_name):
+    # Resolve tinker item/material button paths directly from canonical craftables schema.
+    """Db direct tinker paths for the AutoMiner workflow.
+
+    Args:
+        server: Input value used by this helper.
+        item_name: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
+    try:
+        conn = None
+        try:
+            conn, _ = _connect_recipe_db_ro()
+            target = _normalize_recipe_name(item_name)
+            item_buttons = []
+            material_buttons = []
+            material_option_id = 0
+            for prof in ("Tinker", "Tinkering"):
+                try:
+                    cur = conn.execute(
+                        """
+                        SELECT ci.craftable_item_id, ci.default_material_option_id
+                        FROM craftable_items ci
+                        JOIN crafting_contexts cc ON cc.context_id = ci.context_id
+                        JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                        JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                        WHERE gs.server_name=?
+                          AND cp.profession_name=?
+                          AND (lower(ci.item_key_slug)=? OR lower(ci.item_display_name)=?)
+                        ORDER BY ci.craftable_item_id
+                        LIMIT 1
+                        """,
+                        (str(server or ""), str(prof), str(target), str(target)),
+                    )
+                    item_row = cur.fetchone()
+                    craftable_item_id = int(item_row[0] or 0) if item_row else 0
+                    material_option_id = int(item_row[1] or 0) if item_row else 0
+                    if craftable_item_id <= 0:
+                        continue
+                    cur = conn.execute(
+                        """
+                        SELECT cins.gump_button_id
+                        FROM craftable_item_navigation_steps cins
+                        WHERE cins.craftable_item_id=?
+                        ORDER BY cins.step_number
+                        """,
+                        (int(craftable_item_id),),
+                    )
+                    item_buttons = [int(r[0]) for r in (cur.fetchall() or []) if int(r[0]) > 0]
+                    if item_buttons:
+                        _diag_info(
+                            "Direct DB item path hit server={0} prof={1} item={2} buttons={3} default_material_option_id={4}".format(
+                                str(server or ""), str(prof), str(target), list(item_buttons), int(material_option_id or 0)
+                            )
+                        )
+                        break
+                except Exception as ex:
+                    _diag_info(
+                        "Direct DB item path query failed server={0} prof={1} item={2} err={3}".format(
+                            str(server or ""), str(prof), str(target), str(ex)
+                        )
+                    )
+                    continue
+            if int(material_option_id or 0) > 0:
+                try:
+                    cur = conn.execute(
+                        """
+                        SELECT mons.gump_button_id
+                        FROM material_option_navigation_steps mons
+                        WHERE mons.material_option_id=?
+                        ORDER BY mons.step_number
+                        """,
+                        (int(material_option_id),),
+                    )
+                    material_buttons = [int(r[0]) for r in (cur.fetchall() or []) if int(r[0]) > 0]
+                    if material_buttons:
+                        _diag_info(
+                            "Direct DB material path hit server={0} material_option_id={1} buttons={2}".format(
+                                str(server or ""), int(material_option_id), list(material_buttons)
+                            )
+                        )
+                except Exception as ex:
+                    _diag_info(
+                        "Direct DB material path query failed server={0} material_option_id={1} err={2}".format(
+                            str(server or ""), int(material_option_id), str(ex)
+                        )
+                    )
+            return item_buttons, material_buttons
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+    except Exception:
+        return [], []
+
+
 def _resolve_tinker_recipe_paths(item_name):
+    """Resolve tinker recipe paths for the AutoMiner workflow.
+
+    Args:
+        item_name: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
+    global TINKER_CRAFT_PATHS_BY_SERVER
     server = _active_recipe_server_name()
-    node = TINKER_CRAFT_PATHS_BY_SERVER.get(server, {}) if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
-    items = node.get("items", {}) if isinstance(node, dict) else {}
-    item_buttons = list(items.get(_normalize_recipe_name(item_name), []) if isinstance(items, dict) else [])
-    material_buttons = list(node.get("material_buttons", []) if isinstance(node, dict) else [])
-    if not material_buttons and server == "UOAlive":
-        material_buttons = [7, 6]
+    target = _normalize_recipe_name(item_name)
+
+    def _server_node(paths, wanted):
+        """Server node for the AutoMiner workflow.
+
+        Args:
+            paths: Input value used by this helper.
+            wanted: Input value used by this helper.
+
+        Returns:
+            object: Result value produced for the caller.
+
+        Side Effects:
+            No side effects beyond local calculations.
+        """
+        if not isinstance(paths, dict):
+            return {}
+        node = paths.get(wanted, {})
+        if isinstance(node, dict):
+            return node
+        w = _normalize_recipe_name(wanted)
+        for k, v in paths.items():
+            if _normalize_recipe_name(k) == w and isinstance(v, dict):
+                return v
+        return {}
+
+    item_buttons = []
+    material_buttons = []
+    for _attempt in range(2):
+        paths = TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
+        node = _server_node(paths, server)
+        items = node.get("items", {}) if isinstance(node, dict) else {}
+        item_buttons = list(items.get(target, []) if isinstance(items, dict) else [])
+        material_buttons = list(node.get("material_buttons", []) if isinstance(node, dict) else [])
+        if item_buttons:
+            break
+        if _attempt == 0:
+            _prime_tinker_craft_path_cache(True)
+    if (not item_buttons) or (not material_buttons):
+        direct_item, direct_mat = _db_direct_tinker_paths(server, item_name)
+        if direct_item:
+            item_buttons = list(direct_item)
+            if direct_mat:
+                material_buttons = list(direct_mat)
+            try:
+                node = TINKER_CRAFT_PATHS_BY_SERVER.get(server, {}) if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
+                if not isinstance(node, dict):
+                    node = {}
+                items = node.get("items", {}) if isinstance(node.get("items", {}), dict) else {}
+                items[target] = list(item_buttons)
+                node["items"] = items
+                if direct_mat:
+                    node["material_buttons"] = list(direct_mat)
+                if not isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict):
+                    TINKER_CRAFT_PATHS_BY_SERVER = {}
+                TINKER_CRAFT_PATHS_BY_SERVER[server] = node
+            except Exception:
+                pass
     return item_buttons, material_buttons
 
 # Tinker gump + button ids.
 TINKER_GUMP_ID_OSI = 0x1CC  # Tinker gump id (OSI).
 TINKER_GUMP_ID_UOALIVE = 0xD466EA9C  # Tinker gump id (UOAlive).
-TINKER_IRON_MATERIAL_BUTTONS_UOALIVE = [7, 6]  # Ingot -> Iron (UOAlive).
-
-
+TINKER_GUMP_ANCHORS = [
+    "TINKERING MENU",
+    "TINKERING",
+    "TINKER",
+]
 # Select the next smeltable ore stack from backpack contents.
 def _find_ore_in_backpack():
     # Find the next smeltable ore in the backpack, honoring special min-stack rules.
     # Special case: only smelt 0x19B7 when stack is 2+ (check recursively).
+    """Find ore in backpack for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     items = API.ItemsInContainer(API.Backpack, True)
     if items:
         for item in items:
@@ -656,6 +1545,17 @@ def _find_ore_in_backpack():
 
 def _count_ingots_in_backpack():
     # Count hue-0 ingots in the backpack.
+    """Count ingots in backpack for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     total = 0
     items = API.ItemsInContainer(API.Backpack, True) or []
     for item in items:
@@ -665,85 +1565,326 @@ def _count_ingots_in_backpack():
 
 def _count_shovels_in_backpack():
     # Count shovels in the backpack.
+    """Count shovels in backpack for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     items = API.ItemsInContainer(API.Backpack, True) or []
     return sum(1 for i in items if i.Graphic in SHOVEL_GRAPHICS)
 
 def _count_tinker_tools_in_backpack():
     # Count tinker's tools in the backpack.
+    """Count tinker tools in backpack for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     items = API.ItemsInContainer(API.Backpack, True) or []
     return sum(1 for i in items if i.Graphic in TINKER_TOOL_GRAPHICS)
 
 def _find_tinker_tool():
     # Find the first tinker's tool in the backpack.
+    """Find tinker tool for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     for graphic in TINKER_TOOL_GRAPHICS:
         tool = API.FindType(graphic, API.Backpack)
         if tool:
             return tool
     return None
 
+def _gump_matches_anchors(gump_id, anchors):
+    """Gump matches anchors for the AutoMiner workflow.
+
+    Args:
+        gump_id: Input value used by this helper.
+        anchors: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
+    gid = int(gump_id or 0)
+    if gid <= 0:
+        return False
+    try:
+        txt = API.GetGumpContents(gid) or ""
+    except Exception:
+        txt = ""
+    if not txt:
+        return False
+    lower = str(txt).lower()
+    for a in (anchors or []):
+        if str(a or "").lower() in lower:
+            return True
+    return False
+
+
+def _find_tinker_gump_by_anchors():
+    """Find tinker gump by anchors for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
+    ids = _gump_ids_snapshot() or []
+    seen = set()
+    for gid in ids:
+        try:
+            g = int(gid)
+        except Exception:
+            continue
+        if g <= 0 or g in seen:
+            continue
+        seen.add(g)
+        if _gump_matches_anchors(g, TINKER_GUMP_ANCHORS):
+            return g
+    return 0
+
+
+def _wait_for_tinker_gump(timeout_s=3.0, preferred_id=0):
+    """Wait for tinker gump for the AutoMiner workflow.
+
+    Args:
+        timeout_s: Input value used by this helper.
+        preferred_id: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
+    elapsed = 0.0
+    step = 0.1
+    pid = int(preferred_id or 0)
+    while elapsed < float(timeout_s):
+        if pid > 0:
+            try:
+                if API.WaitForGump(int(pid), 0.1) and _gump_matches_anchors(int(pid), TINKER_GUMP_ANCHORS):
+                    return int(pid)
+            except Exception:
+                pass
+        gid = _find_tinker_gump_by_anchors()
+        if int(gid or 0) > 0:
+            return int(gid)
+        API.ProcessCallbacks()
+        _sleep(step)
+        elapsed += step
+    return 0
+
+
+def _open_tinker_menu(preferred_id):
+    """Open tinker menu for the AutoMiner workflow.
+
+    Args:
+        preferred_id: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
+    tool = _find_tinker_tool()
+    if not tool:
+        return 0
+    bp_ser = int(API.Backpack or 0)
+    for _ in range(3):
+        live_tool = None
+        try:
+            live_tool = API.FindItem(int(getattr(tool, "Serial", 0) or 0))
+        except Exception:
+            live_tool = None
+        if not live_tool:
+            live_tool = _find_tinker_tool()
+        if not live_tool:
+            return 0
+        try:
+            c1 = int(getattr(live_tool, "Container", 0) or 0)
+            c2 = int(getattr(live_tool, "ContainerSerial", 0) or 0)
+            if bp_ser > 0 and c1 != bp_ser and c2 != bp_ser:
+                API.MoveItem(int(getattr(live_tool, "Serial", 0) or 0), API.Backpack, 1)
+                _sleep(0.5)
+                live_tool = API.FindItem(int(getattr(live_tool, "Serial", 0) or 0))
+                if not live_tool:
+                    live_tool = _find_tinker_tool()
+        except Exception:
+            pass
+        try:
+            API.UseObject(int(getattr(live_tool, "Serial", 0) or 0))
+        except Exception:
+            _sleep(0.25)
+            continue
+        gid = _wait_for_tinker_gump(3.0, int(preferred_id or 0))
+        if int(gid or 0) > 0:
+            return int(gid)
+        _sleep(0.25)
+    return 0
+
+
 def _click_tinker_button_path(gump_id, buttons):
+    """Click tinker button path for the AutoMiner workflow.
+
+    Args:
+        gump_id: Input value used by this helper.
+        buttons: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     path = [int(x) for x in (buttons or []) if int(x) > 0]
     if not path:
-        return False
+        return 0
+    gid = int(gump_id or 0)
     for idx, button_id in enumerate(path):
-        API.ReplyGump(int(button_id), int(gump_id))
-        _sleep(0.35)
+        if not _gump_matches_anchors(int(gid), TINKER_GUMP_ANCHORS):
+            gid = _wait_for_tinker_gump(2.0, int(gid))
+        if int(gid or 0) <= 0:
+            return 0
+        API.ReplyGump(int(button_id), int(gid))
+        _sleep(0.28)
         if idx < (len(path) - 1):
-            if not API.WaitForGump(int(gump_id), 2):
-                return False
-    return True
+            gid = _wait_for_tinker_gump(2.0, int(gid))
+            if int(gid or 0) <= 0:
+                return 0
+    return int(gid)
 
 
 def _craft_with_tinker_path(gump_id, item_buttons, material_buttons=None):
     # Craft an item using a full gump button path (optional material selection first).
-    tool = _find_tinker_tool()
-    if not tool:
-        return False
-    API.UseObject(tool.Serial)
-    if not API.WaitForGump(int(gump_id), 3):
+    """Craft with tinker path for the AutoMiner workflow.
+
+    Args:
+        gump_id: Input value used by this helper.
+        item_buttons: Input value used by this helper.
+        material_buttons: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
+    active_gump_id = _open_tinker_menu(int(gump_id))
+    if int(active_gump_id or 0) <= 0:
         _diag_info("Tinker gump not found.")
         return False
     _sleep(0.5)
     if material_buttons:
-        if not _click_tinker_button_path(int(gump_id), material_buttons):
+        active_gump_id = _click_tinker_button_path(int(active_gump_id), material_buttons)
+        if int(active_gump_id or 0) <= 0:
             _diag_info("Tinker material selection failed.")
             return False
-        if not API.WaitForGump(int(gump_id), 2):
+        active_gump_id = _wait_for_tinker_gump(2.0, int(active_gump_id))
+        if int(active_gump_id or 0) <= 0:
             _diag_info("Tinker gump not found after material selection.")
             return False
         _sleep(0.25)
-    if not _click_tinker_button_path(int(gump_id), item_buttons):
+    active_gump_id = _click_tinker_button_path(int(active_gump_id), item_buttons)
+    if int(active_gump_id or 0) <= 0:
         _diag_info("Tinker craft path failed.")
         return False
     _sleep(0.5)
-    API.CloseGump(int(gump_id))
+    API.CloseGump(int(active_gump_id))
     API.CloseGump()
     return True
 
 def _craft_tinker_tool():
     # Craft a spare tinker's tool using shard-specific gump buttons.
+    """Craft tinker tool for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     gump_id = TINKER_GUMP_ID_UOALIVE if USE_UOALIVE_SHARD else TINKER_GUMP_ID_OSI
     item_buttons, material_buttons = _resolve_tinker_recipe_paths("tinker's tools")
     if not item_buttons:
         _diag_info("No DB craft path found for Tinker's tools.")
         return False
     if not material_buttons:
-        material_buttons = list(TINKER_IRON_MATERIAL_BUTTONS_UOALIVE)
+        _diag_info("No DB material path found for Tinker's tools.")
+        return False
     return _craft_with_tinker_path(gump_id, item_buttons, material_buttons)
 
 def _craft_shovel():
     # Craft a shovel using the shard-appropriate button flow.
+    """Craft shovel for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     gump_id = TINKER_GUMP_ID_UOALIVE if USE_UOALIVE_SHARD else TINKER_GUMP_ID_OSI
     item_buttons, material_buttons = _resolve_tinker_recipe_paths("shovel")
+    _diag_info(
+        "Shovel path lookup server={0} item_buttons={1} material_buttons={2}".format(
+            _active_recipe_server_name(), list(item_buttons or []), list(material_buttons or [])
+        )
+    )
     if not item_buttons:
         _diag_info("No DB craft path found for shovel.")
         return False
     if not material_buttons:
-        material_buttons = list(TINKER_IRON_MATERIAL_BUTTONS_UOALIVE)
+        _diag_info("No DB material path found for shovel.")
+        return False
     return _craft_with_tinker_path(gump_id, item_buttons, material_buttons)
 
 def _ensure_tooling_in_backpack():
     # Ensure required tools exist before mining.
+    """Ensure tooling in backpack for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if USE_TOOL_CRAFTING:
         tinker_count = _count_tinker_tools_in_backpack()
         if tinker_count == 0:
@@ -762,6 +1903,17 @@ def _ensure_tooling_in_backpack():
 
 def _ensure_shovels_from_drop_container():
     # Pull shovels from the drop container when auto tooling is disabled.
+    """Ensure shovels from drop container for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     count = _count_shovels_in_backpack()
     if count == 0:
         _diag_info("No shovels in backpack. Recalling home and pausing.")
@@ -786,6 +1938,17 @@ def _ensure_shovels_from_drop_container():
 
 def _find_drop_item():
     # Drop by smallest graphic, then by hue priority (iron -> hued), then by lowest hue value.
+    """Find drop item for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     items = API.ItemsInContainer(API.Backpack, True) or []
     if not items:
         return None
@@ -808,12 +1971,44 @@ def _find_drop_item():
 
 def _toggle_running():
     # Toggle the main run state and refresh the gump button text.
+    """Toggle running for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+        Interacts with the TazUO client through API calls.
+    """
     global RUNNING, NEEDS_TOOL_CHECK, NEEDS_INITIAL_RECALL
-    RUNNING = not RUNNING
-    state = "ON" if RUNNING else "OFF"
+
+    # We split start/stop handling so start can be blocked with clear feedback.
     if RUNNING:
-        _diag_info("Craftables.db primes crafting paths")
-        _prime_tinker_craft_path_cache(False)
+        RUNNING = False
+        NEEDS_TOOL_CHECK = False
+        NEEDS_INITIAL_RECALL = False
+        _diag_info("Mining: OFF")
+        _update_control_gump()
+        return
+
+    if not _can_start_mining():
+        RUNNING = False
+        NEEDS_TOOL_CHECK = False
+        NEEDS_INITIAL_RECALL = False
+        _update_control_gump()
+        return
+
+    RUNNING = True
+    state = "ON"
+    if RUNNING:
+        _clear_recipe_caches()
+        _reset_mine_cache()
+        _diag_info("Tile caches cleared for fresh run start")
+        _diag_info("Craftables.db caches cleared; forcing fresh craft-path prime")
+        _prime_tinker_craft_path_cache(True)
         API.Dismount()
         API.ToggleFly()
         NEEDS_TOOL_CHECK = True
@@ -824,12 +2019,34 @@ def _toggle_running():
 
 def _toggle_fire_beetle():
     # Toggle fire beetle smelting.
+    """Toggle fire beetle for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global USE_FIRE_BEETLE_SMELT
     USE_FIRE_BEETLE_SMELT = not USE_FIRE_BEETLE_SMELT
     _save_config()
 
 def _toggle_tool_crafting():
     # Toggle auto tool crafting.
+    """Toggle tool crafting for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global USE_TOOL_CRAFTING
     USE_TOOL_CRAFTING = not USE_TOOL_CRAFTING
     _save_config()
@@ -837,6 +2054,17 @@ def _toggle_tool_crafting():
 
 # Refresh home/mining runebook button ranges for current travel mode.
 def _refresh_recall_buttons():
+    """Refresh recall buttons for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global HOME_RECALL_BUTTON, MINING_RUNES
     if USE_SACRED_JOURNEY:
         HOME_RECALL_BUTTON = 75
@@ -848,6 +2076,17 @@ def _refresh_recall_buttons():
 
 # Switch travel mode to Sacred Journey button mapping.
 def _set_travel_chiv():
+    """Set travel chiv for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global USE_SACRED_JOURNEY
     USE_SACRED_JOURNEY = True
     _refresh_recall_buttons()
@@ -857,6 +2096,17 @@ def _set_travel_chiv():
 
 # Switch travel mode to Mage Recall button mapping.
 def _set_travel_mage():
+    """Set travel mage for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global USE_SACRED_JOURNEY
     USE_SACRED_JOURNEY = False
     _refresh_recall_buttons()
@@ -865,6 +2115,17 @@ def _set_travel_mage():
 
 def _unset_runebook():
     # Clear the runebook serial.
+    """Unset runebook for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global RUNBOOK_SERIAL
     RUNBOOK_SERIAL = 0
     _diag_info("Runebook unset.")
@@ -873,6 +2134,17 @@ def _unset_runebook():
 
 def _unset_secure_container():
     # Clear the drop container serial.
+    """Unset secure container for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global SECURE_CONTAINER_SERIAL
     SECURE_CONTAINER_SERIAL = 0
     _diag_info("Drop container unset.")
@@ -881,6 +2153,18 @@ def _unset_secure_container():
 
 def _set_runebook():
     # Target and set the runebook.
+    """Set runebook for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+        Interacts with the TazUO client through API calls.
+    """
     global RUNBOOK_SERIAL
     _diag_info("Target your runebook.")
     serial = API.RequestTarget()
@@ -892,6 +2176,18 @@ def _set_runebook():
 
 def _set_secure_container():
     # Target and set the drop container.
+    """Set secure container for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+        Interacts with the TazUO client through API calls.
+    """
     global SECURE_CONTAINER_SERIAL
     _diag_info("Target your secure container.")
     serial = API.RequestTarget()
@@ -904,6 +2200,17 @@ def _set_secure_container():
 
 # Human-readable shard mode for gump/status output.
 def _active_shard_mode_name():
+    """Active shard mode name for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if USE_UOALIVE_SHARD:
         return "UOAlive"
     return "OSI"
@@ -911,6 +2218,17 @@ def _active_shard_mode_name():
 
 def _get_active_mining_timings():
     # Return (tool_use_delay_s, failover_delay_s, journal_wait_s) for current shard.
+    """Get active mining timings for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if USE_UOALIVE_SHARD:
         return (UOALIVE_TOOL_USE_DELAY_S, UOALIVE_FAILOVER_DELAY_S, MINING_JOURNAL_WAIT_S)
     return (OSI_TOOL_USE_DELAY_S, OSI_FAILOVER_DELAY_S, OSI_JOURNAL_WAIT_S)
@@ -918,6 +2236,17 @@ def _get_active_mining_timings():
 
 def _set_shard_osi():
     # Use OSI mining timings.
+    """Set shard osi for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global USE_UOALIVE_SHARD
     USE_UOALIVE_SHARD = False
     _diag_info("Shard set to OSI.")
@@ -926,6 +2255,17 @@ def _set_shard_osi():
 
 def _set_shard_uoalive():
     # Use UOAlive mining timings.
+    """Set shard uoalive for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global USE_UOALIVE_SHARD
     USE_UOALIVE_SHARD = True
     _diag_info("Shard set to UOAlive.")
@@ -934,6 +2274,17 @@ def _set_shard_uoalive():
 
 
 def _set_shard_from_dropdown(selected_index):
+    """Set shard from dropdown for the AutoMiner workflow.
+
+    Args:
+        selected_index: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global USE_UOALIVE_SHARD
     idx = int(selected_index)
     if idx < 0 or idx >= len(SHARD_OPTIONS):
@@ -948,6 +2299,17 @@ def _set_shard_from_dropdown(selected_index):
 
 def _set_debug_on():
     # Enable debug system messages.
+    """Set debug on for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global DEBUG_TARGETING
     DEBUG_TARGETING = True
     _diag_info("Debug messages enabled.")
@@ -956,6 +2318,17 @@ def _set_debug_on():
 
 def _set_debug_off():
     # Disable debug system messages.
+    """Set debug off for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global DEBUG_TARGETING
     DEBUG_TARGETING = False
     _diag_info("Debug messages disabled.")
@@ -964,12 +2337,34 @@ def _set_debug_off():
 
 def _update_control_gump():
     # Refresh the gump button label to reflect current run state.
+    """Update control gump for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if not CONTROL_BUTTON:
         return
     CONTROL_BUTTON.Text = "Pause" if RUNNING else "Start"
 
 def _stop_running_with_message():
     # Stop the run loop without closing the gump.
+    """Stop running with message for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global RUNNING, NEEDS_TOOL_CHECK, NEEDS_INITIAL_RECALL
     RUNNING = False
     NEEDS_TOOL_CHECK = False
@@ -978,6 +2373,17 @@ def _stop_running_with_message():
 
 def _rebuild_control_gump():
     # Rebuild the gump to reflect updated settings.
+    """Rebuild control gump for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global CONTROL_GUMP, CONTROL_BUTTON, CONTROL_CONTROLS
     if CONTROL_GUMP:
         CONTROL_GUMP.Dispose()
@@ -988,12 +2394,34 @@ def _rebuild_control_gump():
 
 def _pause_if_needed():
     # Block execution while paused, still processing gump callbacks.
+    """Pause if needed for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     while not RUNNING:
         API.ProcessCallbacks()
         API.Pause(0.1)
 
 def _sleep(seconds):
     # Pause in small steps so the pause button is responsive.
+    """Sleep for the AutoMiner workflow.
+
+    Args:
+        seconds: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     elapsed = 0.0
     step = 0.1
     while elapsed < seconds:
@@ -1004,6 +2432,17 @@ def _sleep(seconds):
 
 def _wait_for_target(seconds):
     # Wait for a target cursor while respecting pause state.
+    """Wait for target for the AutoMiner workflow.
+
+    Args:
+        seconds: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     elapsed = 0.0
     step = 0.1
     while elapsed < seconds:
@@ -1017,6 +2456,17 @@ def _wait_for_target(seconds):
 
 # Append a message to the rolling in-memory log buffer and refresh log UI.
 def _append_log(msg):
+    """Append log for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global LOG_TEXT, LOG_LINES
     LOG_TEXT = (LOG_TEXT + msg + "\n")[-DEBUG_LOG_MAX_CHARS:]
     LOG_LINES = LOG_TEXT.splitlines() or ["(log empty)"]
@@ -1026,6 +2476,17 @@ def _append_log(msg):
 
 # Resolve the default on-disk debug log location.
 def _debug_log_path():
+    """Debug log path for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     try:
         base = os.path.dirname(__file__)
     except Exception:
@@ -1038,6 +2499,17 @@ def _debug_log_path():
 
 # Write one timestamped debug line to disk (best-effort).
 def _write_debug_log(line):
+    """Write debug log for the AutoMiner workflow.
+
+    Args:
+        line: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if not DEBUG_LOG_ENABLED or not DEBUG_TARGETING:
         return
     try:
@@ -1055,6 +2527,18 @@ def _write_debug_log(line):
 
 # Emit a diagnostic message to sysmsg + in-memory log + optional file log.
 def _diag_msg(msg, hue=DIAG_HUE):
+    """Diag msg for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+        hue: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     API.SysMsg(msg, hue)
     _append_log(msg)
     _write_debug_log(msg)
@@ -1062,6 +2546,20 @@ def _diag_msg(msg, hue=DIAG_HUE):
 
 # Standardized phase-tagged diagnostic wrapper.
 def _diag_emit(msg, phase="RUN", hue=None, debug_only=False):
+    """Diag emit for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+        phase: Input value used by this helper.
+        hue: Input value used by this helper.
+        debug_only: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if debug_only and not DEBUG_TARGETING:
         return
     p = str(phase or "RUN").upper()
@@ -1071,26 +2569,97 @@ def _diag_emit(msg, phase="RUN", hue=None, debug_only=False):
 
 
 def _diag_info(msg, phase="RUN"):
+    """Diag info for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+        phase: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _diag_emit(msg, phase=phase)
 
 
 def _diag_warn(msg, phase="RUN"):
+    """Diag warn for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+        phase: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _diag_emit(msg, phase=phase, hue=53)
 
 
 def _diag_error(msg, phase="RUN"):
+    """Diag error for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+        phase: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _diag_emit(msg, phase=phase, hue=33)
 
 
 def _diag_debug(msg, phase="TARGET", hue=None):
+    """Diag debug for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+        phase: Input value used by this helper.
+        hue: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _diag_emit(msg, phase=phase, hue=hue, debug_only=True)
 
 
 def _diag_target_event(msg):
+    """Diag target event for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _diag_debug(msg, phase="TARGET")
 
 
 def _diag_target_journal_hits(journal_texts):
+    """Diag target journal hits for the AutoMiner workflow.
+
+    Args:
+        journal_texts: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if not DEBUG_TARGETING:
         return
     for text in JOURNAL_LOG_TEXTS:
@@ -1099,19 +2668,63 @@ def _diag_target_journal_hits(journal_texts):
 
 
 def _debug(msg):
+    """Debug for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _diag_debug(msg, phase="TARGET", hue=HEADMSG_HUE)
 
 
 def _debug_cache(msg):
+    """Debug cache for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _diag_debug(msg, phase="CACHE", hue=DEBUG_CACHE_HUE)
 
 
 def _debug_failover(msg):
+    """Debug failover for the AutoMiner workflow.
+
+    Args:
+        msg: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _diag_debug(msg, phase="FAILOVER", hue=DEBUG_FAILOVER_HUE)
 
 
 # Callback-friendly wait that does not pause on RUNNING state.
 def _diag_wait(seconds):
+    """Diag wait for the AutoMiner workflow.
+
+    Args:
+        seconds: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     elapsed = 0.0
     step = 0.1
     while elapsed < seconds:
@@ -1122,6 +2735,18 @@ def _diag_wait(seconds):
 
 # Chebyshev-style tile distance helper for container diagnostics.
 def _tile_distance_to_xy(x, y):
+    """Tile distance to xy for the AutoMiner workflow.
+
+    Args:
+        x: Input value used by this helper.
+        y: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if x is None or y is None:
         return 999
     try:
@@ -1134,6 +2759,17 @@ def _tile_distance_to_xy(x, y):
 
 # Snapshot active gump ids across varying object/int representations.
 def _gump_ids_snapshot():
+    """Gump ids snapshot for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     out = set()
     try:
         all_gumps = API.GetAllGumps() or []
@@ -1157,6 +2793,17 @@ def _gump_ids_snapshot():
 
 # Return structured details for a container/item serial used by diagnostics.
 def _container_debug_info(serial):
+    """Container debug info for the AutoMiner workflow.
+
+    Args:
+        serial: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     sid = int(serial or 0)
     if sid <= 0:
         return {"ok": False, "reason": "serial_zero"}
@@ -1188,6 +2835,17 @@ def _container_debug_info(serial):
 
 # Return item counts (shallow, recursive) for a container serial.
 def _container_item_counts(container_serial):
+    """Container item counts for the AutoMiner workflow.
+
+    Args:
+        container_serial: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     sid = int(container_serial or 0)
     if sid <= 0:
         return 0, 0
@@ -1204,6 +2862,18 @@ def _container_item_counts(container_serial):
 
 # Probe a container via UseObject/context menu and log what the client reports.
 def _run_container_diag_for(container_serial, label):
+    """Run container diag for for the AutoMiner workflow.
+
+    Args:
+        container_serial: Input value used by this helper.
+        label: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     sid = int(container_serial or 0)
     diag_name = str(label or "ContainerDiag")
     _diag_msg(f"{diag_name}: starting.")
@@ -1251,6 +2921,17 @@ def _run_container_diag_for(container_serial, label):
 
 # Execute a broad diagnostics sweep across config, tools, travel, target cache, and container state.
 def _run_all_diagnostics():
+    """Run all diagnostics for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     _diag_info("Starting all-phase diagnostics.", phase="RUN")
     try:
         px = int(getattr(API.Player, "X", 0) or 0)
@@ -1315,6 +2996,17 @@ def _run_all_diagnostics():
 
 # Pull recent journal text entries into a simple list of strings.
 def _get_recent_journal_texts(seconds):
+    """Get recent journal texts for the AutoMiner workflow.
+
+    Args:
+        seconds: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     try:
         entries = API.GetJournalEntries(seconds) or []
     except Exception:
@@ -1329,6 +3021,18 @@ def _get_recent_journal_texts(seconds):
 
 # Substring match helper for journal text arrays.
 def _journal_contains(texts, needle):
+    """Journal contains for the AutoMiner workflow.
+
+    Args:
+        texts: Input value used by this helper.
+        needle: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     for text in texts:
         if needle in text:
             return True
@@ -1337,6 +3041,18 @@ def _journal_contains(texts, needle):
 
 # Any-match helper across multiple needles and journal entries.
 def _journal_contains_any(texts, needles):
+    """Journal contains any for the AutoMiner workflow.
+
+    Args:
+        texts: Input value used by this helper.
+        needles: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     for text in texts:
         for needle in needles:
             if needle in text:
@@ -1346,6 +3062,17 @@ def _journal_contains_any(texts, needles):
 
 # Wait for mining-result journal output up to timeout.
 def _wait_for_mining_journal(timeout_s):
+    """Wait for mining journal for the AutoMiner workflow.
+
+    Args:
+        timeout_s: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     elapsed = 0.0
     step = 0.2
     while elapsed < timeout_s:
@@ -1361,6 +3088,17 @@ def _wait_for_mining_journal(timeout_s):
 
 # Resolve or create the default directory used for log exports.
 def _get_log_export_dir():
+    """Get log export dir for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global LOG_EXPORT_BASE
     if LOG_EXPORT_BASE:
         return LOG_EXPORT_BASE
@@ -1376,30 +3114,58 @@ def _get_log_export_dir():
 
 # Load persisted log export settings.
 def _load_log_config():
+    """Load persisted debug-log export settings.
+
+    Args:
+        None.
+
+    Returns:
+        None: Updates the module-level export directory when available.
+
+    Side Effects:
+        Reads persisted settings and updates `LOG_EXPORT_BASE`.
+    """
     global LOG_EXPORT_BASE
+
     raw = API.GetPersistentVar(LOG_DATA_KEY, "", API.PersistentVar.Char)
     if not raw:
         return
-    try:
-        try:
-            data = json.loads(raw)
-        except Exception:
-            data = ast.literal_eval(raw)
-        path = data.get("export_path", "")
-        if path:
-            LOG_EXPORT_BASE = path
-    except Exception:
-        pass
 
+    data = _parse_persisted_dict(raw, "AutoMiner log")
+    path = str(data.get("export_path", "")).strip()
+    if path:
+        LOG_EXPORT_BASE = path
 
 # Persist log export settings.
 def _save_log_config():
+    """Save log config for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     data = {"export_path": LOG_EXPORT_BASE or ""}
     API.SavePersistentVar(LOG_DATA_KEY, json.dumps(data), API.PersistentVar.Char)
 
 
 # Export the in-memory debug log buffer to a text file.
 def _export_log_to_file():
+    """Export log to file for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     export_dir = _get_log_export_dir()
     if LOG_PATH_TEXTBOX and LOG_PATH_TEXTBOX.Text.strip():
         export_dir = LOG_PATH_TEXTBOX.Text.strip()
@@ -1419,11 +3185,34 @@ def _export_log_to_file():
 
 # Open or refresh the debug log gump.
 def _open_log_gump():
+    """Open log gump for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _update_log_gump()
 
 
 # Build and show the floating debug log gump.
 def _update_log_gump():
+    """Update log gump for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+        Interacts with the TazUO client through API calls.
+    """
     global LOG_GUMP, LOG_PATH_TEXTBOX
     if LOG_GUMP:
         LOG_GUMP.Dispose()
@@ -1467,6 +3256,17 @@ def _update_log_gump():
 
 def _reset_mine_cache_if_moved():
     # Clear per-spot caches when the player moves.
+    """Reset mine cache if moved for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global LAST_PLAYER_POS, NO_ORE_TILE_CACHE, NON_MINEABLE_TILE_CACHE, TARGET_FAILOVER_CACHE, OSI_TIMEOUT_TILE_COUNTS
     pos = (int(API.Player.X), int(API.Player.Y), int(API.Player.Z))
     if LAST_PLAYER_POS is None:
@@ -1481,6 +3281,17 @@ def _reset_mine_cache_if_moved():
 
 def _reset_mine_cache():
     # Force-clear per-spot caches.
+    """Reset mine cache for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global LAST_PLAYER_POS, NO_ORE_TILE_CACHE, NON_MINEABLE_TILE_CACHE, TARGET_FAILOVER_CACHE, LAST_MINE_PASS_POS, MINE_CENTER, OSI_TIMEOUT_TILE_COUNTS
     NO_ORE_TILE_CACHE.clear()
     NON_MINEABLE_TILE_CACHE.clear()
@@ -1493,6 +3304,18 @@ def _reset_mine_cache():
 
 # Track control references so callbacks stay alive.
 def _add_gump_control(control, on_click=None):
+    """Add gump control for the AutoMiner workflow.
+
+    Args:
+        control: Input value used by this helper.
+        on_click: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     CONTROL_CONTROLS.append(control)
     if on_click:
         API.AddControlOnClick(control, on_click)
@@ -1500,6 +3323,21 @@ def _add_gump_control(control, on_click=None):
 
 # Add a standard label to the control gump.
 def _add_control_label(g, text, x, y, width=160):
+    """Add control label for the AutoMiner workflow.
+
+    Args:
+        g: Input value used by this helper.
+        text: Input value used by this helper.
+        x: Input value used by this helper.
+        y: Input value used by this helper.
+        width: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     label = API.CreateGumpTTFLabel(text, 12, "#FFFFFF", "alagard", "left", width)
     label.SetPos(x, y)
     g.Add(label)
@@ -1508,6 +3346,23 @@ def _add_control_label(g, text, x, y, width=160):
 
 # Add a clickable button to the control gump.
 def _add_control_button(g, text, x, y, w, h, on_click):
+    """Add control button for the AutoMiner workflow.
+
+    Args:
+        g: Input value used by this helper.
+        text: Input value used by this helper.
+        x: Input value used by this helper.
+        y: Input value used by this helper.
+        w: Input value used by this helper.
+        h: Input value used by this helper.
+        on_click: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     btn = API.CreateSimpleButton(text, w, h)
     btn.SetPos(x, y)
     g.Add(btn)
@@ -1517,6 +3372,22 @@ def _add_control_button(g, text, x, y, w, h, on_click):
 
 # Add a checkbox row entry to the control gump.
 def _add_control_checkbox(g, text, x, y, value, on_click):
+    """Add control checkbox for the AutoMiner workflow.
+
+    Args:
+        g: Input value used by this helper.
+        text: Input value used by this helper.
+        x: Input value used by this helper.
+        y: Input value used by this helper.
+        value: Input value used by this helper.
+        on_click: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     cb = API.CreateGumpCheckbox(text, 996, value)
     cb.SetPos(x, y)
     g.Add(cb)
@@ -1526,6 +3397,17 @@ def _add_control_checkbox(g, text, x, y, value, on_click):
 
 # Render shard mode row.
 def _add_shard_row(g):
+    """Add shard row for the AutoMiner workflow.
+
+    Args:
+        g: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     _add_control_label(g, "Shard Selection:", 21, 50)
     shard_idx = 1 if USE_UOALIVE_SHARD else 0
     shard_dd = API.CreateDropDown(145, list(SHARD_OPTIONS), shard_idx)
@@ -1537,12 +3419,34 @@ def _add_shard_row(g):
 
 # Render toggles row.
 def _add_option_rows(g):
+    """Add option rows for the AutoMiner workflow.
+
+    Args:
+        g: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _add_control_checkbox(g, "Use Fire Beetle", 20, 77, USE_FIRE_BEETLE_SMELT, _toggle_fire_beetle)
     _add_control_checkbox(g, "Auto Tooling", 20, 101, USE_TOOL_CRAFTING, _toggle_tool_crafting)
 
 
 # Render travel mode row.
 def _add_travel_row(g):
+    """Add travel row for the AutoMiner workflow.
+
+    Args:
+        g: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     travel_mode = "Chiv" if USE_SACRED_JOURNEY else "Mage"
     _add_control_label(g, f"Travel: {travel_mode}", 20, 130)
     _add_control_button(g, "Chiv", 190, 128, 50, 18, _set_travel_chiv)
@@ -1551,6 +3455,17 @@ def _add_travel_row(g):
 
 # Render runebook set/unset row.
 def _add_runebook_row(g):
+    """Add runebook row for the AutoMiner workflow.
+
+    Args:
+        g: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     runebook_status = "Set" if RUNBOOK_SERIAL else "Unset"
     _add_control_label(g, f"Runebook: {runebook_status}", 20, 154)
     _add_control_button(g, "Set", 190, 152, 50, 18, _set_runebook)
@@ -1559,6 +3474,17 @@ def _add_runebook_row(g):
 
 # Render drop container set/unset row.
 def _add_drop_container_row(g):
+    """Add drop container row for the AutoMiner workflow.
+
+    Args:
+        g: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     secure_status = "Set" if SECURE_CONTAINER_SERIAL else "Unset"
     _add_control_label(g, f"Drop Container: {secure_status}", 20, 180)
     _add_control_button(g, "Set", 190, 178, 50, 18, _set_secure_container)
@@ -1567,6 +3493,17 @@ def _add_drop_container_row(g):
 
 # Render debug toggle row.
 def _add_debug_row(g):
+    """Add debug row for the AutoMiner workflow.
+
+    Args:
+        g: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     debug_status = "On" if DEBUG_TARGETING else "Off"
     _add_control_label(g, f"Debug: {debug_status}", 20, 204)
     _add_control_button(g, "On", 190, 202, 50, 18, _set_debug_on)
@@ -1575,11 +3512,34 @@ def _add_debug_row(g):
 
 # Render centered start/pause action row.
 def _add_action_row(g):
+    """Add action row for the AutoMiner workflow.
+
+    Args:
+        g: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     return _add_control_button(g, "Start", 110, 226, 100, 20, _toggle_running)
 
 
 def _create_control_gump():
     # Build the in-game gump for enabling/disabling the script.
+    """Create control gump for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+        Interacts with the TazUO client through API calls.
+    """
     global CONTROL_GUMP, CONTROL_BUTTON, CONTROL_CONTROLS
     if CONTROL_GUMP:
         return
@@ -1612,6 +3572,17 @@ def _create_control_gump():
 
 def _next_drop_offset():
     # Get next offset for round-robin drops.
+    """Next drop offset for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global DROP_OFFSET_INDEX
     if not DROP_OFFSETS:
         return (0, 1)
@@ -1621,6 +3592,17 @@ def _next_drop_offset():
 
 def _drop_ore_until_weight(target_weight):
     # Drop ore by priority until under the target weight.
+    """Drop ore until weight for the AutoMiner workflow.
+
+    Args:
+        target_weight: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     _diag_info("Dropping ore to reduce weight.")
     while API.Player.Weight > target_weight:
         _pause_if_needed()
@@ -1650,6 +3632,17 @@ def _drop_ore_until_weight(target_weight):
 
 # Determine whether weight/journal state indicates immediate overload handling.
 def _get_overweight_triggers():
+    """Get overweight triggers for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     overweight_trigger = API.Player.Weight >= (API.Player.WeightMax - 50) or API.InJournalAny(OVERWEIGHT_TEXTS, True)
     encumbered_trigger = API.InJournalAny(ENCUMBERED_TEXTS, True)
     return overweight_trigger, encumbered_trigger
@@ -1657,6 +3650,18 @@ def _get_overweight_triggers():
 
 # Attempt local mitigation before recalling (drop excess ore first).
 def _apply_local_weight_mitigation(overweight_trigger, encumbered_trigger):
+    """Apply local weight mitigation for the AutoMiner workflow.
+
+    Args:
+        overweight_trigger: Input value used by this helper.
+        encumbered_trigger: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if overweight_trigger:
         _diag_info("Overweight detected.")
         if API.Player.Weight > API.Player.WeightMax:
@@ -1669,6 +3674,17 @@ def _apply_local_weight_mitigation(overweight_trigger, encumbered_trigger):
 
 # Escalate to smelt and/or home recall if local mitigation was insufficient.
 def _escalate_weight_via_home_recall():
+    """Escalate weight via home recall for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if API.Player.Weight < (API.Player.WeightMax - 50):
         return
     if USE_FIRE_BEETLE_SMELT:
@@ -1684,6 +3700,17 @@ def _escalate_weight_via_home_recall():
 
 # Full overweight handler entry point.
 def _handle_overweight():
+    """Handle overweight for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     overweight_trigger, encumbered_trigger = _get_overweight_triggers()
     if not overweight_trigger and not encumbered_trigger:
         return False
@@ -1694,6 +3721,17 @@ def _handle_overweight():
 
 def _find_fire_beetle():
     # Find a nearby fire beetle to use as a portable smelter.
+    """Find fire beetle for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     mobs = API.GetAllMobiles(graphic=FIRE_BEETLE_GRAPHIC, distance=SMELTER_RANGE) or []
     if not mobs:
         return None
@@ -1702,6 +3740,17 @@ def _find_fire_beetle():
 
 # Resolve nearby smelting context (fire beetle only).
 def _discover_smelt_context():
+    """Discover smelt context for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if not USE_FIRE_BEETLE_SMELT:
         return None
     beetle = _find_fire_beetle()
@@ -1717,6 +3766,17 @@ def _discover_smelt_context():
 
 # Request a target cursor for ore use, with a type-based fallback.
 def _request_ore_target_cursor(ore):
+    """Request a target cursor after using an ore stack.
+
+    Args:
+        ore: Ore item instance being smelted.
+
+    Returns:
+        bool: `True` when a target cursor is available, else `False`.
+
+    Side Effects:
+        Uses items and waits for targeting state in the game client.
+    """
     API.ClearJournal()
     API.UseObject(ore.Serial)
     _sleep(0.2)
@@ -1733,6 +3793,17 @@ def _request_ore_target_cursor(ore):
 
 # Target the active fire beetle smelter.
 def _target_smelter(context):
+    """Target smelter for the AutoMiner workflow.
+
+    Args:
+        context: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     beetle = context.get("beetle") if context else None
     if not beetle:
         return False
@@ -1745,6 +3816,17 @@ def _target_smelter(context):
 
 # Use the fire beetle to request the opposite target-flow when needed.
 def _use_smelter(context):
+    """Use smelter for the AutoMiner workflow.
+
+    Args:
+        context: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     beetle = context.get("beetle") if context else None
     if not beetle:
         return False
@@ -1757,6 +3839,17 @@ def _use_smelter(context):
 
 # Handle the common ore-first targeting flow (ore -> smelter target).
 def _attempt_smelt_ore_to_smelter(context):
+    """Attempt smelt ore to smelter for the AutoMiner workflow.
+
+    Args:
+        context: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     for _ in range(3):
         if not _target_smelter(context):
             if DEBUG_SMELT:
@@ -1772,6 +3865,18 @@ def _attempt_smelt_ore_to_smelter(context):
 
 # Handle fallback smelter-first targeting flow (smelter -> ore target).
 def _attempt_smelt_smelter_to_ore(ore, context):
+    """Run alternate smelting flow: activate beetle, then target ore.
+
+    Args:
+        ore: Ore item to feed into the active smelter flow.
+        context: Smelting context dictionary containing fire beetle data.
+
+    Returns:
+        None: Smelting actions are sent directly to the client.
+
+    Side Effects:
+        Uses the smelter, handles target cursors, and emits diagnostic messages.
+    """
     if DEBUG_SMELT:
         _diag_info("Smelt: no target cursor received (ore -> beetle).")
     API.ClearJournal()
@@ -1792,6 +3897,18 @@ def _attempt_smelt_smelter_to_ore(ore, context):
 
 # Smelt one ore stack using whichever target flow is available.
 def _smelt_single_ore(ore, context):
+    """Smelt single ore for the AutoMiner workflow.
+
+    Args:
+        ore: Input value used by this helper.
+        context: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     got_target = _request_ore_target_cursor(ore)
     if got_target:
         _attempt_smelt_ore_to_smelter(context)
@@ -1801,6 +3918,17 @@ def _smelt_single_ore(ore, context):
 
 def _smelt_ore():
     # Smelt all eligible ore in the backpack using a nearby fire beetle.
+    """Smelt ore for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if not USE_FIRE_BEETLE_SMELT:
         return
     if DEBUG_SMELT:
@@ -1823,6 +3951,17 @@ def _smelt_ore():
 
 def _recall_home():
     # Recall to the home rune (button depends on travel mode).
+    """Recall home for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     if not RUNBOOK_SERIAL:
         _diag_info("No runebook set.")
         return False
@@ -1840,6 +3979,18 @@ def _recall_home():
 
 def _recall_to_button(button_id):
     # Recall using a specific runebook button id.
+    """Recall to button for the AutoMiner workflow.
+
+    Args:
+        button_id: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Updates module-level runtime state.
+        Interacts with the TazUO client through API calls.
+    """
     if not RUNBOOK_SERIAL:
         _diag_info("No runebook set.")
         return False
@@ -1862,6 +4013,17 @@ def _recall_to_button(button_id):
 
 def _recall_mining_spot():
     # Recall to the current mining rune.
+    """Recall mining spot for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if not MINING_RUNES:
         return False
     button_id = MINING_RUNES[CURRENT_MINING_INDEX]
@@ -1870,6 +4032,17 @@ def _recall_mining_spot():
 
 def _advance_mining_spot():
     # Advance to the next mining rune in the loop.
+    """Advance mining spot for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global CURRENT_MINING_INDEX
     if not MINING_RUNES:
         return
@@ -1877,6 +4050,17 @@ def _advance_mining_spot():
 
 def _recall_home_and_unload():
     # Recall home, unload, and restock.
+    """Recall home and unload for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     _diag_info("Recalling home to unload.")
     if _recall_home():
         _sleep(5.0)
@@ -1886,6 +4070,18 @@ def _recall_home_and_unload():
 
 def _move_item_to_container(item, container_serial):
     # Move an item to a container with retry/backoff.
+    """Move item to container for the AutoMiner workflow.
+
+    Args:
+        item: Input value used by this helper.
+        container_serial: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     for attempt in range(1, 4):
         API.ClearJournal()
         API.MoveItem(item.Serial, container_serial, int(item.Amount))
@@ -1897,6 +4093,17 @@ def _move_item_to_container(item, container_serial):
 
 def _drop_blackstone(item):
     # Move blackstone into the drop container.
+    """Drop blackstone for the AutoMiner workflow.
+
+    Args:
+        item: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     if SECURE_CONTAINER_SERIAL:
         _move_item_to_container(item, SECURE_CONTAINER_SERIAL)
         return
@@ -1905,6 +4112,19 @@ def _drop_blackstone(item):
 
 def _target_mine_tile(dx, dy, tile):
     # Target mineable tile relative to player using the tile graphic.
+    """Target mine tile for the AutoMiner workflow.
+
+    Args:
+        dx: Input value used by this helper.
+        dy: Input value used by this helper.
+        tile: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     use_land = int(tile.Graphic) < 0x4000
     for _ in range(5):
         if not API.HasTarget():
@@ -1927,6 +4147,22 @@ def _target_mine_tile(dx, dy, tile):
 
 def _prepare_tile_attempt(px, py, dx, dy, mine_tools, tool_use_delay_s=0.2):
     # Prepare one tile attempt: tool use, relative offsets, and tile metadata.
+    """Prepare tile attempt for the AutoMiner workflow.
+
+    Args:
+        px: Input value used by this helper.
+        py: Input value used by this helper.
+        dx: Input value used by this helper.
+        dy: Input value used by this helper.
+        mine_tools: Input value used by this helper.
+        tool_use_delay_s: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     tx = px + dx
     ty = py + dy
     _pause_if_needed()
@@ -1948,6 +4184,17 @@ def _prepare_tile_attempt(px, py, dx, dy, mine_tools, tool_use_delay_s=0.2):
 
 def _classify_mining_journal(journal_texts):
     # Parse journal output for mining outcomes.
+    """Classify mining journal for the AutoMiner workflow.
+
+    Args:
+        journal_texts: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     no_ore_hit = _journal_contains_any(journal_texts, NO_ORE_CACHE_TEXTS)
     cannot_see = _journal_contains(journal_texts, "Target cannot be seen.")
     dig_some = _journal_contains(journal_texts, "You dig some")
@@ -1958,6 +4205,19 @@ def _classify_mining_journal(journal_texts):
 
 def _execute_target_for_tile(tile_ctx, counters, failover_delay_s=0.2):
     # Execute targeting for one tile and apply timeout/failover cache effects.
+    """Target one tile and update timeout/failover caches.
+
+    Args:
+        tile_ctx: `TileAttempt` metadata for the tile being mined.
+        counters: `PassCounters` instance tracking this 3x3 mining pass.
+        failover_delay_s: Delay used after alternate target calls.
+
+    Returns:
+        TileTargetResult: Timeout/failover status for this tile attempt.
+
+    Side Effects:
+        Sends target calls, updates tile caches, and increments pass counters.
+    """
     tx = tile_ctx.tx
     ty = tile_ctx.ty
     relx = tile_ctx.relx
@@ -2015,6 +4275,17 @@ def _execute_target_for_tile(tile_ctx, counters, failover_delay_s=0.2):
 
 def _unload_ore_and_ingots():
     # Unload ores/ingots/gems/blackrock to the drop container.
+    """Unload ore and ingots for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     if not SECURE_CONTAINER_SERIAL:
         _diag_info("No drop container set.")
         return
@@ -2033,6 +4304,17 @@ def _unload_ore_and_ingots():
 
 def _restock_ingots_from_container(target_amount):
     # Restock hue-0 ingots from the drop container.
+    """Restock ingots from container for the AutoMiner workflow.
+
+    Args:
+        target_amount: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     if not SECURE_CONTAINER_SERIAL:
         return
     API.UseObject(SECURE_CONTAINER_SERIAL)
@@ -2065,6 +4347,17 @@ def _restock_ingots_from_container(target_amount):
 
 def _ensure_min_shovels_on_dropoff():
     # Ensure at least two shovels after dropoff.
+    """Ensure min shovels on dropoff for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if not SECURE_CONTAINER_SERIAL:
         return
     if not USE_TOOL_CRAFTING:
@@ -2105,6 +4398,17 @@ def _ensure_min_shovels_on_dropoff():
 
 # Run one 3x3 mining pass around the current center tile.
 def _mine_adjacent_tiles(mine_tools):
+    """Mine adjacent tiles for the AutoMiner workflow.
+
+    Args:
+        mine_tools: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     status, px, py = _init_mine_center_or_skip(mine_tools)
     if status != "ok":
         return status
@@ -2133,6 +4437,17 @@ def _mine_adjacent_tiles(mine_tools):
 
 # Initialize/validate mine center and early-exit states for this pass.
 def _init_mine_center_or_skip(mine_tools):
+    """Init mine center or skip for the AutoMiner workflow.
+
+    Args:
+        mine_tools: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global MINE_CENTER
     if not mine_tools:
         return "tool_worn", None, None
@@ -2152,6 +4467,18 @@ def _init_mine_center_or_skip(mine_tools):
 
 # Convert pass counters into final action state ("ok" or "no_ore").
 def _finalize_pass_result(counters, total_offsets):
+    """Finalize pass result for the AutoMiner workflow.
+
+    Args:
+        counters: Input value used by this helper.
+        total_offsets: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Updates module-level runtime state.
+    """
     global LAST_MINE_PASS_POS
     if counters.no_ore_count >= total_offsets:
         LAST_MINE_PASS_POS = MINE_CENTER
@@ -2173,11 +4500,42 @@ def _finalize_pass_result(counters, total_offsets):
 
 # Skip tiles already known as depleted/non-mineable at this spot.
 def _should_skip_tile(tx, ty):
+    """Should skip tile for the AutoMiner workflow.
+
+    Args:
+        tx: Input value used by this helper.
+        ty: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     return (tx, ty) in NO_ORE_TILE_CACHE or (tx, ty) in NON_MINEABLE_TILE_CACHE
 
 
 # Execute one tile attempt: prepare tool use, target tile, collect journal outcome.
 def _attempt_tile(px, py, dx, dy, mine_tools, counters, tool_use_delay_s=0.2, failover_delay_s=0.2, journal_wait_s=MINING_JOURNAL_WAIT_S):
+    """Attempt tile for the AutoMiner workflow.
+
+    Args:
+        px: Input value used by this helper.
+        py: Input value used by this helper.
+        dx: Input value used by this helper.
+        dy: Input value used by this helper.
+        mine_tools: Input value used by this helper.
+        counters: Input value used by this helper.
+        tool_use_delay_s: Input value used by this helper.
+        failover_delay_s: Input value used by this helper.
+        journal_wait_s: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     attempt = _prepare_tile_attempt(px, py, dx, dy, mine_tools, tool_use_delay_s)
     tx = attempt.tx
     ty = attempt.ty
@@ -2197,6 +4555,18 @@ def _attempt_tile(px, py, dx, dy, mine_tools, counters, tool_use_delay_s=0.2, fa
 
 # Handle target-timeout bookkeeping and failover queueing.
 def _handle_tile_timeout(attempt, target_result):
+    """Handle tile timeout for the AutoMiner workflow.
+
+    Args:
+        attempt: Input value used by this helper.
+        target_result: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if not target_result.target_timeout:
         return False
     tx = attempt.tx
@@ -2211,6 +4581,20 @@ def _handle_tile_timeout(attempt, target_result):
 
 # Apply primary journal classification results to caches and pass counters.
 def _apply_primary_journal_outcome(attempt, primary, target_result, counters):
+    """Apply primary journal outcome for the AutoMiner workflow.
+
+    Args:
+        attempt: Input value used by this helper.
+        primary: Input value used by this helper.
+        target_result: Input value used by this helper.
+        counters: Input value used by this helper.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     tx = attempt.tx
     ty = attempt.ty
     tile_is_mineable = attempt.tile_is_mineable
@@ -2247,6 +4631,23 @@ def _apply_primary_journal_outcome(attempt, primary, target_result, counters):
 
 # Core mining pass loop with shard-tuned timings.
 def _mine_pass_dynamic_timed(mine_tools, px, py, offsets, tool_use_delay_s, failover_delay_s, journal_wait_s):
+    """Mine pass dynamic timed for the AutoMiner workflow.
+
+    Args:
+        mine_tools: Input value used by this helper.
+        px: Input value used by this helper.
+        py: Input value used by this helper.
+        offsets: Input value used by this helper.
+        tool_use_delay_s: Input value used by this helper.
+        failover_delay_s: Input value used by this helper.
+        journal_wait_s: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     counters = PassCounters()
     for dx, dy in offsets:
         if _handle_overweight():
@@ -2270,6 +4671,17 @@ def _mine_pass_dynamic_timed(mine_tools, px, py, offsets, tool_use_delay_s, fail
 
 # Find the active mining tool (pickaxe preferred, then shovel variants).
 def _get_mine_tool():
+    """Get mine tool for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Interacts with the TazUO client through API calls.
+    """
     return (
         API.FindType(PICKAXE_GRAPHIC, API.Backpack)
         or API.FindType(SHOVEL_GRAPHICS[0], API.Backpack)
@@ -2279,6 +4691,17 @@ def _get_mine_tool():
 
 # Recovery path when journal indicates tool breakage.
 def _handle_tool_worn_path():
+    """Handle tool worn path for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     mine_tools = _get_mine_tool()
     if not mine_tools:
         if _recall_home_and_unload():
@@ -2295,6 +4718,17 @@ def _handle_tool_worn_path():
 
 # Recovery path when the current spot is considered depleted.
 def _handle_no_ore_path():
+    """Handle no ore path for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        No side effects beyond local calculations.
+    """
     if _recall_home_and_unload():
         _advance_mining_spot()
         _sleep(1.0)
@@ -2303,6 +4737,18 @@ def _handle_no_ore_path():
 
 # Single-loop mining tick: callbacks, checks, mining pass, and recovery handling.
 def _tick_mining_cycle(mine_tools):
+    """Tick mining cycle for the AutoMiner workflow.
+
+    Args:
+        mine_tools: Input value used by this helper.
+
+    Returns:
+        object: Result value produced for the caller.
+
+    Side Effects:
+        Updates module-level runtime state.
+        Interacts with the TazUO client through API calls.
+    """
     global NEEDS_TOOL_CHECK, NEEDS_INITIAL_RECALL
     API.ProcessCallbacks()
     _pause_if_needed()
@@ -2329,19 +4775,36 @@ def _tick_mining_cycle(mine_tools):
     return mine_tools
 
 
-_create_control_gump()
-_load_config()
-_load_log_config()
-_rebuild_control_gump()
+def main():
+    """Start the AutoMiner control gump and run the mining loop.
 
-MineTools = _get_mine_tool()
-if not MineTools:
-    _diag_info("You are out of mining equipment.")
-    _stop_running_with_message()
+    Args:
+        None.
 
-_diag_info("AutoMiner loaded. Press Start on the gump to begin.")
-_pause_if_needed()
-_diag_info("Mining started...")
+    Returns:
+        None: Runs until the script is stopped by the user or client.
 
-while True:
-    MineTools = _tick_mining_cycle(MineTools)
+    Side Effects:
+        Creates UI gumps, loads persisted settings, and sends game actions.
+    """
+    _reset_persisted_config_for_json_migration_once()
+    _create_control_gump()
+    _load_config()
+    _load_log_config()
+    _rebuild_control_gump()
+
+    mine_tools = _get_mine_tool()
+    if not mine_tools:
+        _diag_info("You are out of mining equipment.")
+        _stop_running_with_message()
+
+    _diag_info("AutoMiner loaded. Press Start on the gump to begin.")
+    _pause_if_needed()
+    _diag_info("Mining started...")
+
+    while True:
+        mine_tools = _tick_mining_cycle(mine_tools)
+
+
+if __name__ == "__main__":
+    main()
