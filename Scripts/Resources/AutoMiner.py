@@ -262,7 +262,6 @@ FIRE_BEETLE_GRAPHIC = 0x00A9  # Fire beetle graphic.
 DEBUG_SMELT = False  # Enable smelt debug output.
 DEBUG_TARGETING = True  # Enable mining target debug output.
 DEBUG_CACHE_HUE = 33  # Hue for cache debug messages.
-DEBUG_FAILOVER_HUE = 52  # Hue for failover debug messages.
 DIAG_HUE = 88  # Hue for container diagnostic messages.
 DIAG_PHASE_HUES = {
     "RUN": 88,
@@ -274,15 +273,12 @@ DIAG_PHASE_HUES = {
     "UNLOAD": 83,
     "TARGET": 1285,
     "CACHE": 33,
-    "FAILOVER": 52,
     "CONTAINER": 88,
 }
 MINING_JOURNAL_WAIT_S = 2.2  # Max wait for mining journal result per tile.
 TARGET_TIMEOUT_BACKOFF_S = 0.5  # Backoff when target cursor times out.
 UOALIVE_TOOL_USE_DELAY_S = 0.2  # UOAlive mode: delay after using tool.
-UOALIVE_FAILOVER_DELAY_S = 0.2  # UOAlive mode: delay in failover targeting branch.
 OSI_TOOL_USE_DELAY_S = 1.0  # OSI mode: delay after using tool.
-OSI_FAILOVER_DELAY_S = 1.0  # OSI mode: delay in failover targeting branch.
 OSI_JOURNAL_WAIT_S = 6.0  # OSI mode: journal wait timeout per tile.
 CONTAINER_DIAG_USE_ATTEMPTS = 3  # Number of UseObject probes in diagnostics.
 CONTAINER_DIAG_PAUSE_S = 1.0  # Delay between diagnostic probe steps.
@@ -311,7 +307,6 @@ SECURE_CONTAINER_SERIAL = 0  # Drop container serial.
 # Recall loop and cache state.
 NO_ORE_TILE_CACHE = set()  # Cached depleted tiles at current spot.
 NON_MINEABLE_TILE_CACHE = set()  # Cached non-mineable tiles at current spot.
-TARGET_FAILOVER_CACHE = set()  # Tiles that should use alternate targeting next pass.
 OSI_TIMEOUT_TILE_COUNTS = {}  # Per-spot timeout tracking (used by OSI and UOAlive).
 LAST_PLAYER_POS = None  # Last known player position.
 MINE_CENTER = None  # Anchor position for the current mining spot.
@@ -382,9 +377,8 @@ class TileAttempt:
         rely: Tile Y offset from the player's current position.
         tile: Tile object returned by `API.GetTile`, or `None`.
         tile_is_mineable: `True` when the tile graphic is in the mineable list.
-        tile_is_land: `True` when the tile is a land tile (< `0x4000` graphic).
     """
-    def __init__(self, tx, ty, relx, rely, tile, tile_is_mineable, tile_is_land):
+    def __init__(self, tx, ty, relx, rely, tile, tile_is_mineable):
         """Store tile-target context values for one mining attempt.
 
         Args:
@@ -394,7 +388,6 @@ class TileAttempt:
             rely: Relative target Y offset from player.
             tile: Tile object returned by `API.GetTile`.
             tile_is_mineable: Whether this tile is mineable for AutoMiner.
-            tile_is_land: Whether this tile should use land targeting logic.
 
         Returns:
             None: The constructor only stores values on the instance.
@@ -408,7 +401,6 @@ class TileAttempt:
         self.rely = rely
         self.tile = tile
         self.tile_is_mineable = tile_is_mineable
-        self.tile_is_land = tile_is_land
 
 
 # Lightweight result object for tile targeting status.
@@ -417,14 +409,14 @@ class TileTargetResult:
 
     Attributes:
         target_timeout: `True` when no target cursor appeared in time.
-        used_failover: `True` when alternate target mode was used.
+        method_used: Targeting method label used for this attempt.
     """
-    def __init__(self, target_timeout=False, used_failover=False):
+    def __init__(self, target_timeout=False, method_used="unknown"):
         """Normalize result flags to booleans.
 
         Args:
             target_timeout: Raw timeout flag from targeting logic.
-            used_failover: Raw failover flag from targeting logic.
+            method_used: Human-readable method label used for targeting.
 
         Returns:
             None: The constructor only stores normalized values.
@@ -433,7 +425,7 @@ class TileTargetResult:
             Updates instance attributes for pass-level decision logic.
         """
         self.target_timeout = bool(target_timeout)
-        self.used_failover = bool(used_failover)
+        self.method_used = str(method_used or "unknown")
 
 
 # Journal classification output for one mining attempt.
@@ -477,7 +469,7 @@ class PassCounters:
 
     Attributes:
         no_ore_count: Number of tiles classified as no-ore/depleted.
-        cannot_see_count: Number of tiles still blocked after failover.
+        cannot_see_count: Number of tiles that remain blocked by visibility.
         timeout_count: Number of target-cursor timeouts this pass.
         dig_success: `True` after any successful or valid mining response.
     """
@@ -533,7 +525,7 @@ def _parse_persisted_dict(raw_value, settings_name):
         settings_name: Friendly settings label used in diagnostic messages.
 
     Returns:
-        dict: Parsed settings dictionary when parsing succeeds.
+        dict: Structured parse result with `ok`, `data`, and `error`.
 
     Side Effects:
         Emits a diagnostic warning when parsing fails.
@@ -545,16 +537,28 @@ def _parse_persisted_dict(raw_value, settings_name):
             f"{settings_name} config parse failed (invalid JSON). Using defaults.",
             phase="CONFIG",
         )
-        return {}
+        return {
+            "ok": False,
+            "data": {},
+            "error": "invalid_json",
+        }
 
     if isinstance(parsed, dict):
-        return parsed
+        return {
+            "ok": True,
+            "data": parsed,
+            "error": "",
+        }
 
     _diag_warn(
         f"{settings_name} config was not a dictionary. Using defaults.",
         phase="CONFIG",
     )
-    return {}
+    return {
+        "ok": False,
+        "data": {},
+        "error": "not_dictionary",
+    }
 
 
 # Load persisted settings into runtime globals.
@@ -578,9 +582,16 @@ def _load_config():
     data = _default_config()
 
     if raw:
-        loaded = _parse_persisted_dict(raw, "AutoMiner")
-        if loaded:
-            data.update(loaded)
+        parse_result = _parse_persisted_dict(raw, "AutoMiner")
+        if parse_result.get("ok", False):
+            data.update(parse_result.get("data", {}))
+        else:
+            _diag_warn(
+                "AutoMiner config defaults applied reason={0}".format(
+                    str(parse_result.get("error", "unknown"))
+                ),
+                phase="CONFIG",
+            )
 
     RUNBOOK_SERIAL = int(data.get("runebook_serial", 0) or 0)
     SECURE_CONTAINER_SERIAL = int(data.get("drop_container_serial", 0) or 0)
@@ -649,6 +660,9 @@ def _save_config():
 RECIPE_STORE = None
 TINKER_CRAFT_PATHS_BY_SERVER = {}
 _script_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
+_project_root_dir = _script_dir
+while _project_root_dir and os.path.basename(_project_root_dir).lower() in ("resources", "utilities", "skills", "scripts"):
+    _project_root_dir = os.path.dirname(_project_root_dir)
 _util_dir = ""
 _util_candidates = []
 if _script_dir:
@@ -677,7 +691,8 @@ if _util_dir and _util_dir not in sys.path:
 try:
     import RecipeStore as RECIPE_STORE
     try:
-        RECIPE_STORE.set_base_dir(_util_dir)
+        # RecipeStore should resolve paths from the LegionScripts project root.
+        RECIPE_STORE.set_base_dir(_project_root_dir or _util_dir)
     except Exception:
         pass
 except Exception:
@@ -731,52 +746,33 @@ def _is_tinker_profession_name(text):
 
 
 def _recipe_db_path():
-    # Resolve the craftables DB path using the same root logic as viewer/editor utilities.
+    # Resolve craftables DB path from RecipeStore only (single source of truth).
     """Recipe db path for the AutoMiner workflow.
 
     Args:
         None.
 
     Returns:
-        object: Result value produced for the caller.
+        str: Absolute path to `craftables.db`, or empty string when unavailable.
 
     Side Effects:
-        No side effects beyond local calculations.
+        Emits diagnostics when the configured path is unavailable.
     """
-    cands = []
+    if not (RECIPE_STORE and hasattr(RECIPE_STORE, "_db_path")):
+        _diag_error("Recipe DB path unavailable: RecipeStore._db_path is not available.", phase="TOOL")
+        return ""
     try:
-        if RECIPE_STORE and hasattr(RECIPE_STORE, "_db_path"):
-            cands.append(str(RECIPE_STORE._db_path() or ""))
-    except Exception:
-        pass
-    def _project_root(path_value):
-        """Return likely LegionScripts project root for a local path value."""
-        root = str(path_value or "").strip()
-        # Climb out of common script subfolders used by the script runner.
-        while root and os.path.basename(root).lower() in ("resources", "utilities", "skills", "scripts"):
-            root = os.path.dirname(root)
-        return root
-
-    try:
-        uroot = _project_root(_util_dir)
-    except Exception:
-        uroot = _util_dir
-    try:
-        sroot = _project_root(_script_dir)
-    except Exception:
-        sroot = _script_dir
-    try:
-        croot = _project_root(os.getcwd())
-    except Exception:
-        croot = ""
-    for root in (uroot, sroot, croot):
-        if root:
-            cands.append(os.path.join(root, "Databases", "craftables.db"))
-    for cand in cands:
-        p = str(cand or "").strip()
-        if p and os.path.isfile(p):
-            return p
-    return ""
+        p = str(RECIPE_STORE._db_path() or "").strip()
+    except Exception as ex:
+        _diag_error("Recipe DB path lookup failed: {0}".format(str(ex)), phase="TOOL")
+        return ""
+    if not p:
+        _diag_error("Recipe DB path lookup returned an empty value.", phase="TOOL")
+        return ""
+    if not os.path.isfile(p):
+        _diag_error("Recipe DB path does not exist: {0}".format(str(p)), phase="TOOL")
+        return ""
+    return p
 
 
 def _connect_recipe_db_ro():
@@ -841,11 +837,17 @@ def _prime_tinker_craft_path_cache(force=False):
     """
     global TINKER_CRAFT_PATHS_BY_SERVER
     _ = bool(force)  # Parameter kept for call-site compatibility.
+    has_existing_cache = isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) and bool(TINKER_CRAFT_PATHS_BY_SERVER)
 
     try:
         db_path = _recipe_db_path()
         if not db_path:
-            _diag_info("Recipe DB not found in expected paths; craft path cache unchanged.")
+            _diag_error(
+                "Recipe DB path resolution failed; cache prime skipped using_existing_cache={0}".format(
+                    str(has_existing_cache)
+                ),
+                phase="TOOL",
+            )
             return TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
         _diag_info("Recipe DB path: {0}".format(str(db_path)))
 
@@ -950,113 +952,17 @@ def _prime_tinker_craft_path_cache(force=False):
 
         TINKER_CRAFT_PATHS_BY_SERVER = out if isinstance(out, dict) else {}
         return TINKER_CRAFT_PATHS_BY_SERVER
-    except Exception:
-        # Never let DB/cache issues break startup or gump callbacks.
+    except Exception as ex:
+        # Keep runtime stable, but emit explicit diagnostics instead of silent fallback behavior.
+        _diag_error(
+            "Recipe cache prime failed err={0} using_existing_cache={1}".format(
+                str(ex), str(has_existing_cache)
+            ),
+            phase="TOOL",
+        )
         if not isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict):
             TINKER_CRAFT_PATHS_BY_SERVER = {}
         return TINKER_CRAFT_PATHS_BY_SERVER
-
-
-def _db_direct_tinker_paths(server, item_name):
-    # Resolve tinker item/material button paths directly from canonical craftables schema.
-    """Db direct tinker paths for the AutoMiner workflow.
-
-    Args:
-        server: Input value used by this helper.
-        item_name: Input value used by this helper.
-
-    Returns:
-        object: Result value produced for the caller.
-
-    Side Effects:
-        No side effects beyond local calculations.
-    """
-    try:
-        conn = None
-        try:
-            conn, _ = _connect_recipe_db_ro()
-            target = _normalize_recipe_name(item_name)
-            item_buttons = []
-            material_buttons = []
-            material_option_id = 0
-            for prof in ("Tinker", "Tinkering"):
-                try:
-                    cur = conn.execute(
-                        """
-                        SELECT ci.craftable_item_id, ci.default_material_option_id
-                        FROM craftable_items ci
-                        JOIN crafting_contexts cc ON cc.context_id = ci.context_id
-                        JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
-                        JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
-                        WHERE gs.server_name=?
-                          AND cp.profession_name=?
-                          AND (lower(ci.item_key_slug)=? OR lower(ci.item_display_name)=?)
-                        ORDER BY ci.craftable_item_id
-                        LIMIT 1
-                        """,
-                        (str(server or ""), str(prof), str(target), str(target)),
-                    )
-                    item_row = cur.fetchone()
-                    craftable_item_id = int(item_row[0] or 0) if item_row else 0
-                    material_option_id = int(item_row[1] or 0) if item_row else 0
-                    if craftable_item_id <= 0:
-                        continue
-                    cur = conn.execute(
-                        """
-                        SELECT cins.gump_button_id
-                        FROM craftable_item_navigation_steps cins
-                        WHERE cins.craftable_item_id=?
-                        ORDER BY cins.step_number
-                        """,
-                        (int(craftable_item_id),),
-                    )
-                    item_buttons = [int(r[0]) for r in (cur.fetchall() or []) if int(r[0]) > 0]
-                    if item_buttons:
-                        _diag_info(
-                            "Direct DB item path hit server={0} prof={1} item={2} buttons={3} default_material_option_id={4}".format(
-                                str(server or ""), str(prof), str(target), list(item_buttons), int(material_option_id or 0)
-                            )
-                        )
-                        break
-                except Exception as ex:
-                    _diag_info(
-                        "Direct DB item path query failed server={0} prof={1} item={2} err={3}".format(
-                            str(server or ""), str(prof), str(target), str(ex)
-                        )
-                    )
-                    continue
-            if int(material_option_id or 0) > 0:
-                try:
-                    cur = conn.execute(
-                        """
-                        SELECT mons.gump_button_id
-                        FROM material_option_navigation_steps mons
-                        WHERE mons.material_option_id=?
-                        ORDER BY mons.step_number
-                        """,
-                        (int(material_option_id),),
-                    )
-                    material_buttons = [int(r[0]) for r in (cur.fetchall() or []) if int(r[0]) > 0]
-                    if material_buttons:
-                        _diag_info(
-                            "Direct DB material path hit server={0} material_option_id={1} buttons={2}".format(
-                                str(server or ""), int(material_option_id), list(material_buttons)
-                            )
-                        )
-                except Exception as ex:
-                    _diag_info(
-                        "Direct DB material path query failed server={0} material_option_id={1} err={2}".format(
-                            str(server or ""), int(material_option_id), str(ex)
-                        )
-                    )
-            return item_buttons, material_buttons
-        finally:
-            try:
-                conn.close()
-            except Exception:
-                pass
-    except Exception:
-        return [], []
 
 
 def _resolve_tinker_recipe_paths(item_name):
@@ -1075,62 +981,58 @@ def _resolve_tinker_recipe_paths(item_name):
     server = _active_recipe_server_name()
     target = _normalize_recipe_name(item_name)
 
-    def _server_node(paths, wanted):
-        """Server node for the AutoMiner workflow.
+    # Keep recipe resolution single-path: read from the primed cache only.
+    # This avoids hidden fallback behavior that can make failures harder to debug.
+    if not isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) or not TINKER_CRAFT_PATHS_BY_SERVER:
+        _diag_info("Recipe cache empty; priming from craftables DB.", phase="TOOL")
+        _prime_tinker_craft_path_cache(True)
 
-        Args:
-            paths: Input value used by this helper.
-            wanted: Input value used by this helper.
+    paths = TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
+    node = paths.get(server, {})
+    if not isinstance(node, dict):
+        _diag_error(
+            "Recipe cache missing server node server={0}. Expected keys: {1}".format(
+                str(server), list(paths.keys()) if isinstance(paths, dict) else []
+            ),
+            phase="TOOL",
+        )
+        _diag_error(
+            "Recipe path resolve failed item='{0}' reason=missing_server_node".format(str(target)),
+            phase="TOOL",
+        )
+        return [], []
 
-        Returns:
-            object: Result value produced for the caller.
+    items = node.get("items", {})
+    if not isinstance(items, dict):
+        _diag_error("Recipe cache malformed: items map is not a dictionary.", phase="TOOL")
+        _diag_error(
+            "Recipe path resolve failed item='{0}' reason=malformed_items_map".format(str(target)),
+            phase="TOOL",
+        )
+        return [], []
 
-        Side Effects:
-            No side effects beyond local calculations.
-        """
-        if not isinstance(paths, dict):
-            return {}
-        node = paths.get(wanted, {})
-        if isinstance(node, dict):
-            return node
-        w = _normalize_recipe_name(wanted)
-        for k, v in paths.items():
-            if _normalize_recipe_name(k) == w and isinstance(v, dict):
-                return v
-        return {}
-
-    item_buttons = []
-    material_buttons = []
-    for _attempt in range(2):
-        paths = TINKER_CRAFT_PATHS_BY_SERVER if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
-        node = _server_node(paths, server)
-        items = node.get("items", {}) if isinstance(node, dict) else {}
-        item_buttons = list(items.get(target, []) if isinstance(items, dict) else [])
-        material_buttons = list(node.get("material_buttons", []) if isinstance(node, dict) else [])
-        if item_buttons:
-            break
-        if _attempt == 0:
-            _prime_tinker_craft_path_cache(True)
-    if (not item_buttons) or (not material_buttons):
-        direct_item, direct_mat = _db_direct_tinker_paths(server, item_name)
-        if direct_item:
-            item_buttons = list(direct_item)
-            if direct_mat:
-                material_buttons = list(direct_mat)
-            try:
-                node = TINKER_CRAFT_PATHS_BY_SERVER.get(server, {}) if isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict) else {}
-                if not isinstance(node, dict):
-                    node = {}
-                items = node.get("items", {}) if isinstance(node.get("items", {}), dict) else {}
-                items[target] = list(item_buttons)
-                node["items"] = items
-                if direct_mat:
-                    node["material_buttons"] = list(direct_mat)
-                if not isinstance(TINKER_CRAFT_PATHS_BY_SERVER, dict):
-                    TINKER_CRAFT_PATHS_BY_SERVER = {}
-                TINKER_CRAFT_PATHS_BY_SERVER[server] = node
-            except Exception:
-                pass
+    item_buttons = list(items.get(target, []))
+    material_buttons = list(node.get("material_buttons", []))
+    if not item_buttons:
+        _diag_error(
+            "Recipe path missing item buttons server={0} item='{1}'.".format(str(server), str(target)),
+            phase="TOOL",
+        )
+    if not material_buttons:
+        _diag_error(
+            "Recipe path missing material buttons server={0} item='{1}'.".format(str(server), str(target)),
+            phase="TOOL",
+        )
+    if not item_buttons or not material_buttons:
+        _diag_error(
+            "Recipe path resolve incomplete server={0} item='{1}' has_item_buttons={2} has_material_buttons={3}".format(
+                str(server),
+                str(target),
+                str(bool(item_buttons)),
+                str(bool(material_buttons)),
+            ),
+            phase="TOOL",
+        )
     return item_buttons, material_buttons
 
 # Tinker gump + button ids.
@@ -1845,7 +1747,7 @@ def _active_shard_mode_name():
 
 
 def _get_active_mining_timings():
-    # Return (tool_use_delay_s, failover_delay_s, journal_wait_s) for current shard.
+    # Return (tool_use_delay_s, journal_wait_s) for current shard.
     """Get active mining timings for the AutoMiner workflow.
 
     Args:
@@ -1858,8 +1760,8 @@ def _get_active_mining_timings():
         No side effects beyond local calculations.
     """
     if USE_UOALIVE_SHARD:
-        return (UOALIVE_TOOL_USE_DELAY_S, UOALIVE_FAILOVER_DELAY_S, MINING_JOURNAL_WAIT_S)
-    return (OSI_TOOL_USE_DELAY_S, OSI_FAILOVER_DELAY_S, OSI_JOURNAL_WAIT_S)
+        return (UOALIVE_TOOL_USE_DELAY_S, MINING_JOURNAL_WAIT_S)
+    return (OSI_TOOL_USE_DELAY_S, OSI_JOURNAL_WAIT_S)
 
 
 def _set_shard_osi():
@@ -2153,6 +2055,33 @@ def _write_debug_log(line):
         pass
 
 
+# Reset the debug log at startup so each script run has a clean file.
+def _reset_debug_log_for_new_session():
+    """Reset debug log for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Truncates `Logs/AutoMiner.debug.log` and writes a session header line.
+    """
+    if not DEBUG_LOG_ENABLED or not DEBUG_TARGETING:
+        return
+    try:
+        path = _debug_log_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        ts = time.strftime("%Y-%m-%d %H:%M:%S")
+        # Open in write mode to clear old loop history from previous runs.
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(f"[{ts}] [RUN] Debug log reset for new AutoMiner session.\n")
+    except Exception:
+        # Logging is best-effort and should never stop script startup.
+        pass
+
+
 # Emit a diagnostic message to sysmsg + in-memory log + optional file log.
 def _diag_msg(msg, hue=DIAG_HUE):
     """Diag msg for the AutoMiner workflow.
@@ -2356,6 +2285,30 @@ def _write_startup_trace(step_text):
         pass
 
 
+def _reset_startup_log_for_new_session():
+    """Reset startup log for the AutoMiner workflow.
+
+    Args:
+        None.
+
+    Returns:
+        None: Performs actions without returning a value.
+
+    Side Effects:
+        Truncates `Logs/AutoMiner.startup.log` and writes a session header line.
+    """
+    try:
+        path = _startup_error_log_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        ts = time.strftime("%Y-%m-%d %H:%M:%S")
+        # Clear old startup traces so the file does not grow forever.
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(f"[{ts}] STEP Startup log reset for new AutoMiner session.\n")
+    except Exception:
+        # Startup diagnostics should never create a second crash path.
+        pass
+
+
 def _diag_target_event(msg):
     """Diag target event for the AutoMiner workflow.
 
@@ -2420,21 +2373,6 @@ def _debug_cache(msg):
     _diag_debug(msg, phase="CACHE", hue=DEBUG_CACHE_HUE)
 
 
-def _debug_failover(msg):
-    """Debug failover for the AutoMiner workflow.
-
-    Args:
-        msg: Input value used by this helper.
-
-    Returns:
-        None: Performs actions without returning a value.
-
-    Side Effects:
-        No side effects beyond local calculations.
-    """
-    _diag_debug(msg, phase="FAILOVER", hue=DEBUG_FAILOVER_HUE)
-
-
 # Callback-friendly wait that does not pause on RUNNING state.
 def _diag_wait(seconds):
     """Diag wait for the AutoMiner workflow.
@@ -2465,19 +2403,21 @@ def _tile_distance_to_xy(x, y):
         y: Input value used by this helper.
 
     Returns:
-        object: Result value produced for the caller.
+        int | None: Tile distance, or `None` when coordinates cannot be resolved.
 
     Side Effects:
         No side effects beyond local calculations.
     """
     if x is None or y is None:
-        return 999
+        _diag_warn("Container probe: target coordinates are missing.", phase="CONTAINER")
+        return None
     try:
         px = int(getattr(API.Player, "X", 0) or 0)
         py = int(getattr(API.Player, "Y", 0) or 0)
         return max(abs(px - int(x)), abs(py - int(y)))
-    except Exception:
-        return 999
+    except Exception as ex:
+        _diag_error(f"Container probe: failed to read player position: {ex}", phase="CONTAINER")
+        return None
 
 
 # Snapshot active gump ids across varying object/int representations.
@@ -2541,6 +2481,8 @@ def _container_debug_info(serial):
     y = int(getattr(item, "Y", 0) or 0)
     z = int(getattr(item, "Z", 0) or 0)
     dist = _tile_distance_to_xy(x, y)
+    if dist is None:
+        return {"ok": False, "reason": "distance_probe_failed", "serial": sid}
     is_container = bool(getattr(item, "IsContainer", True))
     holder = int(getattr(item, "Container", 0) or 0)
     return {
@@ -2564,23 +2506,35 @@ def _container_item_counts(container_serial):
         container_serial: Input value used by this helper.
 
     Returns:
-        object: Result value produced for the caller.
+        dict: Probe payload with `ok`, `shallow`, `recursive`, and optional `error`.
 
     Side Effects:
         Interacts with the TazUO client through API calls.
     """
     sid = int(container_serial or 0)
     if sid <= 0:
-        return 0, 0
+        return {
+            "ok": False,
+            "shallow": None,
+            "recursive": None,
+            "error": "serial_zero",
+        }
     try:
         shallow = len(API.ItemsInContainer(sid, False) or [])
-    except Exception:
-        shallow = -1
-    try:
         recursive = len(API.ItemsInContainer(sid, True) or [])
-    except Exception:
-        recursive = -1
-    return shallow, recursive
+        return {
+            "ok": True,
+            "shallow": int(shallow),
+            "recursive": int(recursive),
+            "error": "",
+        }
+    except Exception as ex:
+        return {
+            "ok": False,
+            "shallow": None,
+            "recursive": None,
+            "error": str(ex),
+        }
 
 
 # Probe a container via UseObject/context menu and log what the client reports.
@@ -2609,13 +2563,21 @@ def _run_container_diag_for(container_serial, label):
         return
     _diag_msg(
         f"{diag_name}: target 0x{sid:08X} name='{str(info.get('name', ''))}' "
-        f"dist={int(info.get('dist', 999))} is_container={bool(info.get('is_container', False))} "
+        f"dist={int(info.get('dist', 0))} is_container={bool(info.get('is_container', False))} "
         f"holder=0x{int(info.get('holder', 0)):08X}"
     )
     pre_gumps = _gump_ids_snapshot()
-    c0, c1 = _container_item_counts(sid)
+    pre_counts = _container_item_counts(sid)
     _diag_msg(f"{diag_name}: pre gumps={pre_gumps}")
-    _diag_msg(f"{diag_name}: pre counts shallow={c0} recursive={c1}")
+    if not pre_counts.get("ok", False):
+        _diag_msg(
+            f"{diag_name}: pre-count probe failed err={str(pre_counts.get('error', 'unknown'))}",
+            DEBUG_CACHE_HUE,
+        )
+    _diag_msg(
+        f"{diag_name}: pre counts shallow={str(pre_counts.get('shallow', 'n/a'))} "
+        f"recursive={str(pre_counts.get('recursive', 'n/a'))}"
+    )
 
     for i in range(1, int(CONTAINER_DIAG_USE_ATTEMPTS) + 1):
         try:
@@ -2625,9 +2587,17 @@ def _run_container_diag_for(container_serial, label):
             _diag_msg(f"{diag_name}: UseObject attempt {i} exception: {ex}", DEBUG_CACHE_HUE)
         _diag_wait(CONTAINER_DIAG_PAUSE_S)
         gumps = _gump_ids_snapshot()
-        d0, d1 = _container_item_counts(sid)
+        post_counts = _container_item_counts(sid)
         _diag_msg(f"{diag_name}: post UseObject {i} gumps={gumps}")
-        _diag_msg(f"{diag_name}: post UseObject {i} counts shallow={d0} recursive={d1}")
+        if not post_counts.get("ok", False):
+            _diag_msg(
+                f"{diag_name}: post-count probe failed err={str(post_counts.get('error', 'unknown'))}",
+                DEBUG_CACHE_HUE,
+            )
+        _diag_msg(
+            f"{diag_name}: post UseObject {i} counts shallow={str(post_counts.get('shallow', 'n/a'))} "
+            f"recursive={str(post_counts.get('recursive', 'n/a'))}"
+        )
 
     try:
         API.ContextMenu(sid, 0)
@@ -2636,9 +2606,17 @@ def _run_container_diag_for(container_serial, label):
         _diag_msg(f"{diag_name}: ContextMenu exception: {ex}", DEBUG_CACHE_HUE)
     _diag_wait(CONTAINER_DIAG_PAUSE_S)
     cg = _gump_ids_snapshot()
-    e0, e1 = _container_item_counts(sid)
+    end_counts = _container_item_counts(sid)
     _diag_msg(f"{diag_name}: post context gumps={cg}")
-    _diag_msg(f"{diag_name}: post context counts shallow={e0} recursive={e1}")
+    if not end_counts.get("ok", False):
+        _diag_msg(
+            f"{diag_name}: context-count probe failed err={str(end_counts.get('error', 'unknown'))}",
+            DEBUG_CACHE_HUE,
+        )
+    _diag_msg(
+        f"{diag_name}: post context counts shallow={str(end_counts.get('shallow', 'n/a'))} "
+        f"recursive={str(end_counts.get('recursive', 'n/a'))}"
+    )
     _diag_msg(f"{diag_name}: done.")
 
 
@@ -2704,15 +2682,24 @@ def _run_all_diagnostics():
     _diag_info(
         f"Target: center={MINE_CENTER} last_pass={LAST_MINE_PASS_POS} "
         f"cache(no_ore={len(NO_ORE_TILE_CACHE)}, non_mineable={len(NON_MINEABLE_TILE_CACHE)}, "
-        f"failover={len(TARGET_FAILOVER_CACHE)}, timeout={len(OSI_TIMEOUT_TILE_COUNTS)})",
+        f"timeout={len(OSI_TIMEOUT_TILE_COUNTS)})",
         phase="TARGET",
     )
 
     # Unload/container phase
     _run_container_diag_for(SECURE_CONTAINER_SERIAL, "DropContainerDiag")
     if int(SECURE_CONTAINER_SERIAL or 0) > 0:
-        c0, c1 = _container_item_counts(SECURE_CONTAINER_SERIAL)
-        _diag_info(f"Unload: drop container counts shallow={c0} recursive={c1}", phase="UNLOAD")
+        counts = _container_item_counts(SECURE_CONTAINER_SERIAL)
+        if not counts.get("ok", False):
+            _diag_warn(
+                f"Unload: drop container count probe failed err={str(counts.get('error', 'unknown'))}",
+                phase="UNLOAD",
+            )
+        _diag_info(
+            f"Unload: drop container counts shallow={str(counts.get('shallow', 'n/a'))} "
+            f"recursive={str(counts.get('recursive', 'n/a'))}",
+            phase="UNLOAD",
+        )
 
     _diag_info("All-phase diagnostics complete.", phase="RUN")
 
@@ -2725,21 +2712,29 @@ def _get_recent_journal_texts(seconds):
         seconds: Input value used by this helper.
 
     Returns:
-        object: Result value produced for the caller.
+        dict: Probe payload with `ok`, `texts`, and optional `error`.
 
     Side Effects:
         Interacts with the TazUO client through API calls.
     """
     try:
         entries = API.GetJournalEntries(seconds) or []
-    except Exception:
-        entries = []
+    except Exception as ex:
+        return {
+            "ok": False,
+            "texts": [],
+            "error": str(ex),
+        }
     texts = []
     for entry in entries:
         text = getattr(entry, "Text", "")
         if text:
             texts.append(text)
-    return texts
+    return {
+        "ok": True,
+        "texts": texts,
+        "error": "",
+    }
 
 
 # Substring match helper for journal text arrays.
@@ -2791,7 +2786,7 @@ def _wait_for_mining_journal(timeout_s):
         timeout_s: Input value used by this helper.
 
     Returns:
-        object: Result value produced for the caller.
+        dict: Probe payload with `ok`, `texts`, and terminal status metadata.
 
     Side Effects:
         Interacts with the TazUO client through API calls.
@@ -2803,10 +2798,25 @@ def _wait_for_mining_journal(timeout_s):
         API.ProcessCallbacks()
         API.Pause(step)
         elapsed += step
-        texts = _get_recent_journal_texts(timeout_s)
+        journal_probe = _get_recent_journal_texts(timeout_s)
+        if not journal_probe.get("ok", False):
+            journal_probe["result_text_seen"] = False
+            journal_probe["timed_out"] = False
+            return journal_probe
+        texts = journal_probe.get("texts", [])
         if texts and _journal_contains_any(texts, MINING_RESULT_TEXTS):
-            return texts
-    return _get_recent_journal_texts(timeout_s)
+            journal_probe["result_text_seen"] = True
+            journal_probe["timed_out"] = False
+            return journal_probe
+    final_probe = _get_recent_journal_texts(timeout_s)
+    if not final_probe.get("ok", False):
+        final_probe["result_text_seen"] = False
+        final_probe["timed_out"] = True
+        return final_probe
+    final_texts = final_probe.get("texts", [])
+    final_probe["result_text_seen"] = bool(final_texts and _journal_contains_any(final_texts, MINING_RESULT_TEXTS))
+    final_probe["timed_out"] = True
+    return final_probe
 
 
 # Resolve or create the default directory used for log exports.
@@ -2854,7 +2864,16 @@ def _load_log_config():
     if not raw:
         return
 
-    data = _parse_persisted_dict(raw, "AutoMiner log")
+    parse_result = _parse_persisted_dict(raw, "AutoMiner log")
+    if not parse_result.get("ok", False):
+        _diag_warn(
+            "AutoMiner log config defaults applied reason={0}".format(
+                str(parse_result.get("error", "unknown"))
+            ),
+            phase="CONFIG",
+        )
+        return
+    data = parse_result.get("data", {})
     path = str(data.get("export_path", "")).strip()
     if path:
         LOG_EXPORT_BASE = path
@@ -2895,6 +2914,7 @@ def _export_log_to_file():
         global LOG_EXPORT_BASE
         LOG_EXPORT_BASE = export_dir
         _save_log_config()
+    path = ""
     try:
         os.makedirs(export_dir, exist_ok=True)
         filename = "AutoMinerDebug.txt"
@@ -2902,8 +2922,11 @@ def _export_log_to_file():
         with open(path, "w", encoding="utf-8") as f:
             f.write(LOG_TEXT)
         _diag_info(f"Saved: {filename}")
-    except Exception:
-        _diag_info("Failed to export debug log.")
+    except Exception as ex:
+        _diag_error(
+            f"Failed to export debug log path='{path or export_dir}': {ex}",
+            phase="RUN",
+        )
 
 
 # Open or refresh the debug log gump.
@@ -2990,7 +3013,7 @@ def _reset_mine_cache_if_moved():
     Side Effects:
         Updates module-level runtime state.
     """
-    global LAST_PLAYER_POS, NO_ORE_TILE_CACHE, NON_MINEABLE_TILE_CACHE, TARGET_FAILOVER_CACHE, OSI_TIMEOUT_TILE_COUNTS
+    global LAST_PLAYER_POS, NO_ORE_TILE_CACHE, NON_MINEABLE_TILE_CACHE, OSI_TIMEOUT_TILE_COUNTS
     pos = (int(API.Player.X), int(API.Player.Y), int(API.Player.Z))
     if LAST_PLAYER_POS is None:
         LAST_PLAYER_POS = pos
@@ -2998,7 +3021,6 @@ def _reset_mine_cache_if_moved():
     if pos != LAST_PLAYER_POS:
         NO_ORE_TILE_CACHE.clear()
         NON_MINEABLE_TILE_CACHE.clear()
-        TARGET_FAILOVER_CACHE.clear()
         OSI_TIMEOUT_TILE_COUNTS.clear()
         LAST_PLAYER_POS = pos
 
@@ -3015,10 +3037,9 @@ def _reset_mine_cache():
     Side Effects:
         Updates module-level runtime state.
     """
-    global LAST_PLAYER_POS, NO_ORE_TILE_CACHE, NON_MINEABLE_TILE_CACHE, TARGET_FAILOVER_CACHE, LAST_MINE_PASS_POS, MINE_CENTER, OSI_TIMEOUT_TILE_COUNTS
+    global LAST_PLAYER_POS, NO_ORE_TILE_CACHE, NON_MINEABLE_TILE_CACHE, LAST_MINE_PASS_POS, MINE_CENTER, OSI_TIMEOUT_TILE_COUNTS
     NO_ORE_TILE_CACHE.clear()
     NON_MINEABLE_TILE_CACHE.clear()
-    TARGET_FAILOVER_CACHE.clear()
     OSI_TIMEOUT_TILE_COUNTS.clear()
     LAST_PLAYER_POS = (int(API.Player.X), int(API.Player.Y), int(API.Player.Z))
     LAST_MINE_PASS_POS = None
@@ -3329,27 +3350,52 @@ def _drop_ore_until_weight(target_weight):
     _diag_info("Dropping ore to reduce weight.")
     while API.Player.Weight > target_weight:
         _pause_if_needed()
+        item = _find_drop_item()
+        if not item:
+            _diag_warn("Weight mitigation: no ore stack available to drop.", phase="WEIGHT")
+            break
+
         dropped = False
-        for _ in range(len(DROP_PRIORITY)):
-            item = _find_drop_item()
-            if item:
-                for attempt in range(1, 4):
-                    API.ClearJournal()
-                    before_amt = int(item.Amount)
-                    dx, dy = _next_drop_offset()
-                    API.QueueMoveItemOffset(item.Serial, 1, dx, dy, 0)
-                    _sleep(1.0)
-                    refreshed = API.FindItem(item.Serial)
-                    if refreshed and int(refreshed.Amount) == before_amt:
-                        API.MoveItemOffset(item.Serial, 1, dx, dy, 0, True)
-                        _sleep(1.0)
-                    if API.InJournal("You must wait to perform another action", True):
-                        _sleep(1.2)
-                        continue
-                    break
+        item_serial = int(getattr(item, "Serial", 0) or 0)
+        item_graphic = int(getattr(item, "Graphic", 0) or 0)
+        for attempt in range(1, 4):
+            API.ClearJournal()
+            before_amt = int(getattr(item, "Amount", 0) or 0)
+            if before_amt <= 0:
+                _diag_warn("Weight mitigation: ore stack amount is zero before drop.", phase="WEIGHT")
+                break
+            dx, dy = _next_drop_offset()
+            API.QueueMoveItemOffset(item_serial, 1, dx, dy, 0)
+            _sleep(1.0)
+
+            if API.InJournal("You must wait to perform another action", True):
+                _diag_warn(
+                    "Weight mitigation: drop blocked by action throttle (attempt {0}).".format(attempt),
+                    phase="WEIGHT",
+                )
+                _sleep(1.2)
+                continue
+
+            refreshed = API.FindItem(item_serial)
+            after_amt = int(getattr(refreshed, "Amount", 0) or 0) if refreshed else 0
+            if after_amt < before_amt:
                 dropped = True
                 break
+
+            _diag_warn(
+                "Weight mitigation: queued drop did not move ore serial=0x{0:08X} graphic=0x{1:04X} attempt={2}.".format(
+                    item_serial, item_graphic, attempt
+                ),
+                phase="WEIGHT",
+            )
+
         if not dropped:
+            _diag_error(
+                "Weight mitigation failed for ore serial=0x{0:08X}. Local drop fallback disabled; will escalate recall path.".format(
+                    item_serial
+                ),
+                phase="WEIGHT",
+            )
             break
 
 
@@ -3487,9 +3533,9 @@ def _discover_smelt_context():
     }
 
 
-# Request a target cursor for ore use, with a type-based fallback.
+# Request a target cursor for ore use using the primary serial flow only.
 def _request_ore_target_cursor(ore):
-    """Request a target cursor after using an ore stack.
+    """Request a target cursor after using an ore stack by serial.
 
     Args:
         ore: Ore item instance being smelted.
@@ -3498,20 +3544,35 @@ def _request_ore_target_cursor(ore):
         bool: `True` when a target cursor is available, else `False`.
 
     Side Effects:
-        Uses items and waits for targeting state in the game client.
+        Uses an item, waits for targeting state, and emits diagnostics on failures.
     """
+    ore_serial = int(getattr(ore, "Serial", 0) or 0)
+    ore_graphic = int(getattr(ore, "Graphic", 0) or 0)
+    if ore_serial <= 0:
+        _diag_error("Smelt: ore serial is invalid; cannot request target cursor.", phase="SMELT")
+        return False
+
     API.ClearJournal()
-    API.UseObject(ore.Serial)
-    _sleep(0.2)
-    got_target = _wait_for_target(2)
-    if got_target:
-        return True
-    # Fallback: use by graphic from backpack in case serial use fails.
     try:
-        API.UseType(int(ore.Graphic), 1337, API.Backpack)
-    except Exception:
-        pass
-    return _wait_for_target(2)
+        API.UseObject(ore_serial)
+    except Exception as ex:
+        _diag_error(
+            "Smelt: failed to use ore serial=0x{0:08X} graphic=0x{1:04X}; err={2}".format(
+                ore_serial, ore_graphic, str(ex)
+            ),
+            phase="SMELT",
+        )
+        return False
+    _sleep(0.2)
+    if _wait_for_target(2):
+        return True
+    _diag_warn(
+        "Smelt: no target cursor after ore use serial=0x{0:08X} graphic=0x{1:04X}.".format(
+            ore_serial, ore_graphic
+        ),
+        phase="SMELT",
+    )
+    return False
 
 
 # Target the active fire beetle smelter.
@@ -3537,30 +3598,7 @@ def _target_smelter(context):
     return True
 
 
-# Use the fire beetle to request the opposite target-flow when needed.
-def _use_smelter(context):
-    """Use smelter for the AutoMiner workflow.
-
-    Args:
-        context: Input value used by this helper.
-
-    Returns:
-        object: Result value produced for the caller.
-
-    Side Effects:
-        Interacts with the TazUO client through API calls.
-    """
-    beetle = context.get("beetle") if context else None
-    if not beetle:
-        return False
-    serial = int(getattr(beetle, "Serial", 0) or 0)
-    if serial <= 0:
-        return False
-    API.UseObject(serial)
-    return True
-
-
-# Handle the common ore-first targeting flow (ore -> smelter target).
+# Handle the ore-first targeting flow (ore -> smelter target).
 def _attempt_smelt_ore_to_smelter(context):
     """Attempt smelt ore to smelter for the AutoMiner workflow.
 
@@ -3568,57 +3606,29 @@ def _attempt_smelt_ore_to_smelter(context):
         context: Input value used by this helper.
 
     Returns:
-        None: Performs actions without returning a value.
+        bool: `True` when the target flow completes, else `False`.
 
     Side Effects:
-        Interacts with the TazUO client through API calls.
+        Interacts with the TazUO client through API calls and emits diagnostics.
     """
     for _ in range(3):
         if not _target_smelter(context):
-            if DEBUG_SMELT:
-                _diag_info("Smelt: fire beetle target unavailable.")
-            break
+            _diag_error("Smelt: fire beetle target unavailable.", phase="SMELT")
+            return False
         _sleep(0.2)
         if not API.HasTarget():
             break
+    if API.HasTarget():
+        API.CancelTarget()
+        _diag_warn("Smelt: target cursor remained active after smelter targeting.", phase="SMELT")
+        return False
     _sleep(0.8)
     if DEBUG_SMELT and API.InJournalAny(SMELT_SUCCESS_TEXTS, True):
         _diag_info("Smelt: success message detected.")
+    return True
 
 
-# Handle fallback smelter-first targeting flow (smelter -> ore target).
-def _attempt_smelt_smelter_to_ore(ore, context):
-    """Run alternate smelting flow: activate beetle, then target ore.
-
-    Args:
-        ore: Ore item to feed into the active smelter flow.
-        context: Smelting context dictionary containing fire beetle data.
-
-    Returns:
-        None: Smelting actions are sent directly to the client.
-
-    Side Effects:
-        Uses the smelter, handles target cursors, and emits diagnostic messages.
-    """
-    if DEBUG_SMELT:
-        _diag_info("Smelt: no target cursor received (ore -> beetle).")
-    API.ClearJournal()
-    if not _use_smelter(context):
-        if DEBUG_SMELT:
-            _diag_info("Smelt: fire beetle use unavailable.")
-        return
-    _sleep(0.2)
-    if _wait_for_target(2):
-        for _ in range(3):
-            API.Target(ore.Serial)
-            _sleep(0.2)
-            if not API.HasTarget():
-                break
-    elif DEBUG_SMELT:
-        _diag_info("Smelt: no target cursor received (beetle -> ore).")
-
-
-# Smelt one ore stack using whichever target flow is available.
+# Smelt one ore stack using the primary ore-first target flow.
 def _smelt_single_ore(ore, context):
     """Smelt single ore for the AutoMiner workflow.
 
@@ -3627,16 +3637,22 @@ def _smelt_single_ore(ore, context):
         context: Input value used by this helper.
 
     Returns:
-        None: Performs actions without returning a value.
+        bool: `True` when smelting actions were sent, else `False`.
 
     Side Effects:
-        No side effects beyond local calculations.
+        Sends smelting actions and emits diagnostics on failures.
     """
-    got_target = _request_ore_target_cursor(ore)
-    if got_target:
-        _attempt_smelt_ore_to_smelter(context)
-    else:
-        _attempt_smelt_smelter_to_ore(ore, context)
+    ore_serial = int(getattr(ore, "Serial", 0) or 0)
+    ore_graphic = int(getattr(ore, "Graphic", 0) or 0)
+    if not _request_ore_target_cursor(ore):
+        _diag_error(
+            "Smelt: stopping ore stack serial=0x{0:08X} graphic=0x{1:04X}; alternate fallback flow is disabled.".format(
+                ore_serial, ore_graphic
+            ),
+            phase="SMELT",
+        )
+        return False
+    return _attempt_smelt_ore_to_smelter(context)
 
 
 def _smelt_ore():
@@ -3668,7 +3684,9 @@ def _smelt_ore():
             break
         if DEBUG_SMELT:
             _diag_info(f"Smelt ore: 0x{int(ore.Graphic):04X} serial {int(ore.Serial)}")
-        _smelt_single_ore(ore, context)
+        if not _smelt_single_ore(ore, context):
+            _diag_error("Smelt: stopping smelt pass due to target-flow failure.", phase="SMELT")
+            break
         # Smelt cooldown to reduce spam.
         _sleep(1.2)
 
@@ -3800,19 +3818,57 @@ def _move_item_to_container(item, container_serial):
         container_serial: Input value used by this helper.
 
     Returns:
-        None: Performs actions without returning a value.
+        bool: `True` when the move is confirmed, else `False`.
 
     Side Effects:
         Interacts with the TazUO client through API calls.
     """
+    item_serial = int(getattr(item, "Serial", 0) or 0)
+    item_graphic = int(getattr(item, "Graphic", 0) or 0)
+    move_amount = int(getattr(item, "Amount", 0) or 0)
+    target_serial = int(container_serial or 0)
+    if item_serial <= 0 or target_serial <= 0 or move_amount <= 0:
+        _diag_error(
+            "MoveToContainer: invalid move request serial=0x{0:08X} graphic=0x{1:04X} amount={2} target=0x{3:08X}".format(
+                item_serial, item_graphic, move_amount, target_serial
+            ),
+            phase="UNLOAD",
+        )
+        return False
+
+    # We verify by re-reading the item state after each move attempt.
+    # If the item moved containers or amount dropped, we treat it as success.
     for attempt in range(1, 4):
         API.ClearJournal()
-        API.MoveItem(item.Serial, container_serial, int(item.Amount))
+        API.MoveItem(item_serial, target_serial, move_amount)
         _sleep(1.0)
+        moved_item = API.FindItem(item_serial)
+        moved_item_container = int(getattr(moved_item, "Container", 0) or 0) if moved_item else 0
+        moved_item_amount = int(getattr(moved_item, "Amount", 0) or 0) if moved_item else 0
+        if moved_item is None or moved_item_container == target_serial or moved_item_amount < move_amount:
+            return True
         if API.InJournal("You must wait to perform another action", True):
+            _diag_warn(
+                "MoveToContainer: throttle on attempt {0} serial=0x{1:08X} target=0x{2:08X}".format(
+                    attempt, item_serial, target_serial
+                ),
+                phase="UNLOAD",
+            )
             _sleep(1.2)
             continue
-        return
+        _diag_warn(
+            "MoveToContainer: move unconfirmed on attempt {0} serial=0x{1:08X} graphic=0x{2:04X} amount={3} target=0x{4:08X}".format(
+                attempt, item_serial, item_graphic, move_amount, target_serial
+            ),
+            phase="UNLOAD",
+        )
+    _diag_error(
+        "MoveToContainer failed after retries serial=0x{0:08X} graphic=0x{1:04X} amount={2} target=0x{3:08X}".format(
+            item_serial, item_graphic, move_amount, target_serial
+        ),
+        phase="UNLOAD",
+    )
+    return False
 
 def _drop_blackstone(item):
     # Move blackstone into the drop container.
@@ -3822,16 +3878,24 @@ def _drop_blackstone(item):
         item: Input value used by this helper.
 
     Returns:
-        None: Performs actions without returning a value.
+        bool: `True` when the blackstone move was confirmed, else `False`.
 
     Side Effects:
-        Interacts with the TazUO client through API calls.
+        Interacts with the TazUO client through API calls and emits diagnostics.
     """
-    if SECURE_CONTAINER_SERIAL:
-        _move_item_to_container(item, SECURE_CONTAINER_SERIAL)
-        return
-    API.MoveItemOffset(item.Serial, int(item.Amount), 1, 0, 0, True)
-    _sleep(0.6)
+    if not SECURE_CONTAINER_SERIAL:
+        _diag_error(
+            "Unload: blackstone move blocked because drop container is not configured. Ground-drop fallback is disabled.",
+            phase="UNLOAD",
+        )
+        return False
+    if not _move_item_to_container(item, SECURE_CONTAINER_SERIAL):
+        _diag_error(
+            "Unload: blackstone move failed serial=0x{0:08X}.".format(int(getattr(item, "Serial", 0) or 0)),
+            phase="UNLOAD",
+        )
+        return False
+    return True
 
 def _target_mine_tile(dx, dy, tile):
     # Target mineable tile relative to player using the tile graphic.
@@ -3901,8 +3965,7 @@ def _prepare_tile_attempt(px, py, dx, dy, mine_tools, tool_use_delay_s=0.2):
     if tile:
         graphic = getattr(tile, "Graphic", None)
     tile_is_mineable = tile and graphic in MINEABLE_GRAPHICS
-    tile_is_land = tile and graphic is not None and int(graphic) < 0x4000
-    return TileAttempt(tx, ty, relx, rely, tile, tile_is_mineable, tile_is_land)
+    return TileAttempt(tx, ty, relx, rely, tile, tile_is_mineable)
 
 
 def _classify_mining_journal(journal_texts):
@@ -3926,17 +3989,16 @@ def _classify_mining_journal(journal_texts):
     return TileJournalResult(no_ore_hit, cannot_see, dig_some, fail_skill, cant_mine)
 
 
-def _execute_target_for_tile(tile_ctx, counters, failover_delay_s=0.2):
-    # Execute targeting for one tile and apply timeout/failover cache effects.
-    """Target one tile and update timeout/failover caches.
+def _execute_target_for_tile(tile_ctx, counters):
+    # Execute primary targeting for one tile and apply timeout/cache effects.
+    """Target one tile with the primary targeting method.
 
     Args:
         tile_ctx: `TileAttempt` metadata for the tile being mined.
         counters: `PassCounters` instance tracking this 3x3 mining pass.
-        failover_delay_s: Delay used after alternate target calls.
 
     Returns:
-        TileTargetResult: Timeout/failover status for this tile attempt.
+        TileTargetResult: Timeout and method status for this tile attempt.
 
     Side Effects:
         Sends target calls, updates tile caches, and increments pass counters.
@@ -3947,40 +4009,29 @@ def _execute_target_for_tile(tile_ctx, counters, failover_delay_s=0.2):
     rely = tile_ctx.rely
     tile = tile_ctx.tile
     tile_is_mineable = tile_ctx.tile_is_mineable
-    tile_is_land = tile_ctx.tile_is_land
 
-    used_failover = False
     target_timeout = False
+    method_used = "none"
 
     if not tile_is_mineable:
+        method_used = "skip_non_mineable"
         NON_MINEABLE_TILE_CACHE.add((tx, ty))
         if API.HasTarget():
             if DEBUG_TARGETING:
                 _debug("MineTarget: non-mineable tile; canceling target.")
             API.CancelTarget()
-        return TileTargetResult(target_timeout, used_failover)
+        return TileTargetResult(target_timeout, method_used)
 
     if _wait_for_target(5):
-        if (tx, ty) in TARGET_FAILOVER_CACHE:
-            if tile_is_land:
-                API.TargetLandRel(relx, rely)
-                method = "TargetLandRel"
-            else:
-                API.TargetTileRel(relx, rely, int(tile.Graphic))
-                method = "TargetTileRel"
-            _sleep(failover_delay_s)
-            if DEBUG_TARGETING:
-                _debug(f"MineTarget: method={method} failover tile.")
-            used_failover = True
-        else:
-            if not _target_mine_tile(relx, rely, tile):
-                _diag_info("Mining target failed; canceling cursor.")
-                API.CancelTarget()
-        if used_failover:
-            TARGET_FAILOVER_CACHE.discard((tx, ty))
-        return TileTargetResult(target_timeout, used_failover)
+        method_used = "TargetTileRel_primary"
+        if not _target_mine_tile(relx, rely, tile):
+            _diag_info("Mining target failed; canceling cursor.")
+            API.CancelTarget()
+            method_used = "TargetTileRel_primary_failed"
+        return TileTargetResult(target_timeout, method_used)
 
     target_timeout = True
+    method_used = "target_cursor_timeout"
     counters.timeout_count += 1
     if DEBUG_TARGETING:
         _debug("MineTarget: wait_for_target timed out.")
@@ -3988,12 +4039,11 @@ def _execute_target_for_tile(tile_ctx, counters, failover_delay_s=0.2):
     OSI_TIMEOUT_TILE_COUNTS[key] = OSI_TIMEOUT_TILE_COUNTS.get(key, 0) + 1
     if OSI_TIMEOUT_TILE_COUNTS[key] >= 2:
         NO_ORE_TILE_CACHE.add(key)
-        TARGET_FAILOVER_CACHE.discard(key)
         counters.no_ore_count += 1
         if DEBUG_TARGETING:
             _debug_cache(f"MineTarget: cached timeout tile ({tx},{ty}).")
     _sleep(TARGET_TIMEOUT_BACKOFF_S)
-    return TileTargetResult(target_timeout, used_failover)
+    return TileTargetResult(target_timeout, method_used)
 
 
 def _unload_ore_and_ingots():
@@ -4018,10 +4068,18 @@ def _unload_ore_and_ingots():
     for item in items:
         if item.Graphic in BLACKSTONE_GRAPHICS:
             _diag_info(f"Unload: moving blackstone 0x{int(item.Graphic):04X}.")
-            _drop_blackstone(item)
+            if not _drop_blackstone(item):
+                _diag_error("Unload: blackstone transfer failed.", phase="UNLOAD")
             continue
         if SECURE_CONTAINER_SERIAL and (item.Graphic in ORE_GRAPHICS or item.Graphic == ORE_GRAPHIC_MIN2 or item.Graphic in INGOT_GRAPHICS or item.Graphic in GEM_GRAPHICS):
-            _move_item_to_container(item, SECURE_CONTAINER_SERIAL)
+            if not _move_item_to_container(item, SECURE_CONTAINER_SERIAL):
+                _diag_error(
+                    "Unload: item transfer failed serial=0x{0:08X} graphic=0x{1:04X}".format(
+                        int(getattr(item, "Serial", 0) or 0),
+                        int(getattr(item, "Graphic", 0) or 0),
+                    ),
+                    phase="UNLOAD",
+                )
     _restock_ingots_from_container(22)
     _ensure_min_shovels_on_dropoff()
 
@@ -4146,14 +4204,13 @@ def _mine_adjacent_tiles(mine_tools):
         (1, -1),
         (1, 1),
     ]
-    tool_use_delay_s, failover_delay_s, journal_wait_s = _get_active_mining_timings()
+    tool_use_delay_s, journal_wait_s = _get_active_mining_timings()
     return _mine_pass_dynamic_timed(
         mine_tools,
         px,
         py,
         offsets,
         tool_use_delay_s,
-        failover_delay_s,
         journal_wait_s,
     )
 
@@ -4209,12 +4266,10 @@ def _finalize_pass_result(counters, total_offsets):
         _sleep(3)
         return "no_ore"
     if counters.cannot_see_count >= total_offsets:
-        TARGET_FAILOVER_CACHE.clear()
         _diag_info("Cannot see mining tiles... moving.")
         _sleep(3)
         return "no_ore"
     if (counters.timeout_count + counters.no_ore_count) >= total_offsets and counters.timeout_count > 0 and not counters.dig_success:
-        TARGET_FAILOVER_CACHE.clear()
         _diag_info("Mining target timed out... moving.")
         _sleep(3)
         return "no_ore"
@@ -4239,7 +4294,7 @@ def _should_skip_tile(tx, ty):
 
 
 # Execute one tile attempt: prepare tool use, target tile, collect journal outcome.
-def _attempt_tile(px, py, dx, dy, mine_tools, counters, tool_use_delay_s=0.2, failover_delay_s=0.2, journal_wait_s=MINING_JOURNAL_WAIT_S):
+def _attempt_tile(px, py, dx, dy, mine_tools, counters, tool_use_delay_s=0.2, journal_wait_s=MINING_JOURNAL_WAIT_S):
     """Attempt tile for the AutoMiner workflow.
 
     Args:
@@ -4250,7 +4305,6 @@ def _attempt_tile(px, py, dx, dy, mine_tools, counters, tool_use_delay_s=0.2, fa
         mine_tools: Input value used by this helper.
         counters: Input value used by this helper.
         tool_use_delay_s: Input value used by this helper.
-        failover_delay_s: Input value used by this helper.
         journal_wait_s: Input value used by this helper.
 
     Returns:
@@ -4270,13 +4324,54 @@ def _attempt_tile(px, py, dx, dy, mine_tools, counters, tool_use_delay_s=0.2, fa
         _debug(f"MineTarget: attempt target=({int(tx)},{int(ty)},{int(API.Player.Z)}) rel=({relx},{rely})")
     if tile and getattr(tile, "Graphic", None) is not None and DEBUG_TARGETING:
         _debug(f"System: MineTarget: tile graphic=0x{int(tile.Graphic):04X} in_list={tile_is_mineable}")
-    target_result = _execute_target_for_tile(attempt, counters, failover_delay_s)
-    journal_texts = _wait_for_mining_journal(journal_wait_s)
+    target_result = _execute_target_for_tile(attempt, counters)
+    journal_probe = _wait_for_mining_journal(journal_wait_s)
+    journal_ok = bool(journal_probe.get("ok", False))
+    journal_texts = list(journal_probe.get("texts", []))
+    journal_timed_out = bool(journal_probe.get("timed_out", False))
+    journal_result_text_seen = bool(journal_probe.get("result_text_seen", False))
+    if not journal_ok:
+        _diag_error(
+            "Mining journal probe failed for tile ({0},{1}) err={2}".format(
+                int(tx), int(ty), str(journal_probe.get("error", "unknown"))
+            ),
+            phase="TARGET",
+        )
+    elif journal_timed_out and not journal_result_text_seen:
+        _diag_warn(
+            "Mining journal timeout without result text for tile ({0},{1}) after {2:.1f}s.".format(
+                int(tx), int(ty), float(journal_wait_s)
+            ),
+            phase="TARGET",
+        )
+    elif DEBUG_TARGETING:
+        journal_result = _classify_mining_journal(journal_texts)
+        if journal_result.dig_some:
+            outcome = "dig_some"
+        elif journal_result.fail_skill:
+            outcome = "fail_skill"
+        elif journal_result.no_ore_hit:
+            outcome = "no_ore"
+        elif journal_result.cant_mine:
+            outcome = "cant_mine"
+        elif journal_result.cannot_see:
+            outcome = "cannot_see"
+        else:
+            outcome = "no_actionable_journal"
+        _diag_target_event(
+            "MineTargetOutcome: tile=({0},{1}) method={2} timeout={3} outcome={4}".format(
+                int(tx),
+                int(ty),
+                str(getattr(target_result, "method_used", "unknown")),
+                str(bool(getattr(target_result, "target_timeout", False))),
+                outcome,
+            )
+        )
     _diag_target_journal_hits(journal_texts)
-    return attempt, journal_texts, target_result
+    return attempt, journal_texts, target_result, journal_ok
 
 
-# Handle target-timeout bookkeeping and failover queueing.
+# Handle target-timeout bookkeeping without fallback queueing.
 def _handle_tile_timeout(attempt, target_result):
     """Handle tile timeout for the AutoMiner workflow.
 
@@ -4294,22 +4389,24 @@ def _handle_tile_timeout(attempt, target_result):
         return False
     tx = attempt.tx
     ty = attempt.ty
-    tile_is_mineable = attempt.tile_is_mineable
-    if tile_is_mineable and (tx, ty) not in NO_ORE_TILE_CACHE and (tx, ty) not in TARGET_FAILOVER_CACHE:
-        TARGET_FAILOVER_CACHE.add((tx, ty))
-        if DEBUG_TARGETING:
-            _debug_failover(f"MineTarget: queued failover for ({tx},{ty}).")
+    if DEBUG_TARGETING:
+        _diag_target_event(
+            "MineTargetTimeout: tile=({0},{1}) method={2} action=no_failover_queue".format(
+                int(tx),
+                int(ty),
+                str(getattr(target_result, "method_used", "unknown")),
+            )
+        )
     return True
 
 
 # Apply primary journal classification results to caches and pass counters.
-def _apply_primary_journal_outcome(attempt, primary, target_result, counters):
+def _apply_primary_journal_outcome(attempt, primary, counters):
     """Apply primary journal outcome for the AutoMiner workflow.
 
     Args:
         attempt: Input value used by this helper.
         primary: Input value used by this helper.
-        target_result: Input value used by this helper.
         counters: Input value used by this helper.
 
     Returns:
@@ -4320,13 +4417,6 @@ def _apply_primary_journal_outcome(attempt, primary, target_result, counters):
     """
     tx = attempt.tx
     ty = attempt.ty
-    tile_is_mineable = attempt.tile_is_mineable
-
-    if tile_is_mineable and not primary.no_ore_hit and not primary.any_msg:
-        TARGET_FAILOVER_CACHE.add((tx, ty))
-        if DEBUG_TARGETING:
-            _debug_failover(f"MineTarget: queued failover for ({tx},{ty}).")
-
     if primary.no_ore_hit or primary.cant_mine:
         counters.no_ore_count += 1
         NO_ORE_TILE_CACHE.add((tx, ty))
@@ -4341,11 +4431,7 @@ def _apply_primary_journal_outcome(attempt, primary, target_result, counters):
         # Failed skill check still counts as a successful response (ore may remain).
         counters.dig_success = True
     else:
-        if primary.cannot_see and not target_result.used_failover and (tx, ty) not in TARGET_FAILOVER_CACHE:
-            TARGET_FAILOVER_CACHE.add((tx, ty))
-            if DEBUG_TARGETING:
-                _debug_failover(f"MineTarget: queued cannot-see failover for ({tx},{ty}).")
-        if target_result.used_failover and primary.cannot_see and not primary.dig_some and not primary.no_ore_hit and not primary.fail_skill:
+        if primary.cannot_see and not primary.dig_some and not primary.no_ore_hit and not primary.fail_skill:
             NO_ORE_TILE_CACHE.add((tx, ty))
             counters.cannot_see_count += 1
             if DEBUG_TARGETING:
@@ -4353,7 +4439,7 @@ def _apply_primary_journal_outcome(attempt, primary, target_result, counters):
 
 
 # Core mining pass loop with shard-tuned timings.
-def _mine_pass_dynamic_timed(mine_tools, px, py, offsets, tool_use_delay_s, failover_delay_s, journal_wait_s):
+def _mine_pass_dynamic_timed(mine_tools, px, py, offsets, tool_use_delay_s, journal_wait_s):
     """Mine pass dynamic timed for the AutoMiner workflow.
 
     Args:
@@ -4362,7 +4448,6 @@ def _mine_pass_dynamic_timed(mine_tools, px, py, offsets, tool_use_delay_s, fail
         py: Input value used by this helper.
         offsets: Input value used by this helper.
         tool_use_delay_s: Input value used by this helper.
-        failover_delay_s: Input value used by this helper.
         journal_wait_s: Input value used by this helper.
 
     Returns:
@@ -4380,15 +4465,17 @@ def _mine_pass_dynamic_timed(mine_tools, px, py, offsets, tool_use_delay_s, fail
         if _should_skip_tile(tx, ty):
             counters.no_ore_count += 1
             continue
-        attempt, journal_texts, target_result = _attempt_tile(
-            px, py, dx, dy, mine_tools, counters, tool_use_delay_s, failover_delay_s, journal_wait_s
+        attempt, journal_texts, target_result, journal_ok = _attempt_tile(
+            px, py, dx, dy, mine_tools, counters, tool_use_delay_s, journal_wait_s
         )
+        if not journal_ok:
+            return "journal_probe_failed"
         if _handle_tile_timeout(attempt, target_result):
             continue
         if _journal_contains_any(journal_texts, TOOL_WORN_TEXTS):
             return "tool_worn"
         primary = _classify_mining_journal(journal_texts)
-        _apply_primary_journal_outcome(attempt, primary, target_result, counters)
+        _apply_primary_journal_outcome(attempt, primary, counters)
     return _finalize_pass_result(counters, len(offsets))
 
 
@@ -4495,6 +4582,9 @@ def _tick_mining_cycle(mine_tools):
         mine_tools = _handle_tool_worn_path()
     elif result == "no_ore":
         _handle_no_ore_path()
+    elif result == "journal_probe_failed":
+        _diag_error("Mining stopped: journal probe failed.", phase="TARGET")
+        _stop_running_with_message()
     return mine_tools
 
 
@@ -4524,6 +4614,12 @@ def main():
         startup_step = "rebuild control gump"
         _write_startup_trace(startup_step)
         _rebuild_control_gump()
+        startup_step = "reset debug log for new session"
+        _write_startup_trace(startup_step)
+        _reset_debug_log_for_new_session()
+        startup_step = "reset startup log for new session"
+        _reset_startup_log_for_new_session()
+        _write_startup_trace("startup sequence complete")
     except Exception as ex:
         # We intentionally catch broad startup failures so users get a clear
         # message instead of a silent script-manager launch failure.
