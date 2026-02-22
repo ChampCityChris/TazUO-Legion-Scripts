@@ -1362,6 +1362,11 @@ def _craft_tinker_tool():
     """
     gump_id = TINKER_GUMP_ID_UOALIVE if USE_UOALIVE_SHARD else TINKER_GUMP_ID_OSI
     item_buttons, material_buttons = _resolve_tinker_recipe_paths("tinker's tools")
+    _diag_info(
+        "Tinker's tools path lookup server={0} item_buttons={1} material_buttons={2}".format(
+            _active_recipe_server_name(), list(item_buttons or []), list(material_buttons or [])
+        )
+    )
     if not item_buttons:
         _diag_info("No DB craft path found for Tinker's tools.")
         return False
