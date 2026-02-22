@@ -9,3 +9,8 @@ Logs/
 .vscode/
 .github/
 
+# Local documentation and API reference files
+AGENTS.md
+README.md
+API.py
+
