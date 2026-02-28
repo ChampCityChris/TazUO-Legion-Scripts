@@ -147,6 +147,7 @@ BOD_REQUEST_ATTEMPTS = 3
 BOD_SCAN_SETTLE_S = 1.0
 BOD_PARSE_DEBUG = False
 BOD_OFFER_GUMP_ID = 0xBAE793EA
+BOD_LARGE_OFFER_GUMP_ID = 0xDF22ACC7
 BOD_OFFER_ACCEPT_BUTTON_ID = 1
 BOD_OFFER_WAIT_S = 1.2
 
@@ -2122,15 +2123,17 @@ def _request_bod_from_giver(giver_serial):
         return False
 
     def _accept_bod_offer_if_present():
-        # Shard-specific: BOD offer gump (tested on tailor) requires clicking OK/Accept.
+        # Shard-specific: both small and large BOD offer gumps use Accept button 1.
+        offer_gump_ids = [int(BOD_OFFER_GUMP_ID), int(BOD_LARGE_OFFER_GUMP_ID)]
         try:
-            if API.WaitForGump(int(BOD_OFFER_GUMP_ID), float(BOD_OFFER_WAIT_S)):
-                try:
-                    API.ReplyGump(int(BOD_OFFER_ACCEPT_BUTTON_ID), int(BOD_OFFER_GUMP_ID))
-                except Exception:
-                    API.ReplyGump(int(BOD_OFFER_ACCEPT_BUTTON_ID))
-                _sleep(0.15)
-                return True
+            for offer_gump_id in offer_gump_ids:
+                if API.WaitForGump(int(offer_gump_id), float(BOD_OFFER_WAIT_S)):
+                    try:
+                        API.ReplyGump(int(BOD_OFFER_ACCEPT_BUTTON_ID), int(offer_gump_id))
+                    except Exception:
+                        API.ReplyGump(int(BOD_OFFER_ACCEPT_BUTTON_ID))
+                    _sleep(0.15)
+                    return True
         except Exception:
             pass
         return False
