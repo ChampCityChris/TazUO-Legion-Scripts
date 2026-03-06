@@ -7,7 +7,7 @@ AutoJacker
 Last Updated: 2026-02-13
 
 Features:
-- Runebook-driven lumberjacking loop (home rune in slot 1, lumber runes in slots 2-15).
+- Runebook or Runic Atlas-driven lumberjacking loop.
 - Uses LumberAssist-style nearby tree scan/harvest loop.
 - Uses the player's equipped axe to harvest and cut logs.
 - Overweight handling: cuts logs to boards, optionally loads boards to Giant Beetle,
@@ -53,8 +53,19 @@ CUT_RESULT_WAIT_S = 0.85
 
 # Travel / recall.
 RECALL_GUMP_ID = 0x59
+TRAVEL_BOOK_TYPES = ("Runebook", "Runic Atlas")
+TRAVEL_BOOK_RUNEBOOK = 0
+TRAVEL_BOOK_RUNIC_ATLAS = 1
+
 HOME_RECALL_BUTTON = 50
 LUMBER_RUNES = list(range(51, 66))
+ATLAS_HOME_LOCATION_BUTTON = 100
+ATLAS_LOCATION_BUTTONS = list(range(101, 148))
+ATLAS_TRAVEL_BUTTON_RECALL = 4
+ATLAS_TRAVEL_BUTTON_SACRED_JOURNEY = 7
+ATLAS_GUMP_ID = 0x1F2
+ATLAS_NEXT_PAGE_BUTTON = 1150
+ATLAS_PAGE_SIZE = 16
 CURRENT_LUMBER_INDEX = 0
 RECALL_SETTLE_S = 4.5
 
@@ -64,6 +75,7 @@ CONTROL_GUMP = None
 CONTROL_BUTTON = None
 USE_SACRED_JOURNEY = False
 USE_GIANT_BEETLE = False
+TRAVEL_BOOK_TYPE = TRAVEL_BOOK_RUNEBOOK
 
 RUNBOOK_SERIAL = 0
 DROP_CONTAINER_SERIAL = 0
@@ -115,11 +127,16 @@ def _default_config():
         "giant_beetle_serial": 0,
         "use_sacred_journey": False,
         "use_giant_beetle": False,
+        "travel_book_type": TRAVEL_BOOK_RUNEBOOK,
     }
 
 
 def _apply_travel_mode():
     global HOME_RECALL_BUTTON, LUMBER_RUNES
+    if TRAVEL_BOOK_TYPE == TRAVEL_BOOK_RUNIC_ATLAS:
+        HOME_RECALL_BUTTON = ATLAS_HOME_LOCATION_BUTTON
+        LUMBER_RUNES = list(ATLAS_LOCATION_BUTTONS)
+        return
     if USE_SACRED_JOURNEY:
         HOME_RECALL_BUTTON = 75
         LUMBER_RUNES = list(range(76, 91))
@@ -129,7 +146,7 @@ def _apply_travel_mode():
 
 
 def _load_config():
-    global RUNBOOK_SERIAL, DROP_CONTAINER_SERIAL, GIANT_BEETLE_SERIAL, USE_SACRED_JOURNEY, USE_GIANT_BEETLE
+    global RUNBOOK_SERIAL, DROP_CONTAINER_SERIAL, GIANT_BEETLE_SERIAL, USE_SACRED_JOURNEY, USE_GIANT_BEETLE, TRAVEL_BOOK_TYPE
     raw = API.GetPersistentVar(DATA_KEY, "", API.PersistentVar.Char)
     if raw:
         try:
@@ -142,6 +159,9 @@ def _load_config():
             GIANT_BEETLE_SERIAL = int(data.get("giant_beetle_serial", 0) or 0)
             USE_SACRED_JOURNEY = bool(data.get("use_sacred_journey", False))
             USE_GIANT_BEETLE = bool(data.get("use_giant_beetle", False))
+            TRAVEL_BOOK_TYPE = int(data.get("travel_book_type", TRAVEL_BOOK_RUNEBOOK) or TRAVEL_BOOK_RUNEBOOK)
+            if TRAVEL_BOOK_TYPE not in (TRAVEL_BOOK_RUNEBOOK, TRAVEL_BOOK_RUNIC_ATLAS):
+                TRAVEL_BOOK_TYPE = TRAVEL_BOOK_RUNEBOOK
         except Exception:
             data = _default_config()
             RUNBOOK_SERIAL = data["runebook_serial"]
@@ -149,6 +169,7 @@ def _load_config():
             GIANT_BEETLE_SERIAL = data["giant_beetle_serial"]
             USE_SACRED_JOURNEY = data["use_sacred_journey"]
             USE_GIANT_BEETLE = data["use_giant_beetle"]
+            TRAVEL_BOOK_TYPE = data["travel_book_type"]
     else:
         data = _default_config()
         RUNBOOK_SERIAL = data["runebook_serial"]
@@ -156,6 +177,7 @@ def _load_config():
         GIANT_BEETLE_SERIAL = data["giant_beetle_serial"]
         USE_SACRED_JOURNEY = data["use_sacred_journey"]
         USE_GIANT_BEETLE = data["use_giant_beetle"]
+        TRAVEL_BOOK_TYPE = data["travel_book_type"]
     _apply_travel_mode()
 
 
@@ -166,6 +188,7 @@ def _save_config():
         "giant_beetle_serial": int(GIANT_BEETLE_SERIAL or 0),
         "use_sacred_journey": bool(USE_SACRED_JOURNEY),
         "use_giant_beetle": bool(USE_GIANT_BEETLE),
+        "travel_book_type": int(TRAVEL_BOOK_TYPE),
     }
     API.SavePersistentVar(DATA_KEY, json.dumps(data), API.PersistentVar.Char)
 
@@ -193,6 +216,17 @@ def _set_chiv():
     _rebuild_gump()
 
 
+def _set_travel_book_type(selected_index):
+    global TRAVEL_BOOK_TYPE
+    idx = int(selected_index or 0)
+    if idx not in (TRAVEL_BOOK_RUNEBOOK, TRAVEL_BOOK_RUNIC_ATLAS):
+        idx = TRAVEL_BOOK_RUNEBOOK
+    TRAVEL_BOOK_TYPE = idx
+    _apply_travel_mode()
+    _save_config()
+    _rebuild_gump()
+
+
 def _toggle_giant_beetle():
     global USE_GIANT_BEETLE
     USE_GIANT_BEETLE = not USE_GIANT_BEETLE
@@ -202,7 +236,7 @@ def _toggle_giant_beetle():
 
 def _set_runebook():
     global RUNBOOK_SERIAL
-    _say("Target runebook.")
+    _say("Target travel book.")
     serial = API.RequestTarget()
     if serial:
         RUNBOOK_SERIAL = int(serial)
@@ -254,7 +288,7 @@ def _unset_giant_beetle():
 def _create_gump():
     global CONTROL_GUMP, CONTROL_BUTTON
     w = 330
-    h = 250
+    h = 278
     g = API.CreateGump(True, True, False)
     g.SetRect(420, 220, w, h)
     bg = API.CreateGumpColorBox(0.7, "#1B1B1B")
@@ -266,6 +300,29 @@ def _create_gump():
     g.Add(title)
 
     y = 38
+    travel_book_type_label = API.CreateGumpTTFLabel("Travel Book Type:", 12, "#FFFFFF", "alagard", "left", 170)
+    travel_book_type_label.SetPos(10, y)
+    g.Add(travel_book_type_label)
+    travel_book_type_dd = API.CreateDropDown(105, list(TRAVEL_BOOK_TYPES), int(TRAVEL_BOOK_TYPE))
+    travel_book_type_dd.SetPos(190, y - 2)
+    g.Add(travel_book_type_dd)
+    travel_book_type_dd.OnDropDownOptionSelected(_set_travel_book_type)
+
+    y += 26
+    runebook_status = "Set" if RUNBOOK_SERIAL else "Unset"
+    runebook_label = API.CreateGumpTTFLabel(f"Travel Book: {runebook_status}", 12, "#FFFFFF", "alagard", "left", 180)
+    runebook_label.SetPos(10, y)
+    g.Add(runebook_label)
+    runebook_set = API.CreateSimpleButton("Set", 50, 18)
+    runebook_set.SetPos(190, y - 2)
+    g.Add(runebook_set)
+    API.AddControlOnClick(runebook_set, _set_runebook)
+    runebook_unset = API.CreateSimpleButton("Unset", 50, 18)
+    runebook_unset.SetPos(245, y - 2)
+    g.Add(runebook_unset)
+    API.AddControlOnClick(runebook_unset, _unset_runebook)
+
+    y += 26
     travel_mode = "Chiv" if USE_SACRED_JOURNEY else "Mage"
     travel_label = API.CreateGumpTTFLabel(f"Travel: {travel_mode}", 12, "#FFFFFF", "alagard", "left", 170)
     travel_label.SetPos(10, y)
@@ -278,20 +335,6 @@ def _create_gump():
     chiv_btn.SetPos(245, y - 2)
     g.Add(chiv_btn)
     API.AddControlOnClick(chiv_btn, _set_chiv)
-
-    y += 26
-    runebook_status = "Set" if RUNBOOK_SERIAL else "Unset"
-    runebook_label = API.CreateGumpTTFLabel(f"Runebook: {runebook_status}", 12, "#FFFFFF", "alagard", "left", 180)
-    runebook_label.SetPos(10, y)
-    g.Add(runebook_label)
-    runebook_set = API.CreateSimpleButton("Set", 50, 18)
-    runebook_set.SetPos(190, y - 2)
-    g.Add(runebook_set)
-    API.AddControlOnClick(runebook_set, _set_runebook)
-    runebook_unset = API.CreateSimpleButton("Unset", 50, 18)
-    runebook_unset.SetPos(245, y - 2)
-    g.Add(runebook_unset)
-    API.AddControlOnClick(runebook_unset, _unset_runebook)
 
     y += 26
     drop_status = "Set" if DROP_CONTAINER_SERIAL else "Unset"
@@ -532,14 +575,66 @@ def _cast_runebook_button(button_id):
     return True
 
 
+def _runic_atlas_page_for_button(button_id):
+    first_button = int(ATLAS_HOME_LOCATION_BUTTON)
+    last_button = int(ATLAS_LOCATION_BUTTONS[-1])
+    target = int(button_id)
+    if target < first_button or target > last_button:
+        return None
+    return int((target - first_button) // int(ATLAS_PAGE_SIZE))
+
+
+def _set_runic_atlas_page_for_button(button_id):
+    target_page = _runic_atlas_page_for_button(button_id)
+    if target_page is None:
+        _say(f"Runic Atlas location button out of range ({int(button_id)}).")
+        return False
+    # Atlas opens at page 1 after each successful travel; only advance forward.
+    for _ in range(int(target_page)):
+        if not API.ReplyGump(int(ATLAS_NEXT_PAGE_BUTTON), ATLAS_GUMP_ID):
+            _say(f"Runic Atlas page advance failed (button {int(ATLAS_NEXT_PAGE_BUTTON)}).")
+            return False
+        _responsive_wait(0.15)
+    return True
+
+
+def _cast_runic_atlas(button_id):
+    if not RUNBOOK_SERIAL:
+        return False
+    if not _wait_for_recall_mana(20):
+        return False
+    API.UseObject(RUNBOOK_SERIAL)
+    _responsive_wait(0.4)
+    if not API.WaitForGump(ATLAS_GUMP_ID, 1.5):
+        _say("Runic Atlas gump did not open.")
+        return False
+    if not _set_runic_atlas_page_for_button(button_id):
+        return False
+    if not API.ReplyGump(int(button_id), ATLAS_GUMP_ID):
+        _say(f"Runic Atlas location select failed (button {int(button_id)}).")
+        return False
+    _responsive_wait(0.2)
+    travel_button = ATLAS_TRAVEL_BUTTON_SACRED_JOURNEY if USE_SACRED_JOURNEY else ATLAS_TRAVEL_BUTTON_RECALL
+    if not API.ReplyGump(int(travel_button), ATLAS_GUMP_ID):
+        _say(f"Runic Atlas travel activate failed (button {int(travel_button)}).")
+        return False
+    _responsive_wait(RECALL_SETTLE_S)
+    return True
+
+
 def _recall_home():
+    if TRAVEL_BOOK_TYPE == TRAVEL_BOOK_RUNIC_ATLAS:
+        return _cast_runic_atlas(HOME_RECALL_BUTTON)
     return _cast_runebook_button(HOME_RECALL_BUTTON)
 
 
 def _recall_lumber_spot():
     if not LUMBER_RUNES:
         return False
-    return _cast_runebook_button(LUMBER_RUNES[CURRENT_LUMBER_INDEX])
+    button_id = LUMBER_RUNES[CURRENT_LUMBER_INDEX]
+    if TRAVEL_BOOK_TYPE == TRAVEL_BOOK_RUNIC_ATLAS:
+        return _cast_runic_atlas(button_id)
+    return _cast_runebook_button(button_id)
 
 
 def _advance_lumber_spot():
