@@ -218,6 +218,7 @@ class RuntimeState:
         self.next_peacemaking_ready_at = 0.0
         self.next_heal_ready_at = 0.0
         self.last_player_hits = 0
+        self.combat_target_serial = 0
 
 
 HOTKEY_STOP_REQUESTED = False
@@ -526,11 +527,25 @@ def _find_instrument_item():
 
 
 def _find_war_enemy():
+    player_serial = _player_serial()
+    nearest_enemy = None
+    nearest_distance = 999
     enemies = API.GetAllMobiles(distance=SEARCH_RANGE, notoriety=HOSTILE_NOTORIETIES) or []
     for enemy in enemies:
-        if bool(getattr(enemy, "InWarMode", False)):
-            return enemy
-    return None
+        serial = int(getattr(enemy, "Serial", 0) or 0)
+        if serial <= 0 or serial == player_serial:
+            continue
+        if bool(getattr(enemy, "IsDead", False)):
+            continue
+        if not bool(getattr(enemy, "InWarMode", False)):
+            continue
+
+        distance = int(getattr(enemy, "Distance", 999) or 999)
+        if distance < nearest_distance:
+            nearest_enemy = enemy
+            nearest_distance = distance
+
+    return nearest_enemy
 
 
 def _find_nearest_hostile():
@@ -555,25 +570,33 @@ def _should_interrupt_for_combat(state):
     if not ENABLE_COMBAT_DEFENSE:
         return False
 
-    war_enemy = _find_war_enemy()
-    if war_enemy:
-        return True
-
     current_hits = int(getattr(API.Player, "Hits", 0) or 0)
     took_damage = current_hits < int(state.last_player_hits or 0)
-    if took_damage and _find_nearest_hostile():
-        return True
-    return False
+    if not took_damage:
+        return False
+
+    attacker = _find_war_enemy()
+    if not attacker:
+        return False
+
+    state.combat_target_serial = int(getattr(attacker, "Serial", 0) or 0)
+    return state.combat_target_serial > 0
 
 
 def _fight_nearest_enemy_until_slain(state):
-    enemy = _find_nearest_hostile()
-    if not enemy:
+    enemy_serial = int(state.combat_target_serial or 0)
+    if enemy_serial <= 0:
         return True
 
-    enemy_serial = int(getattr(enemy, "Serial", 0) or 0)
+    enemy = API.FindMobile(enemy_serial)
+    if not enemy:
+        state.combat_target_serial = 0
+        return True
+
     enemy_name = str(getattr(enemy, "Name", "") or "hostile")
-    _log_warn(f"Combat interrupt: attacking nearest enemy '{enemy_name}' 0x{enemy_serial:08X}.")
+    _log_warn(
+        f"Combat interrupt: attacking active attacker '{enemy_name}' 0x{enemy_serial:08X}."
+    )
 
     state.tame_ongoing = False
     API.CancelTarget()
@@ -590,12 +613,21 @@ def _fight_nearest_enemy_until_slain(state):
         live_enemy = API.FindMobile(enemy_serial)
         if not live_enemy:
             _log_info(f"Enemy 0x{enemy_serial:08X} no longer present. Resuming taming.")
+            state.combat_target_serial = 0
             if not KILL_TAME and bool(getattr(API.Player, "InWarMode", False)):
                 API.SetWarMode(False)
             return True
 
         if bool(getattr(live_enemy, "IsDead", False)):
             _log_info(f"Enemy slain: 0x{enemy_serial:08X}. Resuming taming.")
+            state.combat_target_serial = 0
+            if not KILL_TAME and bool(getattr(API.Player, "InWarMode", False)):
+                API.SetWarMode(False)
+            return True
+
+        if not bool(getattr(live_enemy, "InWarMode", False)):
+            _log_info(f"Enemy 0x{enemy_serial:08X} disengaged. Resuming taming.")
+            state.combat_target_serial = 0
             if not KILL_TAME and bool(getattr(API.Player, "InWarMode", False)):
                 API.SetWarMode(False)
             return True
