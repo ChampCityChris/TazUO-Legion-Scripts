@@ -8,8 +8,8 @@ DB_FILE = "craftables.db"
 DB_FOLDER = "Databases"
 SCHEMA_VERSION = 10
 BASE_DIR_OVERRIDE = ""
-SQLITE_CONNECT_TIMEOUT_S = 0.35
-SQLITE_BUSY_TIMEOUT_MS = 350
+SQLITE_CONNECT_TIMEOUT_S = 2.5
+SQLITE_BUSY_TIMEOUT_MS = 2500
 INIT_RETRY_COOLDOWN_S = 1.5
 _INIT_OK = False
 _INIT_NEXT_RETRY_AT = 0.0
@@ -281,6 +281,19 @@ def _connect_read_cached():
     _READ_CONN = conn
     _READ_CONN_PATH = str(db_path)
     return conn
+
+
+def _close_read_conn_cache():
+    global _READ_CONN, _READ_CONN_PATH
+    cached = _READ_CONN
+    _READ_CONN = None
+    _READ_CONN_PATH = ""
+    if cached is None:
+        return
+    try:
+        cached.close()
+    except Exception:
+        pass
 
 
 def _now_s():
@@ -1462,6 +1475,7 @@ def _ensure_schema(conn):
 
 def init_store():
     _diag("init_store: begin")
+    _close_read_conn_cache()
     conn = _connect()
     try:
         _ensure_schema_ready(conn)
@@ -1530,6 +1544,7 @@ def load_recipes():
 
 
 def save_recipes(rows):
+    _close_read_conn_cache()
     conn = _connect()
     try:
         _ensure_schema_ready(conn)
@@ -1857,7 +1872,38 @@ def load_resource_item_map():
         raise
 
 
+def load_server_names():
+    _diag("load_server_names: begin")
+    conn = _connect_read_cached()
+    try:
+        _ensure_schema_ready(conn)
+        _diag("load_server_names: schema ready")
+        rows = _fetchall(
+            conn,
+            """
+            SELECT server_name
+            FROM game_servers
+            ORDER BY game_server_id
+            """,
+        )
+        out = []
+        seen = set()
+        for row in rows:
+            name = str(row[0] or "").strip()
+            if not name:
+                continue
+            key = str(name or "").lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(name)
+        return out
+    except Exception:
+        raise
+
+
 def save_key_maps(key_maps):
+    _close_read_conn_cache()
     conn = _connect()
     try:
         _ensure_schema_ready(conn)

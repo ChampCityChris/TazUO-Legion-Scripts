@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import sqlite3
+import traceback
 
 """
 RecipeBookEditor
@@ -26,6 +27,8 @@ REQUEST_KEY = "recipe_editor_request"
 RESULT_KEY = "recipe_editor_result"
 DEBUG_LOG_FILE = "RecipeBookEditor.debug.log"
 LOGS_DIR = r"F:\Games\Ultima_Online\Clients\TazUO\TazUO\LegionScripts\Logs"
+SQLITE_CONNECT_TIMEOUT_S = 2.5
+SQLITE_BUSY_TIMEOUT_MS = 2500
 
 SERVER_OPTIONS = ["OSI", "UOAlive", "Sosaria Reforged", "InsaneUO"]
 DEFAULT_SERVER = "UOAlive"
@@ -360,10 +363,10 @@ def _load_resource_name_options():
             continue
         conn = None
         try:
-            conn = sqlite3.connect(t, timeout=0.35)
+            conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
             if _has_columns(conn, "resource_catalog", ["resource_name"]):
                 cur.execute(
                     """
@@ -417,10 +420,10 @@ def _load_resource_item_id_map():
             continue
         conn = None
         try:
-            conn = sqlite3.connect(t, timeout=0.35)
+            conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
             if _has_columns(conn, "resource_catalog", ["resource_name"]):
                 cols = _table_columns(conn, "resource_catalog")
                 iid_expr = "game_item_id" if "game_item_id" in cols else "0 AS game_item_id"
@@ -476,14 +479,40 @@ def _save_resource_item_id_mappings(resources):
             continue
         conn = None
         try:
-            conn = sqlite3.connect(t, timeout=0.35)
+            conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
             if _has_columns(conn, "resource_catalog", ["resource_name"]):
                 cols = _table_columns(conn, "resource_catalog")
                 if "game_item_id" in cols:
+                    names = list(mapped.keys())
+                    placeholders = ",".join(["?"] * len(names))
+                    cur.execute(
+                        "SELECT lower(resource_name) AS resource_name_key, coalesce(game_item_id, 0) AS game_item_id "
+                        "FROM resource_catalog WHERE lower(resource_name) IN (" + placeholders + ")",
+                        tuple(names),
+                    )
+                    existing = {}
+                    for row in (cur.fetchall() or []):
+                        key = str(row["resource_name_key"] or "").strip().lower()
+                        if not key:
+                            continue
+                        try:
+                            existing[key] = int(row["game_item_id"] or 0)
+                        except Exception:
+                            existing[key] = 0
+
+                    changed = {}
                     for mat, iid in mapped.items():
+                        if int(existing.get(mat, 0)) != int(iid):
+                            changed[mat] = int(iid)
+
+                    if not changed:
+                        _write_debug_log("Resource item-id mappings unchanged; skipping save db={0}".format(str(t)))
+                        return True
+
+                    for mat, iid in changed.items():
                         cur.execute("INSERT OR IGNORE INTO resource_catalog(resource_name) VALUES (?)", (mat,))
                         cur.execute(
                             "UPDATE resource_catalog SET game_item_id=? WHERE lower(resource_name)=lower(?)",
@@ -491,7 +520,7 @@ def _save_resource_item_id_mappings(resources):
                         )
                     conn.commit()
                     _write_debug_log(
-                        "Saved resource item-id mappings: count={0} db={1}".format(int(len(mapped)), str(t))
+                        "Saved resource item-id mappings: count={0} db={1}".format(int(len(changed)), str(t))
                     )
                     return True
         except Exception as ex:
@@ -572,10 +601,10 @@ def _load_profession_name_options(server):
             continue
         conn = None
         try:
-            conn = sqlite3.connect(t, timeout=0.35)
+            conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
             if _has_columns(conn, "crafting_professions", ["profession_id", "profession_name"]) and _has_columns(
                 conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"]
             ) and _has_columns(conn, "game_servers", ["game_server_id", "server_name"]):
@@ -649,10 +678,10 @@ def _load_category_name_options(server, profession):
             continue
         conn = None
         try:
-            conn = sqlite3.connect(t, timeout=0.35)
+            conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
             if _has_columns(conn, "craft_categories", ["category_name", "display_sequence", "context_id"]) and _has_columns(
                 conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"]
             ) and _has_columns(conn, "game_servers", ["game_server_id", "server_name"]) and _has_columns(
@@ -731,10 +760,10 @@ def _load_item_name_options(server, profession, category=""):
             continue
         conn = None
         try:
-            conn = sqlite3.connect(t, timeout=0.35)
+            conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
 
             if _has_columns(conn, "craftable_items", ["craftable_item_id", "context_id", "item_display_name"]) and _has_columns(
                 conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"]
@@ -793,10 +822,10 @@ def _load_item_name_options(server, profession, category=""):
                 continue
             conn = None
             try:
-                conn = sqlite3.connect(t, timeout=0.35)
+                conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
                 conn.row_factory = sqlite3.Row
                 cur = conn.cursor()
-                cur.execute("PRAGMA busy_timeout=350")
+                cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
                 if _has_columns(conn, "saved_craft_recipes", ["context_id", "recipe_name"]) and _has_columns(
                     conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"]
                 ) and _has_columns(conn, "game_servers", ["game_server_id", "server_name"]) and _has_columns(
@@ -888,10 +917,10 @@ def _load_item_catalog_entry(server, profession, item_name):
             continue
         conn = None
         try:
-            conn = sqlite3.connect(t, timeout=0.35)
+            conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
             if not (
                 _has_columns(conn, "craftable_items", ["craftable_item_id", "context_id", "item_display_name"])
                 and _has_columns(conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"])
@@ -1462,10 +1491,10 @@ def _collect_material_key_options(profession="", server=""):
             continue
         conn = None
         try:
-            conn = sqlite3.connect(t, timeout=0.35)
+            conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
             if not (
                 _has_columns(conn, "material_options", ["material_option_id", "context_id", "material_option_key"])
                 and _has_columns(conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"])
@@ -1518,10 +1547,10 @@ def _collect_material_key_options(profession="", server=""):
             continue
         conn = None
         try:
-            conn = sqlite3.connect(t, timeout=0.35)
+            conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
             if not (
                 _has_columns(conn, "saved_craft_recipes", ["context_id", "selected_material_option_id", "declared_material_family_id"])
                 and _has_columns(conn, "material_options", ["material_option_id", "material_option_key", "material_family_id"])
@@ -1617,10 +1646,10 @@ def _find_material_buttons_for_key(profession, material_key, server=""):
             continue
         conn = None
         try:
-            conn = sqlite3.connect(t, timeout=0.35)
+            conn = sqlite3.connect(t, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute("PRAGMA busy_timeout=350")
+            cur.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
             if not (
                 _has_columns(conn, "material_options", ["material_option_id", "context_id", "material_option_key"])
                 and _has_columns(conn, "material_option_navigation_steps", ["material_option_id", "step_number", "gump_button_id"])
@@ -2027,12 +2056,14 @@ def _open_editor(pre_override=None):
     _close_editor()
     SCRIPT_EXIT_REQUESTED = False
     pre = pre_override if isinstance(pre_override, dict) else _prefill_from_request()
-    ok = _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "opened"})
-    _write_debug_log("Open ack nonce={0} ok={1}".format(int(REQUEST_NONCE), bool(ok)))
     g = API.CreateGump(True, True, False)
     w = 760
     h = 720
     g.SetRect(560, 120, w, h)
+    try:
+        g.SetInScreen()
+    except Exception:
+        pass
     _add_editor_background(g, w, h)
 
     label_color = "#E7F0FA"
@@ -2456,69 +2487,82 @@ def _open_editor(pre_override=None):
         "resource_rows": resource_rows,
         "resources_text": None,
     }
+    ok = _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "opened"})
+    _write_debug_log("Open ack nonce={0} ok={1}".format(int(REQUEST_NONCE), bool(ok)))
 
 
 def _main():
     global SCRIPT_EXIT_REQUESTED
     # Keep launch responsive; DB access is handled lazily by read/write helpers.
-    _open_editor()
-    while not SCRIPT_EXIT_REQUESTED and EDITOR_GUMP is not None:
-        API.ProcessCallbacks()
-        if SCRIPT_EXIT_REQUESTED or EDITOR_GUMP is None:
-            break
-        try:
-            f = EDITOR_INPUTS or {}
-            dd_mode = f.get("editor_mode")
-            dd_type = f.get("recipe_type")
-            dd_mk = f.get("material_key")
-            dd_prof = f.get("profession")
-            dd_server = f.get("server")
-            dd_category = f.get("category")
-            dd_item = f.get("name")
-            current_mode_idx = int(dd_mode.GetSelectedIndex()) if dd_mode else -1
-            current_type_idx = int(dd_type.GetSelectedIndex()) if dd_type else -1
-            current_mk_idx = int(dd_mk.GetSelectedIndex()) if dd_mk else -1
-            current_prof_idx = int(dd_prof.GetSelectedIndex()) if dd_prof else -1
-            current_server_idx = int(dd_server.GetSelectedIndex()) if dd_server else -1
-            current_category_idx = int(dd_category.GetSelectedIndex()) if dd_category else -1
-            current_item_idx = int(dd_item.GetSelectedIndex()) if dd_item else -1
-        except Exception:
-            current_mode_idx = -1
-            current_type_idx = -1
-            current_mk_idx = -1
-            current_prof_idx = -1
-            current_server_idx = -1
-            current_category_idx = -1
-            current_item_idx = -1
-        if current_mode_idx != -1 and current_mode_idx != int(EDITOR_LAST_MODE_IDX):
-            state = _capture_editor_state()
-            _open_editor(state)
-            continue
-        if current_type_idx != -1 and current_type_idx != int(EDITOR_LAST_TYPE_IDX):
-            state = _capture_editor_state()
-            _open_editor(state)
-            continue
-        if current_server_idx != -1 and current_server_idx != int(EDITOR_LAST_SERVER_IDX):
-            state = _capture_editor_state()
-            _open_editor(state)
-            continue
-        if current_prof_idx != -1 and current_prof_idx != int(EDITOR_LAST_PROFESSION_IDX):
-            state = _capture_editor_state()
-            _open_editor(state)
-            continue
-        if current_category_idx != -1 and current_category_idx != int(EDITOR_LAST_CATEGORY_IDX):
-            state = _capture_editor_state()
-            _open_editor(state)
-            continue
-        if current_item_idx != -1 and current_item_idx != int(EDITOR_LAST_ITEM_IDX):
-            state = _capture_editor_state()
-            _open_editor(state)
-            continue
-        if current_mk_idx != -1 and current_mk_idx != int(EDITOR_LAST_MATERIAL_KEY_IDX):
-            state = _capture_editor_state()
-            _open_editor(state)
-            continue
-        API.Pause(0.1)
+    try:
+        _open_editor()
+    except Exception:
+        _write_debug_log("Open editor exception:\n{0}".format(traceback.format_exc()))
+        _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "error", "error": "open_editor"})
+        SCRIPT_EXIT_REQUESTED = True
+    try:
+        while not SCRIPT_EXIT_REQUESTED and EDITOR_GUMP is not None:
+            API.ProcessCallbacks()
+            if SCRIPT_EXIT_REQUESTED or EDITOR_GUMP is None:
+                break
+            try:
+                f = EDITOR_INPUTS or {}
+                dd_mode = f.get("editor_mode")
+                dd_type = f.get("recipe_type")
+                dd_mk = f.get("material_key")
+                dd_prof = f.get("profession")
+                dd_server = f.get("server")
+                dd_category = f.get("category")
+                dd_item = f.get("name")
+                current_mode_idx = int(dd_mode.GetSelectedIndex()) if dd_mode else -1
+                current_type_idx = int(dd_type.GetSelectedIndex()) if dd_type else -1
+                current_mk_idx = int(dd_mk.GetSelectedIndex()) if dd_mk else -1
+                current_prof_idx = int(dd_prof.GetSelectedIndex()) if dd_prof else -1
+                current_server_idx = int(dd_server.GetSelectedIndex()) if dd_server else -1
+                current_category_idx = int(dd_category.GetSelectedIndex()) if dd_category else -1
+                current_item_idx = int(dd_item.GetSelectedIndex()) if dd_item else -1
+            except Exception:
+                current_mode_idx = -1
+                current_type_idx = -1
+                current_mk_idx = -1
+                current_prof_idx = -1
+                current_server_idx = -1
+                current_category_idx = -1
+                current_item_idx = -1
+            if current_mode_idx != -1 and current_mode_idx != int(EDITOR_LAST_MODE_IDX):
+                state = _capture_editor_state()
+                _open_editor(state)
+                continue
+            if current_type_idx != -1 and current_type_idx != int(EDITOR_LAST_TYPE_IDX):
+                state = _capture_editor_state()
+                _open_editor(state)
+                continue
+            if current_server_idx != -1 and current_server_idx != int(EDITOR_LAST_SERVER_IDX):
+                state = _capture_editor_state()
+                _open_editor(state)
+                continue
+            if current_prof_idx != -1 and current_prof_idx != int(EDITOR_LAST_PROFESSION_IDX):
+                state = _capture_editor_state()
+                _open_editor(state)
+                continue
+            if current_category_idx != -1 and current_category_idx != int(EDITOR_LAST_CATEGORY_IDX):
+                state = _capture_editor_state()
+                _open_editor(state)
+                continue
+            if current_item_idx != -1 and current_item_idx != int(EDITOR_LAST_ITEM_IDX):
+                state = _capture_editor_state()
+                _open_editor(state)
+                continue
+            if current_mk_idx != -1 and current_mk_idx != int(EDITOR_LAST_MATERIAL_KEY_IDX):
+                state = _capture_editor_state()
+                _open_editor(state)
+                continue
+            API.Pause(0.1)
+    except Exception:
+        _write_debug_log("Main loop exception:\n{0}".format(traceback.format_exc()))
+        _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "error", "error": "main_loop"})
+        _close_editor()
+        SCRIPT_EXIT_REQUESTED = True
     _write_debug_log("Main exit requested={0} gump_alive={1}".format(bool(SCRIPT_EXIT_REQUESTED), bool(EDITOR_GUMP is not None)))
 
 

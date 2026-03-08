@@ -31,7 +31,7 @@ Implemented:
   - Auto-tools via tinkering when possible.
   - Crafts items, stages in BOD Item Container, combines via deed gump, and re-checks deed progress until complete.
   - Handles exceptional failures through Salvage Bag/Trash flow when configured.
-- Recipe book supports server tagging/filtering (`OSI`, `UOAlive`, `Sosaria Reforged`, `InsaneUO`).
+- Recipe book supports server tagging/filtering from `Databases/craftables.db`.
 
 Setup:
 - Put your home rune in runebook slot 1.
@@ -122,9 +122,8 @@ DEBUG_LOG_ENABLED = True
 DEBUG_LOG_MAX_CHARS = 80000
 LOG_DATA_KEY = "auto_bod_log_config"
 LOG_EXPORT_FILE = "BODAssistDebug.txt"
-SERVER_OPTIONS = ["OSI", "UOAlive", "Sosaria Reforged", "InsaneUO"]
-DEFAULT_SERVER = "UOAlive"
-RECIPE_TYPE_OPTIONS = ["bod", "training"]
+SERVER_OPTIONS = []
+DEFAULT_SERVER = ""
 RECIPE_EDITOR_REQUEST_KEY = "recipe_editor_request"
 RECIPE_EDITOR_RESULT_KEY = "recipe_editor_result"
 RECIPE_EDITOR_WAIT_FAILSAFE_S = 180.0
@@ -172,6 +171,8 @@ CRAFT_BUTTON_PAUSE_S = 0.28
 MOVE_ITEM_PAUSE_S = 0.45
 RESTOCK_RETRY_COOLDOWN_S = 1.5
 FILL_PHASE_DELAY_S = 0.5
+OPEN_CRAFT_RETRY_BACKOFF_S = 1.1
+OPEN_CRAFT_FAIL_COOLDOWN_S = 6.0
 
 # Fill diagnostics hues by helper/phase.
 DIAG_HUE_RUN = 88
@@ -190,22 +191,13 @@ TRASH_CONTAINER_SERIAL = 0
 
 # Auto tooling/crafting.
 AUTO_TOOLING = True
-INGOT_ID = 0x1BF2
-CLOTH_ID = 0x1766
-LEATHER_ID = 0x1081
-BOARD_ID = 0x1BD7
-FEATHER_ID = 0x1BD1
 TINKER_TOOL_IDS = [0x1EB8, 0x1EB9]
 BLACKSMITH_TOOL_IDS = [0x0FBB]  # Tongs
 TAILOR_TOOL_IDS = [0x0F9D]      # Sewing kit
 CARPENTRY_TOOL_IDS = [0x1028, 0x102C, 0x1034, 0x1035]
+KEEP_RESOURCE_NAMES = ["ingot", "cloth", "leather", "board", "feather"]
 
 SALVAGE_CONTEXT_INDEX = 2
-ALLOW_KEEP_GRAPHICS = [
-    0x1BF2, 0x1766, 0x1081, 0x1BD7,
-    0x0FBB, 0x0F9D, 0x1EB8, 0x1EB9,
-    0x1028, 0x102C, 0x1034, 0x1035,
-]
 
 BLACKSMITH_GUMP_ID = 0xD466EA9C
 TINKER_GUMP_ID = 0xD466EA9C
@@ -218,42 +210,9 @@ CRAFT_GUMP_ANCHORS_BY_PROFESSION = {
     "Tinker": ["TINKERING MENU", "TINKERING", "TINKER"],
 }
 
-# Tool craft buttons (via tinkering gump).
-TINKER_BTN_TINKER_TOOL = [41, 62]
-TINKER_BTN_TONGS = [41, 242]
-TINKER_BTN_SEWING_KIT = [41, 122]
-TINKER_BTN_DOVETAIL_SAW = [41, 162]
-# Tinkering-gump material selection path for Iron ingots (used by Auto Tooling).
-# Update if your shard uses different buttons.
-TINKER_IRON_MATERIAL_BUTTONS = [7, 6]
-
 RECIPE_BOOK = []
 KEY_MAPS = {}
 RESOURCE_ITEM_MAP = {}
-RESOURCE_NAME_ALIASES = {
-    "feathers": "feather",
-    "ingots": "ingot",
-    "boards": "board",
-}
-
-# Category-level first-button overrides for craft paths.
-# Format: {server: {profession: {category: first_button_id}}}
-CATEGORY_PAGE_BUTTON_OVERRIDES = {
-    "UOAlive": {
-        "Tinker": {
-            "Wooden Items": 21,
-            "Tools": 41,
-            "Parts": 61,
-            "Utensils": 81,
-            "Miscellaneous": 101,
-            "Assemblies": 121,
-            "Traps": 141,
-            "Magic Jewelry": 161,
-            # Backward-compatible alias used in earlier data loads.
-            "Jewelry": 1,
-        },
-    },
-}
 
 RECIPE_STORE = None
 _script_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
@@ -283,60 +242,6 @@ LEARN_MODE = True
 CRAFT_INDEX_CACHE = {}
 SELECTED_SERVER = DEFAULT_SERVER
 RECIPE_EDITOR_NONCE = 0
-
-# Manual material options for recipe entry by profession/BOD type.
-# `buttons` is the gump button path to select the material before crafting the item.
-PROFESSION_OPTIONS = ["Blacksmith", "Tailor", "Carpentry", "Tinker"]
-MATERIAL_OPTIONS_BY_PROFESSION = {
-    "Blacksmith": [
-        {"key": "ingot_iron", "label": "Ingot - Iron", "base": "ingot", "buttons": [7, 6]},
-        {"key": "ingot_dull_copper", "label": "Ingot - Dull Copper", "base": "ingot", "buttons": [7, 26]},
-        {"key": "ingot_shadow_iron", "label": "Ingot - Shadow Iron", "base": "ingot", "buttons": [7, 46]},
-        {"key": "ingot_copper", "label": "Ingot - Copper", "base": "ingot", "buttons": [7, 66]},
-        {"key": "ingot_bronze", "label": "Ingot - Bronze", "base": "ingot", "buttons": [7, 86]},
-        {"key": "ingot_gold", "label": "Ingot - Gold", "base": "ingot", "buttons": [7, 106]},
-        {"key": "ingot_agapite", "label": "Ingot - Agapite", "base": "ingot", "buttons": [7, 126]},
-        {"key": "ingot_verite", "label": "Ingot - Verite", "base": "ingot", "buttons": [7, 146]},
-        {"key": "ingot_valorite", "label": "Ingot - Valorite", "base": "ingot", "buttons": [7, 166]},
-        {"key": "scale_red", "label": "Scale - Red", "base": "scale", "buttons": [147, 6]},
-        {"key": "scale_yellow", "label": "Scale - Yellow", "base": "scale", "buttons": [147, 26]},
-        {"key": "scale_black", "label": "Scale - Black", "base": "scale", "buttons": [147, 46]},
-        {"key": "scale_green", "label": "Scale - Green", "base": "scale", "buttons": [147, 66]},
-        {"key": "scale_white", "label": "Scale - White", "base": "scale", "buttons": [147, 86]},
-        {"key": "scale_blue", "label": "Scale - Blue", "base": "scale", "buttons": [147, 106]},
-    ],
-    "Tailor": [
-        {"key": "cloth", "label": "Cloth", "base": "cloth", "buttons": []},
-        {"key": "leather", "label": "Leather", "base": "leather", "buttons": []},
-    ],
-    "Carpentry": [
-        {"key": "board", "label": "Board", "base": "board", "buttons": []},
-    ],
-    "Tinker": [
-        {"key": "ingot_iron", "label": "Ingot - Iron", "base": "ingot", "buttons": []},
-        {"key": "ingot_dull_copper", "label": "Ingot - Dull Copper", "base": "ingot", "buttons": []},
-        {"key": "ingot_shadow_iron", "label": "Ingot - Shadow Iron", "base": "ingot", "buttons": []},
-        {"key": "ingot_copper", "label": "Ingot - Copper", "base": "ingot", "buttons": []},
-        {"key": "ingot_bronze", "label": "Ingot - Bronze", "base": "ingot", "buttons": []},
-        {"key": "ingot_gold", "label": "Ingot - Gold", "base": "ingot", "buttons": []},
-        {"key": "ingot_agapite", "label": "Ingot - Agapite", "base": "ingot", "buttons": []},
-        {"key": "ingot_verite", "label": "Ingot - Verite", "base": "ingot", "buttons": []},
-        {"key": "ingot_valorite", "label": "Ingot - Valorite", "base": "ingot", "buttons": []},
-    ],
-}
-
-MATERIAL_COLOR_BY_KEY = {
-    "ingot": "iron",
-    "ingot_iron": "iron",
-    "ingot_dull_copper": "dull copper",
-    "ingot_shadow_iron": "shadow iron",
-    "ingot_copper": "copper",
-    "ingot_bronze": "bronze",
-    "ingot_gold": "gold",
-    "ingot_agapite": "agapite",
-    "ingot_verite": "verite",
-    "ingot_valorite": "valorite",
-}
 # If true, ingot restock will fail for unknown hues instead of pulling any hue.
 STRICT_INGOT_HUE_MATCH = True
 
@@ -406,6 +311,8 @@ FORCE_STOP = False
 FATAL_STOP_REASON = ""
 ACTIVE_CRAFT_GUMP_ID = 0
 ACTIVE_CRAFT_PROFESSION = ""
+ACTIVE_CRAFT_MATERIAL_KEY = ""
+OPEN_CRAFT_BLOCK_UNTIL = 0.0
 RESTOCK_BLOCK_UNTIL = {}
 CALLBACK_ERR_LAST_AT = 0.0
 LOG_TEXT = ""
@@ -730,12 +637,67 @@ def _parse_int_list(text):
     return [int(x) for x in re.findall(r"\d+", str(text or ""))]
 
 
+def _dedupe_case_preserving(values):
+    out = []
+    seen = set()
+    for raw in values or []:
+        text = str(raw or "").strip()
+        if not text:
+            continue
+        key = text.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(text)
+    return out
+
+
+def _server_options_from_key_maps():
+    if not isinstance(KEY_MAPS, dict):
+        return []
+    return _dedupe_case_preserving(KEY_MAPS.keys())
+
+
+def _current_server_options():
+    opts = _dedupe_case_preserving(SERVER_OPTIONS)
+    if opts:
+        return opts
+    return _server_options_from_key_maps()
+
+
+def _preferred_default_server(options):
+    opts = _dedupe_case_preserving(options)
+    if not opts:
+        return ""
+    return str(opts[0])
+
+
+def _load_server_options_from_store():
+    if RECIPE_STORE is None:
+        return []
+    if not hasattr(RECIPE_STORE, "load_server_names"):
+        return []
+    try:
+        raw = RECIPE_STORE.load_server_names()
+    except Exception as ex:
+        _write_debug_log(f"Config: server-list load error: {ex}")
+        return []
+    if not isinstance(raw, list):
+        _write_debug_log(f"Config: server-list load invalid type: {type(raw).__name__}")
+        return []
+    return _dedupe_case_preserving(raw)
+
+
 def _normalize_server_name(value):
-    v = str(value or "").strip().lower()
-    for s in SERVER_OPTIONS:
-        if s.lower() == v:
-            return s
-    return DEFAULT_SERVER
+    v = str(value or "").strip()
+    opts = _current_server_options()
+    if not opts:
+        return v
+    low = v.lower()
+    for s in opts:
+        if str(s).lower() == low:
+            return str(s)
+    return _preferred_default_server(opts)
 
 
 def _normalize_recipe_type(value):
@@ -782,22 +744,90 @@ def _build_deed_key(item_name, profession="", material_key="", raw_text=""):
 
 
 def _material_options_for_profession(profession):
-    p = str(profession or "").strip()
-    opts = MATERIAL_OPTIONS_BY_PROFESSION.get(p, [])
-    return list(opts) if opts else list(MATERIAL_OPTIONS_BY_PROFESSION.get("Blacksmith", []))
+    srv = _normalize_server_name(SELECTED_SERVER or DEFAULT_SERVER)
+    prof = _canonical_profession_name(profession)
+    if not (srv and prof):
+        return []
+    srv_node = KEY_MAPS.get(srv, {}) if isinstance(KEY_MAPS, dict) else {}
+    if not isinstance(srv_node, dict):
+        return []
+    node = srv_node.get(prof, {})
+    if not isinstance(node, dict):
+        return []
+    mats = node.get("material_keys", {})
+    if not isinstance(mats, dict):
+        return []
+    out = []
+    for mk in sorted(mats.keys()):
+        ent = mats.get(mk, {})
+        if not isinstance(ent, dict):
+            ent = {}
+        base = _normalize_text(ent.get("material", "") or "")
+        if not base:
+            base = _normalize_text(str(mk).split("_")[0])
+        suffix = str(mk or "").strip().lower()
+        if base and suffix.startswith(base + "_"):
+            suffix = suffix[len(base) + 1:]
+        label_prefix = (base or str(mk or "").split("_")[0]).replace("_", " ").title()
+        if str(mk or "").strip().lower() in ("ingot", "ingot_iron"):
+            label = "Ingot - Iron"
+        elif suffix and suffix != str(base):
+            label = f"{label_prefix} - {str(suffix).replace('_', ' ').title()}"
+        else:
+            label = label_prefix
+        out.append(
+            {
+                "key": str(mk or "").strip(),
+                "label": str(label or ""),
+                "base": str(base or "").strip(),
+                "buttons": [int(x) for x in (ent.get("material_buttons", []) or []) if int(x) > 0][:2],
+                "hue": ent.get("hue", None),
+            }
+        )
+    return out
+
+
+def _all_material_options_for_server():
+    srv = _normalize_server_name(SELECTED_SERVER or DEFAULT_SERVER)
+    srv_node = KEY_MAPS.get(srv, {}) if isinstance(KEY_MAPS, dict) else {}
+    if not isinstance(srv_node, dict):
+        return []
+    out = []
+    for prof_name in srv_node.keys():
+        out.extend(_material_options_for_profession(prof_name))
+    return out
+
+
+def _material_base_matches(base_value, target_base):
+    base = _normalize_text(base_value or "")
+    target = _normalize_text(target_base or "")
+    if not base or not target:
+        return False
+    if base == target:
+        return True
+    aliases = {
+        "scale": {"scale", "scales"},
+        "scales": {"scale", "scales"},
+        "leather": {"leather", "hide", "hides"},
+        "hide": {"leather", "hide", "hides"},
+        "hides": {"leather", "hide", "hides"},
+    }
+    left = aliases.get(base, {base})
+    right = aliases.get(target, {target})
+    return bool(left & right)
 
 
 def _material_option_by_key(key, profession=None):
-    needle = str(key or "").strip()
-    opts = _material_options_for_profession(profession)
+    needle = str(key or "").strip().lower()
+    if not needle:
+        return None
+    opts = _material_options_for_profession(profession) if profession else []
     for o in opts:
-        if str(o.get("key", "")).strip() == needle:
+        if str(o.get("key", "")).strip().lower() == needle:
             return o
-    # Cross-profession fallback for persisted recipes.
-    for opts2 in MATERIAL_OPTIONS_BY_PROFESSION.values():
-        for o in opts2:
-            if str(o.get("key", "")).strip() == needle:
-                return o
+    for o in _all_material_options_for_server():
+        if str(o.get("key", "")).strip().lower() == needle:
+            return o
     return None
 
 
@@ -810,45 +840,95 @@ def _material_option_index_for_key(key, profession):
     return 0
 
 
+def _find_material_key_by_terms(base_hint, terms, profession=""):
+    expected = [_normalize_text(t) for t in (terms or []) if _normalize_text(t)]
+    options = _material_options_for_profession(profession) if profession else []
+    if not options:
+        options = _all_material_options_for_server()
+    for opt in options:
+        key = str(opt.get("key", "") or "").strip()
+        base = _normalize_text(opt.get("base", "") or "")
+        if not key or not base:
+            continue
+        if base_hint and not _material_base_matches(base, base_hint):
+            continue
+        key_text = _normalize_text(key.replace("_", " "))
+        label_text = _normalize_text(opt.get("label", "") or "")
+        if all((term in key_text) or (term in label_text) for term in expected):
+            return key
+    return ""
+
+
+def _default_material_key_for_base(base_hint, profession=""):
+    options = _material_options_for_profession(profession) if profession else []
+    if not options:
+        options = _all_material_options_for_server()
+    candidates = []
+    for opt in options:
+        key = str(opt.get("key", "") or "").strip()
+        base = _normalize_text(opt.get("base", "") or "")
+        if not key or not base:
+            continue
+        if base_hint and not _material_base_matches(base, base_hint):
+            continue
+        candidates.append(dict(opt))
+    if not candidates:
+        return ""
+    ranked = sorted(
+        candidates,
+        key=lambda opt: (
+            int((opt.get("buttons", [99999, 99999]) + [99999, 99999])[1]),
+            int((opt.get("buttons", [99999]) + [99999])[0]),
+            len(str(opt.get("key", "") or "")),
+            str(opt.get("key", "") or ""),
+        ),
+    )
+    return str(ranked[0].get("key", "") or "")
+
+
 def _infer_material_key(material_text, raw_text=""):
     low = _normalize_text(f"{material_text or ''} {raw_text or ''}")
-    ingot_map = [
-        ("dull copper", "ingot_dull_copper"),
-        ("shadow iron", "ingot_shadow_iron"),
-        ("agapite", "ingot_agapite"),
-        ("valorite", "ingot_valorite"),
-        ("verite", "ingot_verite"),
-        ("bronze", "ingot_bronze"),
-        ("copper", "ingot_copper"),
-        ("gold", "ingot_gold"),
-        ("iron", "ingot_iron"),
-    ]
-    for needle, key in ingot_map:
-        if needle in low:
-            return key
-    if "red scale" in low:
-        return "scale_red"
-    if "yellow scale" in low:
-        return "scale_yellow"
-    if "black scale" in low:
-        return "scale_black"
-    if "green scale" in low:
-        return "scale_green"
-    if "white scale" in low:
-        return "scale_white"
-    if "blue scale" in low:
-        return "scale_blue"
+    for metal_name in (
+        "dull copper",
+        "shadow iron",
+        "agapite",
+        "valorite",
+        "verite",
+        "bronze",
+        "copper",
+        "gold",
+        "iron",
+    ):
+        if metal_name in low:
+            key = _find_material_key_by_terms("ingot", [metal_name])
+            if key:
+                return key
+    for color_name in ("red", "yellow", "black", "green", "white", "blue"):
+        if f"{color_name} scale" in low:
+            key = _find_material_key_by_terms("scale", [color_name])
+            if key:
+                return key
     if "scale" in low:
-        return "scale_red"
+        key = _default_material_key_for_base("scale")
+        if key:
+            return key
     if "leather" in low:
-        return "leather"
+        key = _default_material_key_for_base("leather")
+        if key:
+            return key
     if "cloth" in low:
-        return "cloth"
+        key = _default_material_key_for_base("cloth")
+        if key:
+            return key
     if "board" in low:
-        return "board"
+        key = _default_material_key_for_base("board")
+        if key:
+            return key
     if "ingot" in low:
-        return "ingot_iron"
-    return "ingot_iron"
+        key = _default_material_key_for_base("ingot")
+        if key:
+            return key
+    return ""
 
 
 def _parse_material_key_needed(text, material_needed="", profession=""):
@@ -856,29 +936,25 @@ def _parse_material_key_needed(text, material_needed="", profession=""):
     lines = [_normalize_text(x) for x in str(text or "").splitlines() if _normalize_text(x)]
 
     # Strong explicit scale matches first.
-    scale_map = [
-        ("red scale", "scale_red"),
-        ("yellow scale", "scale_yellow"),
-        ("black scale", "scale_black"),
-        ("green scale", "scale_green"),
-        ("white scale", "scale_white"),
-        ("blue scale", "scale_blue"),
-    ]
-    for needle, key in scale_map:
+    scale_map = ["red", "yellow", "black", "green", "white", "blue"]
+    for color_name in scale_map:
+        needle = f"{color_name} scale"
         if needle in low:
-            return key
+            key = _find_material_key_by_terms("scale", [color_name], profession)
+            if key:
+                return key
 
-    ingot_map = {
-        "dull copper": "ingot_dull_copper",
-        "shadow iron": "ingot_shadow_iron",
-        "agapite": "ingot_agapite",
-        "valorite": "ingot_valorite",
-        "verite": "ingot_verite",
-        "bronze": "ingot_bronze",
-        "copper": "ingot_copper",
-        "gold": "ingot_gold",
-        "iron": "ingot_iron",
-    }
+    ingot_map = (
+        "dull copper",
+        "shadow iron",
+        "agapite",
+        "valorite",
+        "verite",
+        "bronze",
+        "copper",
+        "gold",
+        "iron",
+    )
 
     # Strict parse on material-focused lines first.
     material_lines = [ln for ln in lines if ("material" in ln or "ingot" in ln or "scale" in ln)]
@@ -886,13 +962,17 @@ def _parse_material_key_needed(text, material_needed="", profession=""):
     for ln in material_lines:
         m = re.search(r"\b(dull copper|shadow iron|copper|bronze|gold|agapite|verite|valorite|iron)\s+ingots?\b", ln)
         if m:
-            explicit_hits.append(ingot_map.get(m.group(1), ""))
+            hit = _find_material_key_by_terms("ingot", [str(m.group(1) or "")], profession)
+            if hit:
+                explicit_hits.append(hit)
             continue
         # Some shards omit the word ingot but still use "material: dull copper".
         if "material" in ln:
-            for name, key in ingot_map.items():
+            for name in ingot_map:
                 if name in ln:
-                    explicit_hits.append(key)
+                    hit = _find_material_key_by_terms("ingot", [name], profession)
+                    if hit:
+                        explicit_hits.append(hit)
                     break
     explicit_hits = [h for h in explicit_hits if h]
     if len(explicit_hits) == 1:
@@ -903,9 +983,9 @@ def _parse_material_key_needed(text, material_needed="", profession=""):
 
     # Fallback to base material only (no guessed ingot subtype).
     mk = _infer_material_key(material_needed or "", "")
-    if mk in ("cloth", "leather", "board"):
-        return mk
-    if mk.startswith("scale_"):
+    opt = _material_option_by_key(mk, profession) if mk else None
+    base = _normalize_text(opt.get("base", "") if isinstance(opt, dict) else "")
+    if base in ("cloth", "leather", "hide", "hides", "board", "scale", "scales"):
         return mk
     # No explicit ingot subtype found in deed text.
     return ""
@@ -1072,10 +1152,7 @@ def _merge_item_key_map_into_recipe(recipe):
 
 
 def _resource_name_key(material):
-    mat = _normalize_text(material or "")
-    if mat in RESOURCE_NAME_ALIASES:
-        mat = str(RESOURCE_NAME_ALIASES.get(mat, mat) or mat)
-    return mat
+    return _normalize_text(material or "")
 
 
 def _resource_map_lookup(material):
@@ -1088,18 +1165,16 @@ def _resource_map_lookup(material):
     return dict(ent) if isinstance(ent, dict) else None
 
 
+def _resource_item_id(material):
+    ent = _resource_map_lookup(material) or {}
+    try:
+        return int(ent.get("item_id", 0) or 0)
+    except Exception:
+        return 0
+
+
 def _resource_item_defaults(material):
     mat = _resource_name_key(material)
-    if mat == "ingot":
-        return INGOT_ID, 60, 400, None
-    if mat == "cloth":
-        return CLOTH_ID, 60, 300, None
-    if mat == "leather":
-        return LEATHER_ID, 60, 300, None
-    if mat == "board":
-        return BOARD_ID, 80, 500, None
-    if mat in ("feather", "feathers"):
-        return FEATHER_ID, 60, 300, None
     ent = _resource_map_lookup(mat) or {}
     iid = int(ent.get("item_id", 0) or 0)
     hue = ent.get("hue", None)
@@ -1108,6 +1183,16 @@ def _resource_item_defaults(material):
             hue = int(hue)
         except Exception:
             hue = None
+    if mat == "ingot":
+        return int(iid), 60, 400, hue
+    if mat == "cloth":
+        return int(iid), 60, 300, hue
+    if mat == "leather":
+        return int(iid), 60, 300, hue
+    if mat == "board":
+        return int(iid), 80, 500, hue
+    if mat in ("feather", "feathers"):
+        return int(iid), 60, 300, hue
     if iid > 0:
         return int(iid), 10, 50, hue
     return 0, 10, 50, hue
@@ -1195,7 +1280,8 @@ def _material_buttons_from_recipe(recipe):
 
 def _wanted_hue_for_item(recipe, item_id):
     # Currently only ingots need hue filtering on this shard.
-    if int(item_id) != int(INGOT_ID):
+    ingot_id = int(_resource_item_id("ingot") or 0)
+    if ingot_id <= 0 or int(item_id) != ingot_id:
         return None
     key = str(_recipe_material_key(recipe) or "").strip().lower()
     if not key:
@@ -1267,11 +1353,13 @@ def _toggle_running():
 
 
 def _hard_stop():
-    global FORCE_STOP, ACTIVE_CRAFT_GUMP_ID, ACTIVE_CRAFT_PROFESSION, OPENED_CONTAINERS
+    global FORCE_STOP, ACTIVE_CRAFT_GUMP_ID, ACTIVE_CRAFT_PROFESSION, ACTIVE_CRAFT_MATERIAL_KEY, OPEN_CRAFT_BLOCK_UNTIL, OPENED_CONTAINERS
     FORCE_STOP = True
     _set_running(False)
     ACTIVE_CRAFT_GUMP_ID = 0
     ACTIVE_CRAFT_PROFESSION = ""
+    ACTIVE_CRAFT_MATERIAL_KEY = ""
+    OPEN_CRAFT_BLOCK_UNTIL = 0.0
     OPENED_CONTAINERS = set()
     try:
         API.CancelTarget()
@@ -1293,6 +1381,7 @@ def _pause_if_needed():
 
 
 def _default_config():
+    default_server = _preferred_default_server(_current_server_options())
     return {
         "runebook_serial": 0,
         "resource_container_serial": 0,
@@ -1307,7 +1396,7 @@ def _default_config():
         "craft_station_set": False,
         "use_sacred_journey": False,
         "enabled_bod_types": {k: True for k in BOD_TYPE_ORDER},
-        "selected_server": DEFAULT_SERVER,
+        "selected_server": default_server,
     }
 
 
@@ -1351,39 +1440,8 @@ def _normalize_item_key_name(name):
     return n.strip()
 
 
-def _category_first_button(server, profession, category):
-    srv = _normalize_server_name(server or DEFAULT_SERVER)
-    prof = str(profession or "").strip()
-    cat = str(category or "").strip()
-    if not (srv and prof and cat):
-        return 0
-    by_server = CATEGORY_PAGE_BUTTON_OVERRIDES.get(srv, {}) or {}
-    by_prof = by_server.get(prof, {}) if isinstance(by_server, dict) else {}
-    if not isinstance(by_prof, dict):
-        return 0
-    raw = by_prof.get(cat, None)
-    if raw is None:
-        cat_lower = cat.lower()
-        for k, v in by_prof.items():
-            if str(k or "").strip().lower() == cat_lower:
-                raw = v
-                break
-    try:
-        return int(raw or 0)
-    except Exception:
-        return 0
-
-
 def _normalize_item_buttons_for_category(server, profession, category, buttons):
-    cleaned = [int(x) for x in (buttons or []) if int(x) > 0][:2]
-    if not cleaned:
-        return []
-    page_btn = _category_first_button(server, profession, category)
-    if page_btn <= 0:
-        return cleaned
-    if len(cleaned) == 1:
-        return [int(page_btn), int(cleaned[0])]
-    return [int(page_btn), int(cleaned[1])]
+    return [int(x) for x in (buttons or []) if int(x) > 0][:2]
 
 
 def _load_recipe_book_from_file():
@@ -1463,7 +1521,7 @@ def _load_resource_item_map_from_file():
 
 
 def _reload_recipe_cache_from_store(reason=""):
-    global RECIPE_BOOK, KEY_MAPS, RESOURCE_ITEM_MAP
+    global RECIPE_BOOK, KEY_MAPS, RESOURCE_ITEM_MAP, SERVER_OPTIONS, DEFAULT_SERVER, SELECTED_SERVER
     if RECIPE_STORE is None:
         return False
     changed = False
@@ -1485,6 +1543,17 @@ def _reload_recipe_cache_from_store(reason=""):
         res_map = _load_resource_item_map_from_file()
         if isinstance(res_map, dict):
             RESOURCE_ITEM_MAP = dict(res_map)
+            changed = True
+    except Exception:
+        pass
+    try:
+        server_options = _load_server_options_from_store()
+        if not server_options:
+            server_options = _server_options_from_key_maps()
+        if server_options:
+            SERVER_OPTIONS = _dedupe_case_preserving(server_options)
+            DEFAULT_SERVER = _preferred_default_server(SERVER_OPTIONS)
+            SELECTED_SERVER = _normalize_server_name(SELECTED_SERVER or DEFAULT_SERVER)
             changed = True
     except Exception:
         pass
@@ -1562,7 +1631,7 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
                 ack_wait += 0.1
                 res = _get_persistent_json(RECIPE_EDITOR_RESULT_KEY) or {}
                 status = str(res.get("status", "") or "").strip().lower()
-                if status not in ("opened", "saved", "cancel"):
+                if status not in ("opened", "saved", "cancel", "error"):
                     continue
                 try:
                     got_nonce = int(res.get("nonce", 0) or 0)
@@ -1573,6 +1642,13 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
                         f"RecipeEditor ack nonce mismatch: requested={nonce} got={got_nonce} status={status}"
                     )
                     continue
+                if status == "error":
+                    _write_debug_log(
+                        "RecipeEditor launch error ack: nonce={0} detail={1}".format(
+                            int(nonce), str(res.get("error", "") or "")
+                        )
+                    )
+                    break
                 launched = True
                 break
             if launched:
@@ -1691,6 +1767,14 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
             got_nonce = 0
         if got_nonce != nonce:
             continue
+        if status == "error":
+            _say("RecipeBookEditor reported a startup error. Check RecipeBookEditor.debug.log.", 33)
+            _write_debug_log(
+                "RecipeEditor wait error: requested={0} detail={1}".format(
+                    int(nonce), str(res.get("error", "") or "")
+                )
+            )
+            break
         if status in ("saved", "cancel"):
             if status == "saved":
                 out = _normalize_recipe_entry(res.get("recipe", {}))
@@ -1700,8 +1784,11 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
 
 
 def _load_config():
-    global RUNBOOK_SERIAL, RESOURCE_CONTAINER_SERIAL, BOD_ITEM_CONTAINER_SERIAL, SALVAGE_BAG_SERIAL, TRASH_CONTAINER_SERIAL, AUTO_TOOLING, LEARN_MODE, RECIPE_BOOK, KEY_MAPS, RESOURCE_ITEM_MAP, SELECTED_SERVER
+    global RUNBOOK_SERIAL, RESOURCE_CONTAINER_SERIAL, BOD_ITEM_CONTAINER_SERIAL, SALVAGE_BAG_SERIAL, TRASH_CONTAINER_SERIAL, AUTO_TOOLING, LEARN_MODE, RECIPE_BOOK, KEY_MAPS, RESOURCE_ITEM_MAP, SELECTED_SERVER, SERVER_OPTIONS, DEFAULT_SERVER
     global CRAFT_STATION_X, CRAFT_STATION_Y, CRAFT_STATION_Z, CRAFT_STATION_SET, USE_SACRED_JOURNEY, ENABLED_BOD_TYPES
+    server_options = _load_server_options_from_store()
+    SERVER_OPTIONS = _dedupe_case_preserving(server_options)
+    DEFAULT_SERVER = _preferred_default_server(SERVER_OPTIONS)
     raw = API.GetPersistentVar(DATA_KEY, "", API.PersistentVar.Char)
     if raw:
         try:
@@ -1716,7 +1803,7 @@ def _load_config():
             TRASH_CONTAINER_SERIAL = int(data.get("trash_container_serial", 0) or 0)
             AUTO_TOOLING = bool(data.get("auto_tooling", True))
             LEARN_MODE = bool(data.get("learn_mode", True))
-            SELECTED_SERVER = _normalize_server_name(data.get("selected_server", DEFAULT_SERVER))
+            SELECTED_SERVER = str(data.get("selected_server", "") or "").strip()
             RECIPE_BOOK = []
             CRAFT_STATION_X = int(data.get("craft_station_x", 0) or 0)
             CRAFT_STATION_Y = int(data.get("craft_station_y", 0) or 0)
@@ -1737,7 +1824,7 @@ def _load_config():
             TRASH_CONTAINER_SERIAL = data["trash_container_serial"]
             AUTO_TOOLING = data["auto_tooling"]
             LEARN_MODE = data["learn_mode"]
-            SELECTED_SERVER = _normalize_server_name(data.get("selected_server", DEFAULT_SERVER))
+            SELECTED_SERVER = str(data.get("selected_server", "") or "").strip()
             RECIPE_BOOK = []
             CRAFT_STATION_X = data["craft_station_x"]
             CRAFT_STATION_Y = data["craft_station_y"]
@@ -1754,7 +1841,7 @@ def _load_config():
         TRASH_CONTAINER_SERIAL = data["trash_container_serial"]
         AUTO_TOOLING = data["auto_tooling"]
         LEARN_MODE = data["learn_mode"]
-        SELECTED_SERVER = _normalize_server_name(data.get("selected_server", DEFAULT_SERVER))
+        SELECTED_SERVER = str(data.get("selected_server", "") or "").strip()
         RECIPE_BOOK = []
         CRAFT_STATION_X = data["craft_station_x"]
         CRAFT_STATION_Y = data["craft_station_y"]
@@ -1819,6 +1906,12 @@ def _load_config():
                 RECIPE_STORE.set_diag_logger(None)
             except Exception:
                 pass
+    if not SERVER_OPTIONS:
+        SERVER_OPTIONS = _server_options_from_key_maps()
+    if not SERVER_OPTIONS:
+        raise RuntimeError("No game servers found in Databases/craftables.db game_servers.")
+    DEFAULT_SERVER = _preferred_default_server(SERVER_OPTIONS)
+    SELECTED_SERVER = _normalize_server_name(SELECTED_SERVER or DEFAULT_SERVER)
     _refresh_recall_buttons()
     try:
         km_ct = len(KEY_MAPS)
@@ -1957,7 +2050,7 @@ def _open_manual_recipe_from_control():
         "server": str(SELECTED_SERVER or DEFAULT_SERVER),
         "profession": "Blacksmith",
         "material": "ingot",
-        "material_key": "ingot_iron",
+        "material_key": str(_default_material_key_for_base("ingot", "Blacksmith") or ""),
         "name": "",
         "buttons": "",
     }, wait_s=0.0)
@@ -2015,10 +2108,14 @@ def _set_chiv():
 
 def _set_server(selected_index):
     global SELECTED_SERVER
+    options = _current_server_options()
+    if not options:
+        _say("No servers found in craftables.db game_servers.", 33)
+        return
     idx = int(selected_index)
-    if idx < 0 or idx >= len(SERVER_OPTIONS):
+    if idx < 0 or idx >= len(options):
         idx = 0
-    SELECTED_SERVER = str(SERVER_OPTIONS[idx])
+    SELECTED_SERVER = str(options[idx])
     _save_config()
     _rebuild_gump()
 
@@ -2827,12 +2924,16 @@ def _run_transfer_diag():
     except Exception:
         pass
     _wait_and_pump(0.35, 0.05)
-    before = int(_count_in_raw(API.Backpack, INGOT_ID, None) or 0)
+    ingot_id = int(_resource_item_id("ingot") or 0)
+    if ingot_id <= 0:
+        _say("TransferDiag: missing resource_catalog.game_item_id for 'ingot'.", 33)
+        return
+    before = int(_count_in_raw(API.Backpack, ingot_id, None) or 0)
     _say(f"TransferDiag: backpack ingots before={before}")
 
     # Primary path uses the same helper as Fill restock.
-    if _transfer_once_resource_to_backpack(INGOT_ID, "", 0, amount=400, settle_s=0.9):
-        after = int(_count_in_raw(API.Backpack, INGOT_ID, None) or 0)
+    if _transfer_once_resource_to_backpack(ingot_id, "", 0, amount=400, settle_s=0.9):
+        after = int(_count_in_raw(API.Backpack, ingot_id, None) or 0)
         _say(f"TransferDiag: helper result backpack={after} delta={int(after)-int(before)}")
         _say("TransferDiag: SUCCESS via shared helper.")
         _say("TransferDiag: done.")
@@ -2844,9 +2945,9 @@ def _run_transfer_diag():
     ]
 
     for name, mover in methods:
-        src = _find_first_in_container_hued(sid, INGOT_ID, 0)
+        src = _find_first_in_container_hued(sid, ingot_id, 0)
         if not src:
-            src = _find_first_in_container(sid, INGOT_ID)
+            src = _find_first_in_container(sid, ingot_id)
         if not src:
             _say(f"TransferDiag: no source ingot found for method {name}.", 33)
             continue
@@ -2863,7 +2964,7 @@ def _run_transfer_diag():
         except Exception as ex:
             _say(f"TransferDiag: method={name} exception: {ex}", 33)
             continue
-        after = int(_count_in_raw(API.Backpack, INGOT_ID, None) or 0)
+        after = int(_count_in_raw(API.Backpack, ingot_id, None) or 0)
         delta = int(after) - int(before)
         _say(f"TransferDiag: method={name} result backpack={after} delta={delta}")
         if delta > 0:
@@ -3076,12 +3177,13 @@ def _find_first_in_container_hued(container_serial, item_id, hue=None):
         return _find_first_in_container(container_serial, item_id)
     wanted_hue = int(hue)
     non_iron_hues = _non_iron_ingot_hues()
+    ingot_id = int(_resource_item_id("ingot") or 0)
     for _ in range(2):
         for it in _items_in(container_serial, True):
             if int(getattr(it, "Graphic", 0) or 0) != int(item_id):
                 continue
             item_hue = int(getattr(it, "Hue", 0) or 0)
-            if int(item_id) == int(INGOT_ID) and int(wanted_hue) == 0:
+            if ingot_id > 0 and int(item_id) == ingot_id and int(wanted_hue) == 0:
                 # Base iron matching: accept any non-colored ingot hue.
                 if item_hue in non_iron_hues:
                     continue
@@ -3151,6 +3253,7 @@ def _count_in_hued(container_serial, item_id, hue=None):
         return _count_in(container_serial, item_id)
     wanted_hue = int(hue)
     non_iron_hues = _non_iron_ingot_hues()
+    ingot_id = int(_resource_item_id("ingot") or 0)
     total = 0
     for attempt in range(2):
         total = 0
@@ -3158,7 +3261,7 @@ def _count_in_hued(container_serial, item_id, hue=None):
             if int(getattr(it, "Graphic", 0) or 0) != int(item_id):
                 continue
             item_hue = int(getattr(it, "Hue", 0) or 0)
-            if int(item_id) == int(INGOT_ID) and int(wanted_hue) == 0:
+            if ingot_id > 0 and int(item_id) == ingot_id and int(wanted_hue) == 0:
                 # Base iron matching: accept any non-colored ingot hue.
                 if item_hue in non_iron_hues:
                     continue
@@ -3225,6 +3328,7 @@ def _restock_resource(item_id, min_in_pack=40, pull_amount=400, hue=None, materi
     global RESTOCK_BLOCK_UNTIL
     mk = str(material_key or "").strip().lower()
     key = f"{int(item_id)}:{mk}:{'' if hue is None else int(hue)}"
+    ingot_id = int(_resource_item_id("ingot") or 0)
     resource_before = 0
     if int(RESOURCE_CONTAINER_SERIAL or 0) > 0:
         if mk:
@@ -3262,7 +3366,7 @@ def _restock_resource(item_id, min_in_pack=40, pull_amount=400, hue=None, materi
         if int(getattr(item, "Graphic", 0) or 0) != int(item_id):
             continue
         if mk:
-            if int(item_id) == int(INGOT_ID) and mk in ("ingot", "ingot_iron"):
+            if ingot_id > 0 and int(item_id) == ingot_id and mk in ("ingot", "ingot_iron"):
                 ih = int(getattr(item, "Hue", 0) or 0)
                 if ih in non_iron_hues:
                     continue
@@ -3292,7 +3396,7 @@ def _restock_resource(item_id, min_in_pack=40, pull_amount=400, hue=None, materi
     safety = 0
     while safety < 120 and remaining_to_move > 0:
         safety += 1
-        if mk in ("ingot", "ingot_iron") and int(item_id) == int(INGOT_ID):
+        if ingot_id > 0 and mk in ("ingot", "ingot_iron") and int(item_id) == ingot_id:
             iron_hue = hue
             if iron_hue is None:
                 iron_hue = _resolved_ingot_hue(mk, "Blacksmith", SELECTED_SERVER)
@@ -3345,7 +3449,7 @@ def _restock_resource(item_id, min_in_pack=40, pull_amount=400, hue=None, materi
         _say(f"Restock moved-item trace: source serial 0x{int(source.Serial):08X} not found after move.")
     RESTOCK_BLOCK_UNTIL[key] = _now_s() + 0.25
 
-    if mk in ("ingot", "ingot_iron") and int(item_id) == int(INGOT_ID):
+    if ingot_id > 0 and mk in ("ingot", "ingot_iron") and int(item_id) == ingot_id:
         iron_hue = hue
         if iron_hue is None:
             iron_hue = _resolved_ingot_hue(mk, "Blacksmith", SELECTED_SERVER)
@@ -3369,7 +3473,7 @@ def _restock_resource(item_id, min_in_pack=40, pull_amount=400, hue=None, materi
         # Do not treat delta-only movement as success for fill.
         # We must verify materials are actually usable from backpack.
         _wait_and_pump(0.5, 0.05)
-        if mk in ("ingot", "ingot_iron") and int(item_id) == int(INGOT_ID):
+        if ingot_id > 0 and mk in ("ingot", "ingot_iron") and int(item_id) == ingot_id:
             iron_hue = hue
             if iron_hue is None:
                 iron_hue = _resolved_ingot_hue(mk, "Blacksmith", SELECTED_SERVER)
@@ -3412,11 +3516,33 @@ def _is_exceptional_item(item):
     return "exceptional" in str(props).lower()
 
 
+def _allow_keep_graphics():
+    keep_ids = set()
+    for name in KEEP_RESOURCE_NAMES:
+        iid = int(_resource_item_id(name) or 0)
+        if iid > 0:
+            keep_ids.add(iid)
+    for iid in (
+        TINKER_TOOL_IDS
+        + BLACKSMITH_TOOL_IDS
+        + TAILOR_TOOL_IDS
+        + CARPENTRY_TOOL_IDS
+    ):
+        try:
+            gi = int(iid or 0)
+        except Exception:
+            gi = 0
+        if gi > 0:
+            keep_ids.add(gi)
+    return keep_ids
+
+
 def _move_non_keep_from_salvage_to_trash():
     if not SALVAGE_BAG_SERIAL or not TRASH_CONTAINER_SERIAL:
         return
+    keep_ids = _allow_keep_graphics()
     for it in _items_in(SALVAGE_BAG_SERIAL, True):
-        if int(getattr(it, "Graphic", 0) or 0) in ALLOW_KEEP_GRAPHICS:
+        if int(getattr(it, "Graphic", 0) or 0) in keep_ids:
             continue
         _move_item_to_container(it.Serial, TRASH_CONTAINER_SERIAL, int(getattr(it, "Amount", 1) or 1))
 
@@ -3468,50 +3594,62 @@ def _item_matches_material_key(item, material_key):
     if not mk:
         return True
     txt = _normalize_text(_get_item_text(item))
-    # Base type guard (lets granite reuse this path later).
-    if (mk.startswith("ingot_") or mk == "ingot") and "ingot" not in txt:
+    opt = _material_option_by_key(mk, "")
+    base = _normalize_text(opt.get("base", "") if isinstance(opt, dict) else "")
+    if not base:
+        base = _normalize_text(str(mk).split("_")[0] if "_" in mk else mk)
+
+    if _material_base_matches(base, "ingot"):
+        if "ingot" not in txt:
+            return False
+        ingot_hue = _resolved_ingot_hue(mk, "", SELECTED_SERVER)
+        if ingot_hue is None and STRICT_INGOT_HUE_MATCH:
+            return False
+        if ingot_hue is None:
+            return True
+        item_hue = int(getattr(item, "Hue", 0) or 0)
+        if int(ingot_hue) == 0:
+            return item_hue not in _non_iron_ingot_hues()
+        return int(item_hue) == int(ingot_hue)
+
+    if _material_base_matches(base, "board") and "board" not in txt:
         return False
-    if mk.startswith("granite_") and "granite" not in txt:
+    if _material_base_matches(base, "cloth") and "cloth" not in txt:
         return False
-    wanted = str(MATERIAL_COLOR_BY_KEY.get(mk, "") or "").strip().lower()
-    if not wanted:
+    if _material_base_matches(base, "leather") and ("leather" not in txt and "hide" not in txt):
+        return False
+    if _material_base_matches(base, "scale") and "scale" not in txt:
+        return False
+
+    suffix = mk
+    if base and mk.startswith(base + "_"):
+        suffix = mk[len(base) + 1:]
+    terms = []
+    for token in str(suffix or "").split("_"):
+        t = _normalize_text(token)
+        if not t:
+            continue
+        if t in (base, base.rstrip("s"), "ingot", "ingots", "scale", "scales", "hide", "hides"):
+            continue
+        terms.append(t)
+    if not terms:
         return True
-    if wanted == "iron":
-        # Iron is the base subtype; reject known non-iron ingot labels.
-        for v in MATERIAL_COLOR_BY_KEY.values():
-            vv = str(v or "").strip().lower()
-            if vv and vv != "iron" and vv in txt:
-                return False
-        return "ingot" in txt
-    return wanted in txt
+    return all(term in txt for term in terms)
 
 
 def _find_first_in_container_by_material_key(container_serial, item_id, material_key):
-    mk = str(material_key or "").strip().lower()
-    non_iron_hues = _non_iron_ingot_hues()
     for _ in range(2):
         for it in _items_in(container_serial, True):
             if int(getattr(it, "Graphic", 0) or 0) != int(item_id):
                 continue
             if _item_matches_material_key(it, material_key):
                 return it
-        # Fallback for shards where iron subtype text is omitted/variant.
-        # Only accept base/non-colored ingot hues for iron.
-        if mk in ("ingot", "ingot_iron") and int(item_id) == int(INGOT_ID):
-            for it in _items_in(container_serial, True):
-                if int(getattr(it, "Graphic", 0) or 0) == int(INGOT_ID):
-                    ih = int(getattr(it, "Hue", 0) or 0)
-                    if ih in non_iron_hues:
-                        continue
-                    return it
         _ensure_container_open(container_serial, force=True)
         _prime_subcontainers(container_serial, max_depth=2)
     return None
 
 
 def _count_in_by_material_key(container_serial, item_id, material_key):
-    mk = str(material_key or "").strip().lower()
-    non_iron_hues = _non_iron_ingot_hues()
     total = 0
     for attempt in range(2):
         total = 0
@@ -3521,16 +3659,6 @@ def _count_in_by_material_key(container_serial, item_id, material_key):
             if not _item_matches_material_key(it, material_key):
                 continue
             total += int(getattr(it, "Amount", 1) or 1)
-        # Fallback for shards where iron subtype text is omitted/variant.
-        # Only count base/non-colored ingot hues for iron.
-        if total <= 0 and mk in ("ingot", "ingot_iron") and int(item_id) == int(INGOT_ID):
-            for it in _items_in(container_serial, True):
-                if int(getattr(it, "Graphic", 0) or 0) != int(INGOT_ID):
-                    continue
-                ih = int(getattr(it, "Hue", 0) or 0)
-                if ih in non_iron_hues:
-                    continue
-                total += int(getattr(it, "Amount", 1) or 1)
         if total > 0 or attempt > 0:
             break
         _ensure_container_open(container_serial, force=True)
@@ -4275,7 +4403,7 @@ def _deed_progress_ready(parsed):
 
 # Fill context helper: open and bind the correct craft gump for the profession.
 def _open_craft_gump_for_profession(profession):
-    global ACTIVE_CRAFT_GUMP_ID, ACTIVE_CRAFT_PROFESSION
+    global ACTIVE_CRAFT_GUMP_ID, ACTIVE_CRAFT_PROFESSION, ACTIVE_CRAFT_MATERIAL_KEY, OPEN_CRAFT_BLOCK_UNTIL
 
     def _wait_for_profession_gump(expected_id, timeout_s=2.8):
         t0 = _now_s()
@@ -4314,9 +4442,27 @@ def _open_craft_gump_for_profession(profession):
         return out
 
     def _open_with_tool(tool_item, expected_id, tool_ids):
+        global OPEN_CRAFT_BLOCK_UNTIL
         # Open the craft gump for the target profession using the provided tool.
         # Keep existing craft gumps open to avoid gump churn/socket pressure.
         # Only close deed gump if present because it can steal focus.
+        now = _now_s()
+        block_until = float(OPEN_CRAFT_BLOCK_UNTIL or 0.0)
+        if now < block_until:
+            remain = max(0.0, block_until - now)
+            _say(f"OpenCraft: cooldown active ({remain:.1f}s); skipping reopen attempt.", 33)
+            _wait_and_pump(min(0.8, remain), 0.05)
+            return 0
+
+        def _action_throttle_seen():
+            try:
+                return bool(
+                    API.InJournal("must wait to perform another action", True)
+                    or API.InJournal("must wait to perform another", True)
+                )
+            except Exception:
+                return False
+
         try:
             API.CloseGump(int(BOD_DEED_GUMP_ID))
         except Exception:
@@ -4324,7 +4470,7 @@ def _open_craft_gump_for_profession(profession):
         _clear_pending_target_context("open_craft_gump")
         _sleep(0.08)
         before = _gump_ids_snapshot()
-        for _ in range(3):
+        for attempt in range(1, 4):
             if _should_stop():
                 return 0
             if not _wait_for_move_settle(3.0):
@@ -4369,28 +4515,48 @@ def _open_craft_gump_for_profession(profession):
                 _say(f"OpenCraft: UseObject tool failed for {profession}: {ex}", 33)
                 _sleep(0.25)
                 continue
+            _wait_and_pump(0.14, 0.05)
+            if _action_throttle_seen():
+                OPEN_CRAFT_BLOCK_UNTIL = _now_s() + float(OPEN_CRAFT_FAIL_COOLDOWN_S)
+                _say(
+                    f"OpenCraft: shard action throttle detected; delaying further open attempts for {OPEN_CRAFT_FAIL_COOLDOWN_S:.1f}s.",
+                    33
+                )
+                return 0
             opened_gid = _wait_for_profession_gump(int(expected_id), 2.8)
             if opened_gid > 0:
                 ACTIVE_CRAFT_GUMP_ID = int(opened_gid)
                 ACTIVE_CRAFT_PROFESSION = str(profession or "")
+                ACTIVE_CRAFT_MATERIAL_KEY = ""
+                OPEN_CRAFT_BLOCK_UNTIL = 0.0
                 return int(opened_gid)
             try:
                 if expected_id and API.HasGump(int(expected_id)):
                     ACTIVE_CRAFT_GUMP_ID = int(expected_id)
                     ACTIVE_CRAFT_PROFESSION = str(profession or "")
+                    ACTIVE_CRAFT_MATERIAL_KEY = ""
+                    OPEN_CRAFT_BLOCK_UNTIL = 0.0
                     return int(expected_id)
             except Exception:
                 pass
+            if _action_throttle_seen():
+                OPEN_CRAFT_BLOCK_UNTIL = _now_s() + float(OPEN_CRAFT_FAIL_COOLDOWN_S)
+                _say(
+                    f"OpenCraft: shard action throttle detected; delaying further open attempts for {OPEN_CRAFT_FAIL_COOLDOWN_S:.1f}s.",
+                    33
+                )
+                return 0
             try:
                 if API.InJournal("must be near", True) or API.InJournal("must be closer", True):
                     _say("OpenCraft: shard reported proximity requirement while opening craft gump.", 33)
             except Exception:
                 pass
-            _sleep(0.35)
+            _wait_and_pump(float(OPEN_CRAFT_RETRY_BACKOFF_S) * float(attempt), 0.05)
         try:
             after = _gump_ids_snapshot()
         except Exception:
             after = []
+        OPEN_CRAFT_BLOCK_UNTIL = _now_s() + float(OPEN_CRAFT_FAIL_COOLDOWN_S)
         _say(
             f"OpenCraft: failed to open {profession} gump 0x{int(expected_id):08X}; "
             f"gumps before={sorted(list(before))} after={sorted(list(after))}.",
@@ -4429,7 +4595,7 @@ def _open_craft_gump_for_profession(profession):
 
 
 def _is_gump_open(gump_id):
-    global ACTIVE_CRAFT_GUMP_ID, ACTIVE_CRAFT_PROFESSION
+    global ACTIVE_CRAFT_GUMP_ID, ACTIVE_CRAFT_PROFESSION, ACTIVE_CRAFT_MATERIAL_KEY
     gid = int(gump_id or 0)
     if gid <= 0:
         return False
@@ -4438,11 +4604,13 @@ def _is_gump_open(gump_id):
         if not ok and int(ACTIVE_CRAFT_GUMP_ID or 0) == gid:
             ACTIVE_CRAFT_GUMP_ID = 0
             ACTIVE_CRAFT_PROFESSION = ""
+            ACTIVE_CRAFT_MATERIAL_KEY = ""
         return ok
     except Exception:
         if int(ACTIVE_CRAFT_GUMP_ID or 0) == gid:
             ACTIVE_CRAFT_GUMP_ID = 0
             ACTIVE_CRAFT_PROFESSION = ""
+            ACTIVE_CRAFT_MATERIAL_KEY = ""
         return False
 
 
@@ -4529,6 +4697,30 @@ def _apply_material_selection(gump_id, recipe):
         return False
 
 
+def _tinker_item_buttons(item_key):
+    srv = _normalize_server_name(SELECTED_SERVER or DEFAULT_SERVER)
+    srv_node = KEY_MAPS.get(srv, {}) if isinstance(KEY_MAPS, dict) else {}
+    if not isinstance(srv_node, dict):
+        return []
+    tinker_node = srv_node.get("Tinker", {})
+    if not isinstance(tinker_node, dict):
+        return []
+    item_keys = tinker_node.get("item_keys", {})
+    if not isinstance(item_keys, dict):
+        return []
+    ent = item_keys.get(str(item_key or "").strip(), {})
+    if not isinstance(ent, dict):
+        return []
+    return [int(x) for x in (ent.get("buttons", []) or []) if int(x) > 0][:2]
+
+
+def _tinker_ingot_buttons():
+    opt = _material_option_by_key("ingot", "Tinker")
+    if not isinstance(opt, dict):
+        return []
+    return [int(x) for x in (opt.get("buttons", []) or []) if int(x) > 0][:2]
+
+
 # Tool helper: ensure requested tool exists, crafting it via tinkering when needed.
 def _ensure_tool_ids(tool_ids, craft_buttons=None):
     # Explicitly open/scan backpack first; some client states need this before item scans are reliable.
@@ -4548,19 +4740,24 @@ def _ensure_tool_ids(tool_ids, craft_buttons=None):
         return False
     # Need a tinker tool to craft other tools.
     if tool_ids != TINKER_TOOL_IDS:
-        if not _ensure_tool_ids(TINKER_TOOL_IDS, TINKER_BTN_TINKER_TOOL):
+        if not _ensure_tool_ids(TINKER_TOOL_IDS, _tinker_item_buttons("tinker_s_tools")):
             return False
+    ingot_id = int(_resource_item_id("ingot") or 0)
+    if ingot_id <= 0:
+        _say("Missing resource item-id mapping for 'ingot' in craftables.db resource_catalog.", 33)
+        return False
     iron_hue = _resolved_ingot_hue("ingot", "Tinker", SELECTED_SERVER)
     if iron_hue is None and STRICT_INGOT_HUE_MATCH:
         _say("Missing ingot hue mapping for ingot in craftables.db material_options.", 33)
         return False
-    if _restock_resource(INGOT_ID, min_in_pack=30, pull_amount=120, hue=iron_hue, material_key="ingot") < 5:
+    if _restock_resource(ingot_id, min_in_pack=30, pull_amount=120, hue=iron_hue, material_key="ingot") < 5:
         return False
     gid = _open_craft_gump_for_profession("Tinker")
     if not gid:
         return False
-    if TINKER_IRON_MATERIAL_BUTTONS:
-        _click_recipe_buttons(gid, TINKER_IRON_MATERIAL_BUTTONS)
+    ingot_buttons = _tinker_ingot_buttons()
+    if ingot_buttons:
+        _click_recipe_buttons(gid, ingot_buttons)
     _click_recipe_buttons(gid, craft_buttons)
     _sleep(0.4)
     return _find_first_in_container_multi(bp_ref, tool_ids) is not None
@@ -4568,13 +4765,13 @@ def _ensure_tool_ids(tool_ids, craft_buttons=None):
 
 def _ensure_tools_for_profession(profession):
     if profession == "Blacksmith":
-        return _ensure_tool_ids(BLACKSMITH_TOOL_IDS, TINKER_BTN_TONGS)
+        return _ensure_tool_ids(BLACKSMITH_TOOL_IDS, _tinker_item_buttons("tongs"))
     if profession == "Tailor":
-        return _ensure_tool_ids(TAILOR_TOOL_IDS, TINKER_BTN_SEWING_KIT)
+        return _ensure_tool_ids(TAILOR_TOOL_IDS, _tinker_item_buttons("sewing_kit"))
     if profession == "Carpentry":
-        return _ensure_tool_ids(CARPENTRY_TOOL_IDS, TINKER_BTN_DOVETAIL_SAW)
+        return _ensure_tool_ids(CARPENTRY_TOOL_IDS, _tinker_item_buttons("dovetail_saw"))
     if profession == "Tinker":
-        return _ensure_tool_ids(TINKER_TOOL_IDS, TINKER_BTN_TINKER_TOOL)
+        return _ensure_tool_ids(TINKER_TOOL_IDS, _tinker_item_buttons("tinker_s_tools"))
     return True
 
 
@@ -4604,25 +4801,34 @@ def ensure_tool_for_profession(profession):
 
 # D09 helper: ensure correct craft gump context is open and (optionally) material is selected.
 def ensure_craft_context(profession, recipe, open_gid=0, apply_material=True):
-    global ACTIVE_CRAFT_GUMP_ID, ACTIVE_CRAFT_PROFESSION
+    global ACTIVE_CRAFT_GUMP_ID, ACTIVE_CRAFT_PROFESSION, ACTIVE_CRAFT_MATERIAL_KEY
     gid = int(open_gid or 0)
+    prior_gid = int(gid)
     prof = str(profession or "")
     apply_mat = bool(apply_material)
     opened_now = False
+    was_open = bool(gid > 0 and _is_gump_open(gid))
     _diag_step("D09", "CONTEXT", f"ensure_craft_context: prof={prof}, gid={gid}", DIAG_HUE_CONTEXT)
     # If caller passed a live gump but active-context metadata drifted, rebind instead of reopening.
     if gid > 0 and _is_gump_open(gid):
+        if str(ACTIVE_CRAFT_PROFESSION or "") != str(prof or ""):
+            ACTIVE_CRAFT_MATERIAL_KEY = ""
         ACTIVE_CRAFT_GUMP_ID = int(gid)
         ACTIVE_CRAFT_PROFESSION = str(prof or "")
     if gid <= 0 or (not _is_active_craft_context(prof, gid)):
         _clear_pending_target_context("ensure_craft_context")
         gid = _open_craft_gump_for_profession(prof)
-        opened_now = bool(gid > 0)
+        opened_now = bool(gid > 0 and ((not was_open) or int(gid) != int(prior_gid)))
         if not gid:
             _diag_step("D09", "CONTEXT", "ensure_craft_context: open_gump fail", DIAG_HUE_CONTEXT)
             return 0, "open_gump"
     # Only apply material selection when explicitly requested by caller.
-    if apply_mat:
+    mat_buttons = _material_buttons_from_recipe(recipe)
+    wanted_material_key = str((recipe or {}).get("material_key", "") or "").strip().lower()
+    current_material_key = str(ACTIVE_CRAFT_MATERIAL_KEY or "").strip().lower()
+    material_changed = bool(wanted_material_key and wanted_material_key != current_material_key)
+    should_apply_material = bool(apply_mat and bool(mat_buttons) and (opened_now or material_changed))
+    if should_apply_material:
         _diag_step(
             "D09",
             "CONTEXT",
@@ -4640,7 +4846,26 @@ def ensure_craft_context(profession, recipe, open_gid=0, apply_material=True):
                 f"ensure_craft_context: gump closed after material_select gid=0x{int(gid or 0):08X}",
                 DIAG_HUE_CONTEXT
             )
+            ACTIVE_CRAFT_MATERIAL_KEY = ""
             return 0, "material_select"
+        ACTIVE_CRAFT_MATERIAL_KEY = wanted_material_key
+    elif apply_mat and not bool(mat_buttons):
+        _diag_step(
+            "D09",
+            "CONTEXT",
+            f"ensure_craft_context: material_select skipped gid=0x{int(gid or 0):08X} reason=no_material_buttons",
+            DIAG_HUE_CONTEXT
+        )
+    elif apply_mat:
+        _diag_step(
+            "D09",
+            "CONTEXT",
+            (
+                f"ensure_craft_context: material_select skipped gid=0x{int(gid or 0):08X} "
+                f"reason=unchanged opened_now={opened_now} material_changed={material_changed}"
+            ),
+            DIAG_HUE_CONTEXT
+        )
     else:
         _diag_step(
             "D09",
@@ -4658,15 +4883,19 @@ def _ensure_material_for_recipe(recipe, required_items=1):
     for r in reqs:
         mat = _normalize_text(r.get("material", "") or "")
         if mat == "ingot":
+            ingot_id = int(_resource_item_id("ingot") or 0)
+            if ingot_id <= 0:
+                _say("Missing resource item-id mapping for 'ingot' in craftables.db resource_catalog.", 33)
+                return False
             hue = r.get("hue", None)
             if hue is None:
-                hue = _wanted_hue_for_item(recipe, INGOT_ID)
+                hue = _wanted_hue_for_item(recipe, ingot_id)
             mk = str(recipe.get("material_key", "") or "").strip().lower()
             if hue == "__MISSING__":
                 mk = mk or "unknown"
                 _say(f"Missing ingot hue mapping for {mk}. Set material_options.material_option_hue.", 33)
                 return False
-            iid = int(r.get("item_id", 0) or INGOT_ID)
+            iid = int(r.get("item_id", 0) or ingot_id)
             minimum = int(r.get("min_in_pack", 0) or 60)
             pull = int(r.get("pull_amount", 0) or 400)
             have = _restock_resource(iid, min_in_pack=minimum, pull_amount=pull, hue=hue, material_key=mk)
@@ -4690,33 +4919,43 @@ def _ensure_material_for_recipe(recipe, required_items=1):
                     f"(pack {int(have)}, resource any {res_any}, resource key {res_key}, resource hue {res_hue}, wanted hue {hue}, key {mk}).",
                     33
                 )
-                if mk in ("ingot", "ingot_iron") and int(res_any) > 0 and int(res_key) == 0:
-                    _say("Base ingot subtype text match failed; fallback-to-any-ingot path will be used.", 33)
                 return False
             continue
         if mat == "cloth":
-            iid = int(r.get("item_id", 0) or CLOTH_ID)
+            iid = int(r.get("item_id", 0) or int(_resource_item_id("cloth") or 0))
+            if iid <= 0:
+                _say("Missing resource item-id mapping for 'cloth' in craftables.db resource_catalog.", 33)
+                return False
             minimum = int(r.get("min_in_pack", 0) or 60)
             pull = int(r.get("pull_amount", 0) or 300)
             if _restock_resource(iid, min_in_pack=minimum, pull_amount=pull) < 10:
                 return False
             continue
         if mat == "leather":
-            iid = int(r.get("item_id", 0) or LEATHER_ID)
+            iid = int(r.get("item_id", 0) or int(_resource_item_id("leather") or 0))
+            if iid <= 0:
+                _say("Missing resource item-id mapping for 'leather' in craftables.db resource_catalog.", 33)
+                return False
             minimum = int(r.get("min_in_pack", 0) or 60)
             pull = int(r.get("pull_amount", 0) or 300)
             if _restock_resource(iid, min_in_pack=minimum, pull_amount=pull) < 10:
                 return False
             continue
         if mat == "board":
-            iid = int(r.get("item_id", 0) or BOARD_ID)
+            iid = int(r.get("item_id", 0) or int(_resource_item_id("board") or 0))
+            if iid <= 0:
+                _say("Missing resource item-id mapping for 'board' in craftables.db resource_catalog.", 33)
+                return False
             minimum = int(r.get("min_in_pack", 0) or 80)
             pull = int(r.get("pull_amount", 0) or 500)
             if _restock_resource(iid, min_in_pack=minimum, pull_amount=pull) < 10:
                 return False
             continue
         if mat in ("feather", "feathers"):
-            iid = int(r.get("item_id", 0) or FEATHER_ID)
+            iid = int(r.get("item_id", 0) or int(_resource_item_id("feather") or 0))
+            if iid <= 0:
+                _say("Missing resource item-id mapping for 'feather' in craftables.db resource_catalog.", 33)
+                return False
             minimum = int(r.get("min_in_pack", 0) or 60)
             pull = int(r.get("pull_amount", 0) or 300)
             if _restock_resource(iid, min_in_pack=minimum, pull_amount=pull) < 10:
@@ -5557,16 +5796,22 @@ def _create_control_gump():
     CONTROL_CONTROLS.append(tool_btn)
 
     y += 24
+    server_options = _current_server_options()
+    if not server_options:
+        server_options = [str(SELECTED_SERVER or DEFAULT_SERVER or "<none>")]
+    display_server = _normalize_server_name(SELECTED_SERVER or DEFAULT_SERVER)
+    if not display_server:
+        display_server = str(server_options[0] if server_options else "<none>")
     srv_idx = 0
     try:
-        srv_idx = SERVER_OPTIONS.index(str(SELECTED_SERVER or DEFAULT_SERVER))
+        srv_idx = list(server_options).index(str(display_server))
     except Exception:
         srv_idx = 0
-    srv_label = API.CreateGumpTTFLabel(f"Server: {str(SELECTED_SERVER or DEFAULT_SERVER)}", 12, "#FFFFFF", "alagard", "left", 220)
+    srv_label = API.CreateGumpTTFLabel(f"Server: {str(display_server)}", 12, "#FFFFFF", "alagard", "left", 220)
     srv_label.SetPos(10, y)
     g.Add(srv_label)
     CONTROL_CONTROLS.append(srv_label)
-    srv_dd = API.CreateDropDown(150, list(SERVER_OPTIONS), srv_idx)
+    srv_dd = API.CreateDropDown(150, list(server_options), srv_idx)
     srv_dd.SetPos(220, y - 2)
     g.Add(srv_dd)
     srv_dd.OnDropDownOptionSelected(_set_server)
