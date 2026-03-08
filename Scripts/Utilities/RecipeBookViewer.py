@@ -3,6 +3,7 @@ import json
 import os
 import re
 import sqlite3
+import sys
 
 """
 RecipeBookViewer (read-only)
@@ -17,7 +18,7 @@ Displays (no write operations):
 - category
 - item name
 - material key
-- source key used for lookup (item_keys.item_key)
+- source key used for lookup (key-map item key)
 - category button id
 - item button id
 - full button path
@@ -61,6 +62,27 @@ METAL_PROGRESSION = [
     "ingot_valorite",
 ]
 METAL_SORT_INDEX = {k: i for i, k in enumerate(METAL_PROGRESSION)}
+
+RECIPE_STORE = None
+_script_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
+_util_dir = _script_dir
+if os.path.basename(str(_util_dir or "")).lower() != "utilities":
+    _cand = os.path.join(_script_dir, "Utilities")
+    if os.path.isdir(_cand):
+        _util_dir = _cand
+_project_root_dir = _util_dir
+while _project_root_dir and os.path.basename(str(_project_root_dir or "")).lower() in ("resources", "utilities", "skills", "scripts"):
+    _project_root_dir = os.path.dirname(_project_root_dir)
+if _util_dir and _util_dir not in sys.path:
+    sys.path.insert(0, _util_dir)
+try:
+    import RecipeStore as RECIPE_STORE
+    try:
+        RECIPE_STORE.set_base_dir(_project_root_dir or _util_dir)
+    except Exception:
+        pass
+except Exception:
+    RECIPE_STORE = None
 
 
 def _say(msg, hue=88):
@@ -186,12 +208,13 @@ def _base_dir():
 
 
 def _db_path():
-    base = _base_dir()
+    if RECIPE_STORE is None:
+        return ""
     try:
-        root = os.path.dirname(base) if os.path.basename(str(base or "")).lower() == "utilities" else base
+        p = str(RECIPE_STORE._db_path() or "").strip()
     except Exception:
-        root = base
-    return os.path.join(root, "Databases", DB_FILE)
+        p = ""
+    return os.path.normpath(p) if p else ""
 
 
 def _connect_ro():
@@ -242,302 +265,205 @@ def _load_rows():
         _say(f"RecipeBookViewer: DB not found: {path}", 33)
         return []
 
-    try:
-        conn = _connect_ro()
-    except Exception as ex:
-        _say(f"RecipeBookViewer: open failed (read-only): {ex}", 33)
+    if RECIPE_STORE is None:
+        _say("RecipeBookViewer: RecipeStore unavailable.", 33)
         return []
 
     rows = []
     try:
-        conn.row_factory = sqlite3.Row
+        key_maps = RECIPE_STORE.load_key_maps() or {}
+    except Exception as ex:
+        _say(f"RecipeBookViewer: key-map load failed: {ex}", 33)
+        key_maps = {}
+    try:
+        recipe_rows = RECIPE_STORE.load_recipes() or []
+    except Exception as ex:
+        _say(f"RecipeBookViewer: recipe load failed: {ex}", 33)
+        recipe_rows = []
 
-        server_by_id = {}
-        prof_by_id = {}
-        if _table_columns(conn, "servers"):
-            try:
-                cur = conn.execute("SELECT id, name FROM servers")
-                for r in cur.fetchall():
-                    server_by_id[int(r["id"] or 0)] = str(r["name"] or "")
-            except Exception:
-                pass
-        if _table_columns(conn, "professions"):
-            try:
-                cur = conn.execute("SELECT id, name FROM professions")
-                for r in cur.fetchall():
-                    prof_by_id[int(r["id"] or 0)] = str(r["name"] or "")
-            except Exception:
-                pass
-
-        item_cols = _table_columns(conn, "item_keys")
-        recipe_cols = _table_columns(conn, "recipes")
-        mat_cols = _table_columns(conn, "material_keys")
-
-        item_resource_costs = {}
-        irc_cols = _table_columns(conn, "item_resource_costs")
-        res_cols = _table_columns(conn, "resources")
-        if (
-            irc_cols
-            and res_cols
-            and "server_id" in irc_cols
-            and "profession_id" in irc_cols
-            and "item_key" in irc_cols
-            and "slot" in irc_cols
-            and "per_item" in irc_cols
-            and "resource_id" in irc_cols
-            and "id" in res_cols
-            and "name" in res_cols
-        ):
-            cur = conn.execute(
-                """
-                SELECT irc.server_id, irc.profession_id, irc.item_key, irc.slot, irc.per_item, res.name
-                FROM item_resource_costs irc
-                JOIN resources res ON res.id = irc.resource_id
-                ORDER BY irc.server_id, irc.profession_id, irc.item_key, irc.slot
-                """
-            )
-            for r in cur.fetchall():
-                sk = _norm_text(server_by_id.get(int(r["server_id"] or 0), ""))
-                pk = _norm_text(prof_by_id.get(int(r["profession_id"] or 0), ""))
-                ik = _norm_text(r["item_key"])
-                nm = str(r["name"] or "").strip().lower()
-                try:
-                    qty = int(r["per_item"] or 0)
-                except Exception:
-                    qty = 0
-                if not (sk and pk and ik and nm and qty > 0):
-                    continue
-                k = (sk, pk, ik)
-                arr = item_resource_costs.get(k)
-                if arr is None:
-                    arr = []
-                    item_resource_costs[k] = arr
-                arr.append({"material": nm, "per_item": qty})
-
-        item_key_buttons = {}
-        ikb_cols = _table_columns(conn, "item_key_buttons")
-        if (
-            ikb_cols
-            and "server_id" in ikb_cols
-            and "profession_id" in ikb_cols
-            and "item_key" in ikb_cols
-            and "slot" in ikb_cols
-            and "button_id" in ikb_cols
-        ):
-            cur = conn.execute(
-                """
-                SELECT server_id, profession_id, item_key, slot, button_id
-                FROM item_key_buttons
-                ORDER BY server_id, profession_id, item_key, slot
-                """
-            )
-            for r in cur.fetchall():
-                k = (
-                    _norm_text(server_by_id.get(int(r["server_id"] or 0), "")),
-                    _norm_text(prof_by_id.get(int(r["profession_id"] or 0), "")),
-                    _norm_text(r["item_key"]),
-                )
-                if not (k[0] and k[1] and k[2]):
-                    continue
-                arr = item_key_buttons.get(k)
-                if arr is None:
-                    arr = []
-                    item_key_buttons[k] = arr
-                try:
-                    bid = int(r["button_id"] or 0)
-                except Exception:
-                    bid = 0
-                if bid > 0:
-                    arr.append(bid)
-
+    try:
         item_records = []
-        if item_cols:
-            item_select = [
-                "server_id",
-                "profession_id",
-                "item_key",
-                "name",
-                "category" if "category" in item_cols else "'' AS category",
-                "default_material_key" if "default_material_key" in item_cols else "'' AS default_material_key",
-            ]
-            item_sql = "SELECT " + ", ".join(item_select) + " FROM item_keys ORDER BY server_id, profession_id, category, name"
-            cur = conn.execute(item_sql)
-            for r in cur.fetchall():
-                server = str(server_by_id.get(int(r["server_id"] or 0), "") or "")
-                profession = str(prof_by_id.get(int(r["profession_id"] or 0), "") or "")
-                item_key = str(r["item_key"] or "")
-                name = str(r["name"] or "")
-                category = str(r["category"] or "")
-                buttons = []
-                default_mk = _norm_text(r["default_material_key"])
-                resources = []
-                if not str(name or "").strip():
-                    continue
-                rk = (_norm_text(server), _norm_text(profession), _norm_text(item_key))
-                if rk in item_key_buttons and item_key_buttons.get(rk):
-                    buttons = list(item_key_buttons.get(rk) or [])
-                if rk in item_resource_costs and item_resource_costs.get(rk):
-                    resources = list(item_resource_costs.get(rk) or [])
-
-                item_records.append(
-                    {
-                        "server": server,
-                        "profession": profession,
-                        "item_key": item_key,
-                        "name": name,
-                        "name_k": _norm_text(name),
-                        "category": category,
-                        "buttons": buttons,
-                        "default_material_key": default_mk,
-                        "resources": resources,
-                    }
-                )
-        else:
-            _say("RecipeBookViewer: item_keys table missing/unreadable.", 33)
-            return []
-
         material_by_prof = {}
         material_buttons_by_key = {}
-        mkb_cols = _table_columns(conn, "material_key_buttons")
-        if (
-            mkb_cols
-            and "server_id" in mkb_cols
-            and "profession_id" in mkb_cols
-            and "material_key" in mkb_cols
-            and "slot" in mkb_cols
-            and "button_id" in mkb_cols
-        ):
-            cur = conn.execute(
-                """
-                SELECT server_id, profession_id, material_key, slot, button_id
-                FROM material_key_buttons
-                ORDER BY server_id, profession_id, material_key, slot
-                """
-            )
-            for r in cur.fetchall():
-                sk = _norm_text(server_by_id.get(int(r["server_id"] or 0), ""))
-                pk = _norm_text(prof_by_id.get(int(r["profession_id"] or 0), ""))
-                mk = _norm_text(r["material_key"])
-                if not mk:
-                    continue
-                k = (sk, pk)
-                s = material_by_prof.get(k)
-                if s is None:
-                    s = set()
-                    material_by_prof[k] = s
-                s.add(mk)
-                mk_key = (sk, pk, mk)
-                arr = material_buttons_by_key.get(mk_key)
-                if arr is None:
-                    arr = []
-                    material_buttons_by_key[mk_key] = arr
-                try:
-                    bid = int(r["button_id"] or 0)
-                except Exception:
-                    bid = 0
-                if bid > 0:
-                    arr.append(bid)
+        seen_item_identity = set()
 
-        if mat_cols and "server_id" in mat_cols and "profession_id" in mat_cols and "material_key" in mat_cols:
-            mat_select = [
-                "server_id",
-                "profession_id",
-                "material_key",
-            ]
-            cur = conn.execute("SELECT " + ", ".join(mat_select) + " FROM material_keys")
-            for r in cur.fetchall():
-                sk = _norm_text(server_by_id.get(int(r["server_id"] or 0), ""))
-                pk = _norm_text(prof_by_id.get(int(r["profession_id"] or 0), ""))
-                mk = _norm_text(r["material_key"])
-                if not mk:
+        # Build item/material maps from normalized key-map payload.
+        if isinstance(key_maps, dict):
+            for server, srv_node in key_maps.items():
+                if not isinstance(srv_node, dict):
                     continue
-                k = (sk, pk)
-                s = material_by_prof.get(k)
-                if s is None:
-                    s = set()
-                    material_by_prof[k] = s
-                s.add(mk)
+                for profession, prof_node in srv_node.items():
+                    if not isinstance(prof_node, dict):
+                        continue
+                    server = str(server or "")
+                    profession = str(profession or "")
+                    server_k = _norm_text(server)
+                    prof_k = _norm_text(profession)
+                    prof_key = (server_k, prof_k)
 
-        # Aggregate recipe linkage counts by key.
+                    mats = prof_node.get("material_keys", {})
+                    if isinstance(mats, dict):
+                        for material_key, ment in mats.items():
+                            mk = _norm_text(material_key)
+                            if not mk:
+                                continue
+                            s = material_by_prof.get(prof_key)
+                            if s is None:
+                                s = set()
+                                material_by_prof[prof_key] = s
+                            s.add(mk)
+                            btns = []
+                            if isinstance(ment, dict):
+                                for x in list(ment.get("material_buttons", []) or []):
+                                    try:
+                                        bid = int(x)
+                                    except Exception:
+                                        bid = 0
+                                    if bid > 0:
+                                        btns.append(int(bid))
+                            if btns:
+                                material_buttons_by_key[(server_k, prof_k, mk)] = list(btns)
+
+                    items = prof_node.get("item_keys", {})
+                    if isinstance(items, dict):
+                        for item_key, ent in items.items():
+                            if not isinstance(ent, dict):
+                                continue
+                            name = str(ent.get("name", "") or "").strip()
+                            if not name:
+                                continue
+                            item_key_text = str(item_key or "").strip()
+                            name_k = _norm_text(name)
+                            identity = (server_k, prof_k, _norm_text(item_key_text), name_k)
+                            if identity in seen_item_identity:
+                                continue
+                            seen_item_identity.add(identity)
+
+                            default_mk = _norm_text(ent.get("default_material_key", ""))
+                            if default_mk:
+                                s = material_by_prof.get(prof_key)
+                                if s is None:
+                                    s = set()
+                                    material_by_prof[prof_key] = s
+                                s.add(default_mk)
+
+                            buttons = []
+                            for x in list(ent.get("buttons", []) or []):
+                                try:
+                                    bid = int(x)
+                                except Exception:
+                                    bid = 0
+                                if bid > 0:
+                                    buttons.append(int(bid))
+
+                            resources = []
+                            for r in list(ent.get("resources", []) or []):
+                                if not isinstance(r, dict):
+                                    continue
+                                mat = _norm_text(r.get("material", ""))
+                                try:
+                                    qty = int(r.get("per_item", 0) or 0)
+                                except Exception:
+                                    qty = 0
+                                if mat and qty > 0:
+                                    resources.append({"material": mat, "per_item": int(qty)})
+
+                            item_records.append(
+                                {
+                                    "server": server,
+                                    "profession": profession,
+                                    "item_key": item_key_text,
+                                    "name": name,
+                                    "name_k": name_k,
+                                    "category": str(ent.get("category", "") or "").strip(),
+                                    "buttons": buttons,
+                                    "default_material_key": default_mk,
+                                    "resources": resources,
+                                }
+                            )
+
+        # Aggregate recipe linkage counts by key from normalized saved recipes.
         bod_sets = {}
         training_counts = {}
         recipe_materials = {}
         recipe_buttons = {}
-        rb_cols = _table_columns(conn, "recipe_buttons")
-        recipe_buttons_by_id = {}
-        if rb_cols and "recipe_id" in rb_cols and "slot" in rb_cols and "button_id" in rb_cols:
-            cur = conn.execute("SELECT recipe_id, slot, button_id FROM recipe_buttons ORDER BY recipe_id, slot")
-            for r in cur.fetchall():
+        for r in list(recipe_rows or []):
+            if not isinstance(r, dict):
+                continue
+            recipe_type = _norm_text(r.get("recipe_type", ""))
+            if recipe_type not in ("bod", "training"):
+                continue
+            sk = _norm_text(r.get("server", ""))
+            pk = _norm_text(r.get("profession", ""))
+            nk = _norm_text(r.get("name", ""))
+            mk = _norm_text(r.get("material_key", ""))
+            dkey = str(r.get("deed_key", "") or "").strip()
+            btns = []
+            for x in list(r.get("buttons", []) or []):
                 try:
-                    rid = int(r["recipe_id"] or 0)
-                except Exception:
-                    rid = 0
-                if rid <= 0:
-                    continue
-                arr = recipe_buttons_by_id.get(rid)
-                if arr is None:
-                    arr = []
-                    recipe_buttons_by_id[rid] = arr
-                try:
-                    bid = int(r["button_id"] or 0)
+                    bid = int(x)
                 except Exception:
                     bid = 0
                 if bid > 0:
-                    arr.append(bid)
+                    btns.append(int(bid))
+            if not (sk and pk and nk):
+                continue
 
-        if recipe_cols and "server_id" in recipe_cols and "profession_id" in recipe_cols and "name" in recipe_cols:
-            recipe_select = [
-                "id",
-                "recipe_type" if "recipe_type" in recipe_cols else "'' AS recipe_type",
-                "server_id",
-                "profession_id",
-                "name",
-                "material_key" if "material_key" in recipe_cols else "'' AS material_key",
-                "deed_key" if "deed_key" in recipe_cols else "'' AS deed_key",
-            ]
-            where_sql = ""
-            if "recipe_type" in recipe_cols:
-                where_sql = " WHERE lower(coalesce(recipe_type,'')) IN ('bod', 'training')"
-            recipe_sql = (
-                "SELECT "
-                + ", ".join(recipe_select)
-                + " FROM recipes"
-                + where_sql
-                + " ORDER BY server_id, profession_id, name, material_key"
+            by_item = recipe_materials.get((sk, pk, nk))
+            if by_item is None:
+                by_item = set()
+                recipe_materials[(sk, pk, nk)] = by_item
+            if mk:
+                by_item.add(mk)
+                prof_key = (sk, pk)
+                s = material_by_prof.get(prof_key)
+                if s is None:
+                    s = set()
+                    material_by_prof[prof_key] = s
+                s.add(mk)
+
+            key = (sk, pk, nk, mk)
+            if btns and key not in recipe_buttons:
+                recipe_buttons[key] = list(btns)
+            if recipe_type == "bod":
+                s = bod_sets.get(key)
+                if s is None:
+                    s = set()
+                    bod_sets[key] = s
+                if dkey:
+                    s.add(dkey)
+            elif recipe_type == "training":
+                training_counts[key] = int(training_counts.get(key, 0) or 0) + 1
+
+        # Ensure recipes still appear even when key-maps are sparse.
+        seen_name_identity = set()
+        for ent in item_records:
+            seen_name_identity.add((_norm_text(ent.get("server", "")), _norm_text(ent.get("profession", "")), _norm_text(ent.get("name", ""))))
+        for r in list(recipe_rows or []):
+            if not isinstance(r, dict):
+                continue
+            server = str(r.get("server", "") or "")
+            profession = str(r.get("profession", "") or "")
+            name = str(r.get("name", "") or "").strip()
+            if not name:
+                continue
+            identity = (_norm_text(server), _norm_text(profession), _norm_text(name))
+            if identity in seen_name_identity:
+                continue
+            seen_name_identity.add(identity)
+            item_records.append(
+                {
+                    "server": server,
+                    "profession": profession,
+                    "item_key": _norm_text(name),
+                    "name": name,
+                    "name_k": _norm_text(name),
+                    "category": "",
+                    "buttons": [],
+                    "default_material_key": "",
+                    "resources": [],
+                }
             )
-            cur = conn.execute(recipe_sql)
-            for r in cur.fetchall():
-                recipe_type = _norm_text(r["recipe_type"])
-                sk = _norm_text(server_by_id.get(int(r["server_id"] or 0), ""))
-                pk = _norm_text(prof_by_id.get(int(r["profession_id"] or 0), ""))
-                nk = _norm_text(r["name"])
-                mk = _norm_text(r["material_key"])
-                dkey = str(r["deed_key"] or "").strip()
-                try:
-                    rid = int(r["id"] or 0)
-                except Exception:
-                    rid = 0
-                btns = list(recipe_buttons_by_id.get(rid, []))
-                if not (sk and pk and nk):
-                    continue
-                by_item = recipe_materials.get((sk, pk, nk))
-                if by_item is None:
-                    by_item = set()
-                    recipe_materials[(sk, pk, nk)] = by_item
-                if mk:
-                    by_item.add(mk)
-                key = (sk, pk, nk, mk)
-                if btns and key not in recipe_buttons:
-                    recipe_buttons[key] = list(btns)
-                if recipe_type == "bod":
-                    s = bod_sets.get(key)
-                    if s is None:
-                        s = set()
-                        bod_sets[key] = s
-                    if dkey:
-                        s.add(dkey)
-                elif recipe_type == "training":
-                    training_counts[key] = int(training_counts.get(key, 0) or 0) + 1
 
         for ent in item_records:
             server = str(ent.get("server", "") or "")
@@ -617,11 +543,6 @@ def _load_rows():
                 )
     except Exception as ex:
         _say(f"RecipeBookViewer: query failed: {ex}", 33)
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
     return rows
 
 

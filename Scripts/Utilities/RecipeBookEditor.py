@@ -33,7 +33,7 @@ RECIPE_TYPE_OPTIONS = ["bod", "training"]
 RECIPE_TYPE_LABELS = ["BOD", "Training"]
 EDITOR_MODE_OPTIONS = ["bind_deed", "recipe_builder"]
 EDITOR_MODE_LABELS = ["Bind Deed", "Recipe Builder"]
-PROFESSION_OPTIONS = ["Blacksmith", "Tailor", "Carpentry", "Tinker", "Bowcraft"]
+PROFESSION_OPTIONS = ["Blacksmith", "Tailor", "Carpentry", "Tinker", "Bowcraft", "Alchemy", "Inscription", "Cooking"]
 MATERIAL_BASE_OPTIONS = ["ingot", "cloth", "leather", "board", "feather", "scale", "gem", "super_gem"]
 EDITOR_BG_GUMP_ART_ID = 271
 MATERIAL_KEY_DEFAULT_OPTIONS = ["ingot_iron", "cloth", "leather", "board", "feather"]
@@ -41,6 +41,7 @@ MATERIAL_KEY_ADD_LABEL = "Add New..."
 RESOURCE_NONE_LABEL = "<none>"
 RESOURCE_SLOT_COUNT = 5
 ITEM_NONE_LABEL = "<none>"
+CATEGORY_ALL_LABEL = "<all>"
 RESOURCE_FALLBACK_OPTIONS = [
     "Ingot",
     "Board",
@@ -118,6 +119,16 @@ MATERIAL_BUTTONS_BY_KEY = {
         "scale_blue": [147, 106],
     },
 }
+PROFESSION_ALIASES_BY_CANONICAL = {
+    "Blacksmith": ["Blacksmith", "Blacksmithing", "Blacksmithy"],
+    "Tailor": ["Tailor", "Tailoring"],
+    "Carpentry": ["Carpentry", "Carpenter"],
+    "Tinker": ["Tinker", "Tinkering"],
+    "Bowcraft": ["Bowcraft", "Bowcraft and Fletching", "Bowcraft/Fletching", "Fletching", "Bowyer"],
+    "Alchemy": ["Alchemy", "Alchemist"],
+    "Inscription": ["Inscription", "Scribing", "Scribe"],
+    "Cooking": ["Cooking", "Cook"],
+}
 
 EDITOR_GUMP = None
 EDITOR_INPUTS = {}
@@ -126,6 +137,9 @@ EDITOR_LAST_TYPE_IDX = -1
 EDITOR_LAST_MATERIAL_KEY_IDX = -1
 EDITOR_LAST_PROFESSION_IDX = -1
 EDITOR_LAST_MODE_IDX = -1
+EDITOR_LAST_SERVER_IDX = -1
+EDITOR_LAST_CATEGORY_IDX = -1
+EDITOR_LAST_ITEM_IDX = -1
 SCRIPT_EXIT_REQUESTED = False
 
 RECIPE_STORE = None
@@ -135,12 +149,15 @@ if os.path.basename(str(_util_dir or "")).lower() != "utilities":
     _cand = os.path.join(_script_dir, "Utilities")
     if os.path.isdir(_cand):
         _util_dir = _cand
+_project_root_dir = _util_dir
+while _project_root_dir and os.path.basename(str(_project_root_dir or "")).lower() in ("resources", "utilities", "skills", "scripts"):
+    _project_root_dir = os.path.dirname(_project_root_dir)
 if _util_dir and _util_dir not in sys.path:
     sys.path.insert(0, _util_dir)
 try:
     import RecipeStore as RECIPE_STORE
     try:
-        RECIPE_STORE.set_base_dir(_util_dir)
+        RECIPE_STORE.set_base_dir(_project_root_dir or _util_dir)
     except Exception:
         pass
 except Exception:
@@ -199,21 +216,52 @@ def _normalize_server_name(value):
 
 def _normalize_profession_name(name):
     n = str(name or "").strip().lower()
-    m = {
-        "blacksmith": "Blacksmith",
-        "blacksmithy": "Blacksmith",
-        "tailor": "Tailor",
-        "tailoring": "Tailor",
-        "carpentry": "Carpentry",
-        "carpenter": "Carpentry",
-        "tinker": "Tinker",
-        "tinkering": "Tinker",
-        "bowcraft": "Bowcraft",
-        "fletching": "Bowcraft",
-        "bowcraft/fletching": "Bowcraft",
-        "bowyer": "Bowcraft",
-    }
-    return m.get(n, "")
+    if not n:
+        return ""
+    for canonical, aliases in PROFESSION_ALIASES_BY_CANONICAL.items():
+        for alias in aliases:
+            if str(alias or "").strip().lower() == n:
+                return str(canonical)
+    return ""
+
+
+def _profession_aliases_for_query(name):
+    canonical = _normalize_profession_name(name)
+    out = []
+    if canonical and canonical in PROFESSION_ALIASES_BY_CANONICAL:
+        out.extend(list(PROFESSION_ALIASES_BY_CANONICAL.get(canonical, [])))
+    raw = str(name or "").strip()
+    if raw:
+        out.append(raw)
+    deduped = []
+    seen = set()
+    for val in out:
+        t = str(val or "").strip()
+        if not t:
+            continue
+        lk = t.lower()
+        if lk in seen:
+            continue
+        seen.add(lk)
+        deduped.append(t)
+    return deduped
+
+
+def _find_profession_option_index(options, preferred):
+    opts = list(options or [])
+    if not opts:
+        return -1
+    wanted_canon = _normalize_profession_name(preferred)
+    wanted_raw = str(preferred or "").strip().lower()
+    if wanted_raw:
+        for i, opt in enumerate(opts):
+            if str(opt or "").strip().lower() == wanted_raw:
+                return int(i)
+    if wanted_canon:
+        for i, opt in enumerate(opts):
+            if _normalize_profession_name(opt) == wanted_canon:
+                return int(i)
+    return -1
 
 
 def _material_key_from_base(base):
@@ -264,7 +312,11 @@ def _parse_resources_text(text):
                 qty = 0
         if qty <= 0:
             continue
-        out.append({"material": mat, "per_item": int(qty)})
+        item_id = _parse_item_id(parts[2]) if len(parts) > 2 else 0
+        entry = {"material": mat, "per_item": int(qty)}
+        if int(item_id) > 0:
+            entry["item_id"] = int(item_id)
+        out.append(entry)
     return out
 
 
@@ -277,34 +329,25 @@ def _resources_to_text(resources):
             continue
         mat = str(r.get("material", "") or "").strip().lower()
         qty = int(r.get("per_item", 0) or 0)
+        item_id = _parse_item_id(r.get("item_id", 0))
         if mat and qty > 0:
-            parts.append(f"{mat}:{qty}")
+            if int(item_id) > 0:
+                parts.append(f"{mat}:{qty}:0x{int(item_id):X}")
+            else:
+                parts.append(f"{mat}:{qty}")
     return ";".join(parts)
 
 
 def _db_candidate_paths():
-    out = []
+    if RECIPE_STORE is None:
+        return []
     try:
-        _root = os.path.dirname(_util_dir) if os.path.basename(str(_util_dir or "")).lower() == "utilities" else _util_dir
+        p = str(RECIPE_STORE._db_path() or "").strip()
     except Exception:
-        _root = _util_dir
-    try:
-        out.append(os.path.join(_root, "Databases", "craftables.db"))
-    except Exception:
-        pass
-    try:
-        out.append(os.path.join(_util_dir, "craftables.db"))
-    except Exception:
-        pass
-    try:
-        out.append(os.path.join(_script_dir, "craftables.db"))
-    except Exception:
-        pass
-    try:
-        out.append(os.path.join(os.getcwd(), "craftables.db"))
-    except Exception:
-        pass
-    return out
+        p = ""
+    if not p:
+        return []
+    return [os.path.normpath(p)]
 
 
 def _load_resource_name_options():
@@ -327,16 +370,17 @@ def _load_resource_name_options():
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
             cur.execute("PRAGMA busy_timeout=350")
-            cur.execute(
-                """
-                SELECT name
-                FROM resources
-                WHERE trim(coalesce(name, '')) <> ''
-                ORDER BY name COLLATE NOCASE
-                """
-            )
-            rows = cur.fetchall()
-            out = [str(r["name"] or "").strip() for r in rows if str(r["name"] or "").strip()]
+            if _has_columns(conn, "resource_catalog", ["resource_name"]):
+                cur.execute(
+                    """
+                    SELECT resource_name
+                    FROM resource_catalog
+                    WHERE trim(coalesce(resource_name, '')) <> ''
+                    ORDER BY resource_name COLLATE NOCASE
+                    """
+                )
+                rows = cur.fetchall()
+                out = [str(r["resource_name"] or "").strip() for r in rows if str(r["resource_name"] or "").strip()]
             if out:
                 break
         except Exception:
@@ -363,24 +407,163 @@ def _load_resource_name_options():
     return deduped
 
 
-def _resource_option_index(options, name):
-    target = str(name or "").strip().lower()
-    if not target:
-        return -1
-    for i, opt in enumerate(list(options or [])):
-        if str(opt or "").strip().lower() == target:
-            return int(i)
-    return -1
+def _load_resource_item_id_map():
+    candidates = _db_candidate_paths()
+    seen = set()
+    out = {}
+    for p in candidates:
+        t = str(p or "").strip()
+        if not t:
+            continue
+        k = t.lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        if not os.path.exists(t):
+            continue
+        conn = None
+        try:
+            conn = sqlite3.connect(t, timeout=0.35)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("PRAGMA busy_timeout=350")
+            if _has_columns(conn, "resource_catalog", ["resource_name"]):
+                cols = _table_columns(conn, "resource_catalog")
+                iid_expr = "game_item_id" if "game_item_id" in cols else "0 AS game_item_id"
+                cur.execute(
+                    "SELECT resource_name, "
+                    + str(iid_expr)
+                    + " FROM resource_catalog WHERE trim(coalesce(resource_name,'')) <> ''"
+                )
+                rows = cur.fetchall()
+                for row in rows:
+                    name = str(row["resource_name"] or "").strip().lower()
+                    if not name:
+                        continue
+                    try:
+                        iid = int(row["game_item_id"] or 0)
+                    except Exception:
+                        iid = 0
+                    if iid > 0:
+                        out[name] = int(iid)
+                break
+        except Exception:
+            out = {}
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+    return out
 
 
-def _load_item_name_options(server, profession):
-    srv = _normalize_server_name(server or DEFAULT_SERVER)
-    prof = _normalize_profession_name(profession or "")
-    if not prof:
-        return []
+def _save_resource_item_id_mappings(resources):
+    mapped = {}
+    for rr in _normalize_resource_rows(resources):
+        mat = str(rr.get("material", "") or "").strip().lower()
+        iid = _parse_item_id(rr.get("item_id", 0))
+        if mat and int(iid) > 0:
+            mapped[mat] = int(iid)
+    if not mapped:
+        return True
 
     candidates = _db_candidate_paths()
+    seen = set()
+    for p in candidates:
+        t = str(p or "").strip()
+        if not t:
+            continue
+        k = t.lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        if not os.path.exists(t):
+            continue
+        conn = None
+        try:
+            conn = sqlite3.connect(t, timeout=0.35)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("PRAGMA busy_timeout=350")
+            if _has_columns(conn, "resource_catalog", ["resource_name"]):
+                cols = _table_columns(conn, "resource_catalog")
+                if "game_item_id" in cols:
+                    for mat, iid in mapped.items():
+                        cur.execute("INSERT OR IGNORE INTO resource_catalog(resource_name) VALUES (?)", (mat,))
+                        cur.execute(
+                            "UPDATE resource_catalog SET game_item_id=? WHERE lower(resource_name)=lower(?)",
+                            (int(iid), mat),
+                        )
+                    conn.commit()
+                    _write_debug_log(
+                        "Saved resource item-id mappings: count={0} db={1}".format(int(len(mapped)), str(t))
+                    )
+                    return True
+        except Exception as ex:
+            _write_debug_log("Resource item-id mapping save failed db={0} err={1}".format(str(t), str(ex)))
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+    return False
 
+
+def _table_columns(conn, table_name):
+    out = set()
+    try:
+        cur = conn.execute("PRAGMA table_info(" + str(table_name) + ")")
+        for row in (cur.fetchall() or []):
+            try:
+                out.add(str(row[1] or "").strip().lower())
+            except Exception:
+                pass
+    except Exception:
+        return set()
+    return out
+
+
+def _has_columns(conn, table_name, names):
+    cols = _table_columns(conn, table_name)
+    if not cols:
+        return False
+    for nm in (names or []):
+        key = str(nm or "").strip().lower()
+        if key and key not in cols:
+            return False
+    return True
+
+
+def _prof_where_clause_and_params(profession):
+    aliases = _profession_aliases_for_query(profession)
+    if not aliases:
+        return "", []
+    placeholders = ",".join(["?"] * len(aliases))
+    clause = " AND lower(coalesce(cp.profession_name,'')) IN (" + placeholders + ")"
+    params = [str(x or "").strip().lower() for x in aliases if str(x or "").strip()]
+    return clause, params
+
+
+def _dedupe_str_list(values):
+    seen = set()
+    out = []
+    for val in list(values or []):
+        t = str(val or "").strip()
+        if not t:
+            continue
+        lk = t.lower()
+        if lk in seen:
+            continue
+        seen.add(lk)
+        out.append(t)
+    return out
+
+
+def _load_profession_name_options(server):
+    srv = _normalize_server_name(server or DEFAULT_SERVER)
+    candidates = _db_candidate_paths()
     seen_paths = set()
     out = []
     for p in candidates:
@@ -399,43 +582,200 @@ def _load_item_name_options(server, profession):
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
             cur.execute("PRAGMA busy_timeout=350")
-            item_cols = set()
-            try:
-                cur.execute("PRAGMA table_info(item_keys)")
-                for rr in (cur.fetchall() or []):
-                    item_cols.add(str(rr[1] or "").strip().lower())
-            except Exception:
-                item_cols = set()
-            if "server_id" in item_cols and "profession_id" in item_cols:
+            if _has_columns(conn, "crafting_professions", ["profession_id", "profession_name"]) and _has_columns(
+                conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"]
+            ) and _has_columns(conn, "game_servers", ["game_server_id", "server_name"]):
                 cur.execute(
                     """
-                    SELECT ik.name
-                    FROM item_keys ik
-                    JOIN servers s ON s.id = ik.server_id
-                    JOIN professions p ON p.id = ik.profession_id
-                    WHERE lower(coalesce(s.name,''))=lower(?)
-                      AND lower(coalesce(p.name,''))=lower(?)
-                      AND trim(coalesce(ik.name,''))<>''
-                    ORDER BY ik.name COLLATE NOCASE
+                    SELECT DISTINCT cp.profession_name
+                    FROM crafting_professions cp
+                    JOIN crafting_contexts cc ON cc.profession_id = cp.profession_id
+                    JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                    WHERE lower(coalesce(gs.server_name,''))=lower(?)
+                    ORDER BY cp.profession_name COLLATE NOCASE
                     """,
-                    (srv, prof),
+                    (srv,),
                 )
-            else:
+                rows = cur.fetchall()
+                out = [str(r["profession_name"] or "").strip() for r in rows if str(r["profession_name"] or "").strip()]
+                if not out:
+                    cur.execute(
+                        """
+                        SELECT profession_name
+                        FROM crafting_professions
+                        WHERE trim(coalesce(profession_name,'')) <> ''
+                        ORDER BY profession_name COLLATE NOCASE
+                        """
+                    )
+                    rows = cur.fetchall()
+                    out = [str(r["profession_name"] or "").strip() for r in rows if str(r["profession_name"] or "").strip()]
+                if out:
+                    break
+        except Exception:
+            out = []
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+    if not out:
+        out = list(PROFESSION_OPTIONS)
+    canonical_out = []
+    seen = set()
+    for nm in out:
+        raw = str(nm or "").strip()
+        if not raw:
+            continue
+        canon = _normalize_profession_name(raw) or raw
+        key = str(canon or "").strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        canonical_out.append(str(canon).strip())
+    if not canonical_out:
+        canonical_out = list(PROFESSION_OPTIONS)
+    return _dedupe_str_list(canonical_out)
+
+
+def _load_category_name_options(server, profession):
+    srv = _normalize_server_name(server or DEFAULT_SERVER)
+    candidates = _db_candidate_paths()
+    seen_paths = set()
+    out = []
+    for p in candidates:
+        t = str(p or "").strip()
+        if not t:
+            continue
+        lk = t.lower()
+        if lk in seen_paths:
+            continue
+        seen_paths.add(lk)
+        if not os.path.exists(t):
+            continue
+        conn = None
+        try:
+            conn = sqlite3.connect(t, timeout=0.35)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("PRAGMA busy_timeout=350")
+            if _has_columns(conn, "craft_categories", ["category_name", "display_sequence", "context_id"]) and _has_columns(
+                conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"]
+            ) and _has_columns(conn, "game_servers", ["game_server_id", "server_name"]) and _has_columns(
+                conn, "crafting_professions", ["profession_id", "profession_name"]
+            ):
+                prof_clause, prof_params = _prof_where_clause_and_params(profession)
+                params = [srv]
+                params.extend(prof_params)
                 cur.execute(
                     """
-                    SELECT name
-                    FROM item_keys
-                    WHERE lower(coalesce(server,''))=lower(?)
-                      AND lower(coalesce(profession,''))=lower(?)
-                      AND trim(coalesce(name,''))<>''
-                    ORDER BY name COLLATE NOCASE
+                    SELECT DISTINCT cat.category_name, cat.display_sequence
+                    FROM craft_categories cat
+                    JOIN crafting_contexts cc ON cc.context_id = cat.context_id
+                    JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                    JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                    WHERE lower(coalesce(gs.server_name,''))=lower(?)
+                    """
+                    + prof_clause
+                    + """
+                    AND trim(coalesce(cat.category_name,'')) <> ''
+                    ORDER BY cat.display_sequence, cat.category_name COLLATE NOCASE
                     """,
-                    (srv, prof),
+                    tuple(params),
                 )
-            rows = cur.fetchall()
-            out = [str(r["name"] or "").strip() for r in rows if str(r["name"] or "").strip()]
-            if out:
-                break
+                rows = cur.fetchall()
+                out = [str(r["category_name"] or "").strip() for r in rows if str(r["category_name"] or "").strip()]
+                if out:
+                    break
+        except Exception:
+            out = []
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+    if not out:
+        try:
+            km = _get_key_maps()
+            prof = _normalize_profession_name(profession)
+            node = km.get(srv, {}).get(prof, {}) if isinstance(km, dict) else {}
+            ik = node.get("item_keys", {}) if isinstance(node, dict) else {}
+            if isinstance(ik, dict):
+                for ent in ik.values():
+                    if not isinstance(ent, dict):
+                        continue
+                    cat = str(ent.get("category", "") or "").strip()
+                    if cat:
+                        out.append(cat)
+        except Exception:
+            pass
+    return _dedupe_str_list(out)
+
+
+def _load_item_name_options(server, profession, category=""):
+    srv = _normalize_server_name(server or DEFAULT_SERVER)
+    prof = _normalize_profession_name(profession or "")
+    if not prof:
+        return []
+    category_text = str(category or "").strip()
+    if category_text.lower() == str(CATEGORY_ALL_LABEL).lower():
+        category_text = ""
+
+    candidates = _db_candidate_paths()
+    seen_paths = set()
+    out = []
+    for p in candidates:
+        t = str(p or "").strip()
+        if not t:
+            continue
+        lk = t.lower()
+        if lk in seen_paths:
+            continue
+        seen_paths.add(lk)
+        if not os.path.exists(t):
+            continue
+        conn = None
+        try:
+            conn = sqlite3.connect(t, timeout=0.35)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("PRAGMA busy_timeout=350")
+
+            if _has_columns(conn, "craftable_items", ["craftable_item_id", "context_id", "item_display_name"]) and _has_columns(
+                conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"]
+            ) and _has_columns(conn, "game_servers", ["game_server_id", "server_name"]) and _has_columns(
+                conn, "crafting_professions", ["profession_id", "profession_name"]
+            ):
+                prof_clause, prof_params = _prof_where_clause_and_params(profession)
+                cat_clause = ""
+                params = [srv]
+                params.extend(prof_params)
+                if category_text:
+                    cat_clause = " AND lower(coalesce(cat.category_name,''))=lower(?)"
+                    params.append(category_text)
+                cur.execute(
+                    """
+                    SELECT ci.item_display_name
+                    FROM craftable_items ci
+                    JOIN crafting_contexts cc ON cc.context_id = ci.context_id
+                    JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                    JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                    LEFT JOIN craft_categories cat ON cat.category_id = ci.category_id
+                    WHERE lower(coalesce(gs.server_name,''))=lower(?)
+                    """
+                    + prof_clause
+                    + cat_clause
+                    + """
+                    AND trim(coalesce(ci.item_display_name,''))<>'' 
+                    ORDER BY ci.item_display_name COLLATE NOCASE
+                    """,
+                    tuple(params),
+                )
+                rows = cur.fetchall()
+                out = [str(r["item_display_name"] or "").strip() for r in rows if str(r["item_display_name"] or "").strip()]
+                if out:
+                    break
         except Exception:
             out = []
         finally:
@@ -446,6 +786,76 @@ def _load_item_name_options(server, profession):
                     pass
 
     if not out:
+        seen_saved_paths = set()
+        for p in candidates:
+            t = str(p or "").strip()
+            if not t:
+                continue
+            lk = t.lower()
+            if lk in seen_saved_paths:
+                continue
+            seen_saved_paths.add(lk)
+            if not os.path.exists(t):
+                continue
+            conn = None
+            try:
+                conn = sqlite3.connect(t, timeout=0.35)
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute("PRAGMA busy_timeout=350")
+                if _has_columns(conn, "saved_craft_recipes", ["context_id", "recipe_name"]) and _has_columns(
+                    conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"]
+                ) and _has_columns(conn, "game_servers", ["game_server_id", "server_name"]) and _has_columns(
+                    conn, "crafting_professions", ["profession_id", "profession_name"]
+                ):
+                    prof_clause, prof_params = _prof_where_clause_and_params(profession)
+                    params = [srv]
+                    params.extend(prof_params)
+                    cat_join = ""
+                    cat_clause = ""
+                    if category_text and _has_columns(conn, "craftable_items", ["craftable_item_id", "category_id"]) and _has_columns(
+                        conn, "craft_categories", ["category_id", "category_name"]
+                    ):
+                        cat_join = """
+                        LEFT JOIN craftable_items ci ON ci.craftable_item_id = sr.craftable_item_id
+                        LEFT JOIN craft_categories cat ON cat.category_id = ci.category_id
+                        """
+                        cat_clause = " AND lower(coalesce(cat.category_name,''))=lower(?)"
+                        params.append(category_text)
+                    cur.execute(
+                        """
+                        SELECT DISTINCT sr.recipe_name
+                        FROM saved_craft_recipes sr
+                        JOIN crafting_contexts cc ON cc.context_id = sr.context_id
+                        JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                        JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                        """
+                        + cat_join
+                        + """
+                        WHERE lower(coalesce(gs.server_name,''))=lower(?)
+                        """
+                        + prof_clause
+                        + cat_clause
+                        + """
+                        AND trim(coalesce(sr.recipe_name,''))<>'' 
+                        ORDER BY sr.recipe_name COLLATE NOCASE
+                        """,
+                        tuple(params),
+                    )
+                    rows = cur.fetchall()
+                    out = [str(r["recipe_name"] or "").strip() for r in rows if str(r["recipe_name"] or "").strip()]
+                    if out:
+                        break
+            except Exception:
+                out = []
+            finally:
+                if conn is not None:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+
+    if not out:
         # Fallback to key-map cache if DB lookup is unavailable.
         try:
             km = _get_key_maps()
@@ -454,23 +864,197 @@ def _load_item_name_options(server, profession):
             if isinstance(ik, dict):
                 for ent in ik.values():
                     nm = str((ent or {}).get("name", "") if isinstance(ent, dict) else "").strip()
+                    cat = str((ent or {}).get("category", "") if isinstance(ent, dict) else "").strip()
+                    if category_text and cat.lower() != category_text.lower():
+                        continue
                     if nm:
                         out.append(nm)
         except Exception:
             pass
 
-    seen_names = set()
-    deduped = []
-    for n in out:
-        t = str(n or "").strip()
+    return _dedupe_str_list(out)
+
+
+def _load_item_catalog_entry(server, profession, item_name):
+    srv = _normalize_server_name(server or DEFAULT_SERVER)
+    item = str(item_name or "").strip()
+    if not item:
+        return {}
+    candidates = _db_candidate_paths()
+    seen_paths = set()
+    for p in candidates:
+        t = str(p or "").strip()
         if not t:
             continue
-        k = t.lower()
-        if k in seen_names:
+        lk = t.lower()
+        if lk in seen_paths:
             continue
-        seen_names.add(k)
-        deduped.append(t)
-    return deduped
+        seen_paths.add(lk)
+        if not os.path.exists(t):
+            continue
+        conn = None
+        try:
+            conn = sqlite3.connect(t, timeout=0.35)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("PRAGMA busy_timeout=350")
+            if not (
+                _has_columns(conn, "craftable_items", ["craftable_item_id", "context_id", "item_display_name"])
+                and _has_columns(conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"])
+                and _has_columns(conn, "game_servers", ["game_server_id", "server_name"])
+                and _has_columns(conn, "crafting_professions", ["profession_id", "profession_name"])
+            ):
+                continue
+            prof_clause, prof_params = _prof_where_clause_and_params(profession)
+            params = [srv]
+            params.extend(prof_params)
+            params.append(item)
+            cur.execute(
+                """
+                SELECT ci.craftable_item_id, ci.game_item_id, ci.default_material_option_id,
+                       coalesce(cat.category_name, '') AS category_name,
+                       coalesce(cat.category_navigation_button_id, 0) AS category_navigation_button_id
+                FROM craftable_items ci
+                JOIN crafting_contexts cc ON cc.context_id = ci.context_id
+                JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                LEFT JOIN craft_categories cat ON cat.category_id = ci.category_id
+                WHERE lower(coalesce(gs.server_name,''))=lower(?)
+                """
+                + prof_clause
+                + """
+                  AND lower(coalesce(ci.item_display_name,''))=lower(?)
+                ORDER BY ci.craftable_item_id
+                LIMIT 1
+                """,
+                tuple(params),
+            )
+            row = cur.fetchone()
+            if not row:
+                continue
+
+            item_id = int(row["craftable_item_id"] or 0)
+            category_button = int(row["category_navigation_button_id"] or 0)
+            buttons = []
+            if category_button > 0:
+                buttons.append(int(category_button))
+            if _has_columns(conn, "craftable_item_navigation_steps", ["craftable_item_id", "step_number", "gump_button_id"]):
+                cur.execute(
+                    """
+                    SELECT gump_button_id
+                    FROM craftable_item_navigation_steps
+                    WHERE craftable_item_id=?
+                    ORDER BY step_number
+                    """,
+                    (int(item_id),),
+                )
+                for r_btn in (cur.fetchall() or []):
+                    try:
+                        b = int(r_btn["gump_button_id"] or 0)
+                    except Exception:
+                        b = 0
+                    if b > 0:
+                        if not buttons or int(buttons[-1]) != int(b):
+                            buttons.append(int(b))
+
+            resources = []
+            if _has_columns(conn, "craftable_item_resource_requirements", ["craftable_item_id", "requirement_sequence", "resource_id", "quantity_per_item"]) and _has_columns(
+                conn, "resource_catalog", ["resource_id", "resource_name"]
+            ):
+                resource_cols = _table_columns(conn, "resource_catalog")
+                item_id_expr = "coalesce(rc.game_item_id, 0)" if "game_item_id" in resource_cols else "0"
+                cur.execute(
+                    """
+                    SELECT rc.resource_name, cir.quantity_per_item, """
+                    + str(item_id_expr)
+                    + """
+                    FROM craftable_item_resource_requirements cir
+                    JOIN resource_catalog rc ON rc.resource_id = cir.resource_id
+                    WHERE cir.craftable_item_id=?
+                    ORDER BY cir.requirement_sequence
+                    """,
+                    (int(item_id),),
+                )
+                for rr in (cur.fetchall() or []):
+                    mat = str(rr["resource_name"] or "").strip().lower()
+                    try:
+                        qty = int(rr["quantity_per_item"] or 0)
+                    except Exception:
+                        qty = 0
+                    try:
+                        item_id = int(rr[2] or 0)
+                    except Exception:
+                        item_id = 0
+                    if mat and qty > 0:
+                        entry = {"material": mat, "per_item": int(qty)}
+                        if int(item_id) > 0:
+                            entry["item_id"] = int(item_id)
+                        resources.append(entry)
+
+            default_material_key = ""
+            declared_material = ""
+            try:
+                mo_id = int(row["default_material_option_id"] or 0)
+            except Exception:
+                mo_id = 0
+            if mo_id > 0 and _has_columns(conn, "material_options", ["material_option_id", "material_option_key", "material_family_id"]):
+                cur.execute(
+                    """
+                    SELECT mo.material_option_key, mf.family_code
+                    FROM material_options mo
+                    LEFT JOIN material_families mf ON mf.material_family_id = mo.material_family_id
+                    WHERE mo.material_option_id=?
+                    LIMIT 1
+                    """,
+                    (int(mo_id),),
+                )
+                mo_row = cur.fetchone()
+                if mo_row:
+                    default_material_key = str(mo_row["material_option_key"] or "").strip().lower()
+                    declared_material = str(mo_row["family_code"] or "").strip().lower()
+
+            return {
+                "category": str(row["category_name"] or "").strip(),
+                "buttons": [int(x) for x in buttons if int(x) > 0][:3],
+                "item_id": int(row["game_item_id"] or 0),
+                "resources": list(resources or []),
+                "default_material_key": default_material_key,
+                "material": declared_material,
+            }
+        except Exception:
+            continue
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+    return {}
+
+
+def _resource_option_index(options, name):
+    target = str(name or "").strip().lower()
+    if not target:
+        return -1
+    for i, opt in enumerate(list(options or [])):
+        if str(opt or "").strip().lower() == target:
+            return int(i)
+    return -1
+
+
+def _selected_dropdown_value(dd, options):
+    opts = list(options or [])
+    idx = -1
+    try:
+        idx = int(dd.GetSelectedIndex()) if dd else -1
+    except Exception:
+        idx = -1
+    if 0 <= idx < len(opts):
+        return str(opts[idx] or "").strip()
+    try:
+        return str((dd.Text if dd else "") or "").strip()
+    except Exception:
+        return ""
 
 
 def _selected_item_name_from_inputs(inputs):
@@ -505,7 +1089,11 @@ def _normalize_resource_rows(resources):
             qty = 0
         if not mat or qty <= 0:
             continue
-        out.append({"material": mat, "per_item": int(qty)})
+        item_id = _parse_item_id(r.get("item_id", 0))
+        entry = {"material": mat, "per_item": int(qty)}
+        if int(item_id) > 0:
+            entry["item_id"] = int(item_id)
+        out.append(entry)
         if len(out) >= int(RESOURCE_SLOT_COUNT):
             break
     return out
@@ -518,6 +1106,7 @@ def _collect_resource_rows_from_controls(inputs):
             continue
         dd = row.get("resource")
         qty_tb = row.get("qty")
+        item_id_tb = row.get("item_id")
         opts = list(row.get("options", []) or [])
         idx = -1
         try:
@@ -537,7 +1126,12 @@ def _collect_resource_rows_from_controls(inputs):
             qty = 0
         if qty <= 0:
             continue
-        out.append({"material": name.lower(), "per_item": int(qty)})
+        item_id_text = str((item_id_tb.Text if item_id_tb else "") or "").strip()
+        item_id = _parse_item_id(item_id_text)
+        entry = {"material": name.lower(), "per_item": int(qty)}
+        if int(item_id) > 0:
+            entry["item_id"] = int(item_id)
+        out.append(entry)
         if len(out) >= int(RESOURCE_SLOT_COUNT):
             break
     return out
@@ -869,39 +1463,151 @@ def _add_editor_background(g, w, h):
     g.Add(panel)
 
 
-def _collect_material_key_options(profession=""):
+def _collect_material_key_options(profession="", server=""):
     prof = _normalize_profession_name(profession)
+    srv = _normalize_server_name(server or DEFAULT_SERVER)
     keys = set()
-    if prof:
-        for k in MATERIAL_KEY_OPTIONS_BY_PROFESSION.get(prof, []):
-            t = str(k or "").strip().lower()
-            if t:
-                keys.add(t)
+    # Include canonical material options from normalized craftables schema.
+    candidates = _db_candidate_paths()
+    seen_paths = set()
+    for p in candidates:
+        t = str(p or "").strip()
+        if not t:
+            continue
+        lk = t.lower()
+        if lk in seen_paths:
+            continue
+        seen_paths.add(lk)
+        if not os.path.exists(t):
+            continue
+        conn = None
+        try:
+            conn = sqlite3.connect(t, timeout=0.35)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("PRAGMA busy_timeout=350")
+            if not (
+                _has_columns(conn, "material_options", ["material_option_id", "context_id", "material_option_key"])
+                and _has_columns(conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"])
+                and _has_columns(conn, "game_servers", ["game_server_id", "server_name"])
+                and _has_columns(conn, "crafting_professions", ["profession_id", "profession_name"])
+            ):
+                continue
+            prof_clause, prof_params = _prof_where_clause_and_params(profession)
+            params = [srv]
+            params.extend(prof_params)
+            cur.execute(
+                """
+                SELECT mo.material_option_key
+                FROM material_options mo
+                JOIN crafting_contexts cc ON cc.context_id = mo.context_id
+                JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                WHERE lower(coalesce(gs.server_name,''))=lower(?)
+                """
+                + prof_clause
+                + """
+                  AND trim(coalesce(mo.material_option_key,'')) <> ''
+                ORDER BY mo.material_option_key COLLATE NOCASE
+                """,
+                tuple(params),
+            )
+            for rr in (cur.fetchall() or []):
+                mk = str(rr["material_option_key"] or "").strip().lower()
+                if mk:
+                    keys.add(mk)
+        except Exception:
+            pass
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+    # Include material keys already persisted with saved recipes.
+    seen_saved_paths = set()
+    for p in candidates:
+        t = str(p or "").strip()
+        if not t:
+            continue
+        lk = t.lower()
+        if lk in seen_saved_paths:
+            continue
+        seen_saved_paths.add(lk)
+        if not os.path.exists(t):
+            continue
+        conn = None
+        try:
+            conn = sqlite3.connect(t, timeout=0.35)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("PRAGMA busy_timeout=350")
+            if not (
+                _has_columns(conn, "saved_craft_recipes", ["context_id", "selected_material_option_id", "declared_material_family_id"])
+                and _has_columns(conn, "material_options", ["material_option_id", "material_option_key", "material_family_id"])
+                and _has_columns(conn, "material_families", ["material_family_id", "family_code"])
+                and _has_columns(conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"])
+                and _has_columns(conn, "game_servers", ["game_server_id", "server_name"])
+                and _has_columns(conn, "crafting_professions", ["profession_id", "profession_name"])
+            ):
+                continue
+            prof_clause, prof_params = _prof_where_clause_and_params(profession)
+            params = [srv]
+            params.extend(prof_params)
+            cur.execute(
+                """
+                SELECT DISTINCT coalesce(mo.material_option_key, mf.family_code, '') AS material_key
+                FROM saved_craft_recipes sr
+                JOIN crafting_contexts cc ON cc.context_id = sr.context_id
+                JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                LEFT JOIN material_options mo ON mo.material_option_id = sr.selected_material_option_id
+                LEFT JOIN material_families mf ON mf.material_family_id = coalesce(sr.declared_material_family_id, mo.material_family_id)
+                WHERE lower(coalesce(gs.server_name,''))=lower(?)
+                """
+                + prof_clause
+                + """
+                  AND trim(coalesce(mo.material_option_key, mf.family_code, '')) <> ''
+                ORDER BY material_key COLLATE NOCASE
+                """,
+                tuple(params),
+            )
+            for rr in (cur.fetchall() or []):
+                mk = str(rr["material_key"] or "").strip().lower()
+                if mk:
+                    keys.add(mk)
+        except Exception:
+            pass
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
     for r in _read_recipe_book():
         try:
             if prof and _normalize_profession_name(r.get("profession", "")) != prof:
+                continue
+            if _normalize_server_name(r.get("server", DEFAULT_SERVER)) != srv:
                 continue
             mk = str(r.get("material_key", "") or "").strip().lower()
         except Exception:
             mk = ""
         if mk:
             keys.add(mk)
-    # Include mapped material keys from key_maps (all servers).
+    # Include mapped material keys from key_maps for the selected server.
     km = _get_key_maps()
     if prof and isinstance(km, dict):
-        for srv_node in km.values():
-            if not isinstance(srv_node, dict):
-                continue
+        srv_node = km.get(srv, {})
+        if isinstance(srv_node, dict):
             pnode = srv_node.get(prof, {})
-            if not isinstance(pnode, dict):
-                continue
-            mats = pnode.get("material_keys", {})
-            if not isinstance(mats, dict):
-                continue
-            for k in mats.keys():
-                t = str(k or "").strip().lower()
-                if t:
-                    keys.add(t)
+            if isinstance(pnode, dict):
+                mats = pnode.get("material_keys", {})
+                if isinstance(mats, dict):
+                    for k in mats.keys():
+                        t = str(k or "").strip().lower()
+                        if t:
+                            keys.add(t)
     return sorted(list(keys))
 
 
@@ -916,6 +1622,74 @@ def _find_material_buttons_for_key(profession, material_key, server=""):
         mb = [int(x) for x in (km.get("material_buttons", []) or []) if int(x) > 0]
         if mb:
             return mb[:2]
+    # Pull directly from normalized material option navigation if available.
+    candidates = _db_candidate_paths()
+    seen_paths = set()
+    for p in candidates:
+        t = str(p or "").strip()
+        if not t:
+            continue
+        lk = t.lower()
+        if lk in seen_paths:
+            continue
+        seen_paths.add(lk)
+        if not os.path.exists(t):
+            continue
+        conn = None
+        try:
+            conn = sqlite3.connect(t, timeout=0.35)
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute("PRAGMA busy_timeout=350")
+            if not (
+                _has_columns(conn, "material_options", ["material_option_id", "context_id", "material_option_key"])
+                and _has_columns(conn, "material_option_navigation_steps", ["material_option_id", "step_number", "gump_button_id"])
+                and _has_columns(conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"])
+                and _has_columns(conn, "game_servers", ["game_server_id", "server_name"])
+                and _has_columns(conn, "crafting_professions", ["profession_id", "profession_name"])
+            ):
+                continue
+            prof_clause, prof_params = _prof_where_clause_and_params(profession)
+            params = [srv]
+            params.extend(prof_params)
+            params.append(mk)
+            cur.execute(
+                """
+                SELECT mons.gump_button_id
+                FROM material_options mo
+                JOIN material_option_navigation_steps mons ON mons.material_option_id = mo.material_option_id
+                JOIN crafting_contexts cc ON cc.context_id = mo.context_id
+                JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
+                JOIN crafting_professions cp ON cp.profession_id = cc.profession_id
+                WHERE lower(coalesce(gs.server_name,''))=lower(?)
+                """
+                + prof_clause
+                + """
+                  AND lower(coalesce(mo.material_option_key,''))=lower(?)
+                ORDER BY mons.step_number
+                """,
+                tuple(params),
+            )
+            out = []
+            for rr in (cur.fetchall() or []):
+                try:
+                    b = int(rr["gump_button_id"] or 0)
+                except Exception:
+                    b = 0
+                if b > 0:
+                    out.append(int(b))
+                if len(out) >= 2:
+                    break
+            if out:
+                return out
+        except Exception:
+            pass
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
     for r in _read_recipe_book():
         rn = _normalize_recipe_entry(r)
         if not rn:
@@ -937,7 +1711,9 @@ def _find_material_buttons_for_key(profession, material_key, server=""):
 
 
 def _close_editor():
-    global EDITOR_GUMP, EDITOR_INPUTS, EDITOR_LAST_TYPE_IDX, EDITOR_LAST_MATERIAL_KEY_IDX, EDITOR_LAST_PROFESSION_IDX, EDITOR_LAST_MODE_IDX
+    global EDITOR_GUMP, EDITOR_INPUTS, EDITOR_LAST_TYPE_IDX, EDITOR_LAST_MATERIAL_KEY_IDX
+    global EDITOR_LAST_PROFESSION_IDX, EDITOR_LAST_MODE_IDX, EDITOR_LAST_SERVER_IDX, EDITOR_LAST_CATEGORY_IDX
+    global EDITOR_LAST_ITEM_IDX
     if EDITOR_GUMP:
         try:
             EDITOR_GUMP.Dispose()
@@ -949,6 +1725,9 @@ def _close_editor():
     EDITOR_LAST_MATERIAL_KEY_IDX = -1
     EDITOR_LAST_PROFESSION_IDX = -1
     EDITOR_LAST_MODE_IDX = -1
+    EDITOR_LAST_SERVER_IDX = -1
+    EDITOR_LAST_CATEGORY_IDX = -1
+    EDITOR_LAST_ITEM_IDX = -1
 
 
 def _capture_editor_state():
@@ -978,14 +1757,15 @@ def _capture_editor_state():
     if sidx < 0 or sidx >= len(SERVER_OPTIONS):
         sidx = 0
     out["server"] = SERVER_OPTIONS[sidx]
-    try:
-        dd = f.get("profession")
-        pidx = int(dd.GetSelectedIndex()) if dd else 0
-    except Exception:
-        pidx = 0
-    if pidx < 0 or pidx >= len(PROFESSION_OPTIONS):
-        pidx = 0
-    out["profession"] = PROFESSION_OPTIONS[pidx]
+    prof_opts = list(f.get("profession_options", []) or [])
+    if not prof_opts:
+        prof_opts = list(PROFESSION_OPTIONS)
+    out["profession"] = _selected_dropdown_value(f.get("profession"), prof_opts)
+    cat_opts = list(f.get("category_options", []) or [])
+    selected_category = _selected_dropdown_value(f.get("category"), cat_opts)
+    if selected_category.lower() == str(CATEGORY_ALL_LABEL).lower():
+        selected_category = ""
+    out["category"] = selected_category
     out["material"] = str(f.get("material_hidden", "ingot") or "ingot")
     out["name"] = _selected_item_name_from_inputs(f)
     out["buttons"] = [int(x) for x in _parse_int_list(
@@ -1032,17 +1812,25 @@ def _save_and_exit():
     global EDITOR_INPUTS, SCRIPT_EXIT_REQUESTED
     f = EDITOR_INPUTS or {}
     mode_dd = f.get("editor_mode")
-    prof_dd = f.get("profession")
     srv_dd = f.get("server")
     type_dd = f.get("recipe_type")
     mode_idx = int(mode_dd.GetSelectedIndex()) if mode_dd else 0
-    prof_idx = int(prof_dd.GetSelectedIndex()) if prof_dd else 0
     srv_idx = int(srv_dd.GetSelectedIndex()) if srv_dd else 0
     type_idx = int(type_dd.GetSelectedIndex()) if type_dd else 0
+    prof_opts = list(f.get("profession_options", []) or [])
+    if not prof_opts:
+        prof_opts = list(PROFESSION_OPTIONS)
+    raw_profession = _selected_dropdown_value(f.get("profession"), prof_opts)
+    profession = _normalize_profession_name(raw_profession)
+    if not profession:
+        _say("Select a valid profession.", 33)
+        return
+    category_opts = list(f.get("category_options", []) or [])
+    selected_category = _selected_dropdown_value(f.get("category"), category_opts)
+    if selected_category.lower() == str(CATEGORY_ALL_LABEL).lower():
+        selected_category = ""
     if mode_idx < 0 or mode_idx >= len(EDITOR_MODE_OPTIONS):
         mode_idx = 0
-    if prof_idx < 0 or prof_idx >= len(PROFESSION_OPTIONS):
-        prof_idx = 0
     if srv_idx < 0 or srv_idx >= len(SERVER_OPTIONS):
         srv_idx = 0
     if type_idx < 0 or type_idx >= len(RECIPE_TYPE_OPTIONS):
@@ -1090,11 +1878,21 @@ def _save_and_exit():
     resources = _collect_resource_rows_from_controls(f)
     if not resources:
         resources = _parse_resources_text(str((f.get("resources_text").Text if f.get("resources_text") else "") or ""))
+    resources = _normalize_resource_rows(resources)
+    catalog_defaults = _load_item_catalog_entry(SERVER_OPTIONS[srv_idx], raw_profession or profession, name)
+    if not selected_category and isinstance(catalog_defaults, dict):
+        selected_category = str(catalog_defaults.get("category", "") or "").strip()
+    if not mk_text and isinstance(catalog_defaults, dict):
+        mk_text = str(catalog_defaults.get("default_material_key", "") or "").strip().lower()
+        if mk_text:
+            material = _material_base_from_key(mk_text, material)
+    if not resources and isinstance(catalog_defaults, dict):
+        resources = _normalize_resource_rows(catalog_defaults.get("resources", []))
 
     row = {
         "name": name,
-        "profession": PROFESSION_OPTIONS[prof_idx],
-        "item_id": 0,
+        "profession": profession,
+        "item_id": int(catalog_defaults.get("item_id", 0) or 0) if isinstance(catalog_defaults, dict) else 0,
         "buttons": [int(x) for x in buttons],
         "material": material,
         "material_key": mk_text,
@@ -1128,20 +1926,34 @@ def _save_and_exit():
                 row["stop_at"] = 0.0
 
     if editor_mode == "recipe_builder":
+        existing_item_map = _get_item_key_map(SERVER_OPTIONS[srv_idx], profession, name)
+        existing_resources = list(existing_item_map.get("resources", []) or []) if isinstance(existing_item_map, dict) else []
+        resources_to_save = (
+            list(resources or [])
+            if list(resources or [])
+            else _normalize_resource_rows(existing_resources)
+        )
+        if not resources_to_save:
+            _say("Resources are required. Add at least one resource and per-item quantity.", 33)
+            return
+        if not _save_resource_item_id_mappings(resources_to_save):
+            _say("Failed to save resource item-id mappings.", 33)
+            return
         if not _upsert_key_maps(
             SERVER_OPTIONS[srv_idx],
-            PROFESSION_OPTIONS[prof_idx],
+            profession,
             name,
             int(row.get("item_id", 0) or 0),
             list(row.get("buttons", []) or []),
             material,
             mk_text,
             list(row.get("material_buttons", []) or []),
-            resources,
+            resources_to_save,
+            selected_category,
         ):
             _say("Failed to save key maps.", 33)
             return
-        _say(f"Key maps saved: {PROFESSION_OPTIONS[prof_idx]} {name} ({SERVER_OPTIONS[srv_idx]})")
+        _say(f"Key maps saved: {profession} {name} ({SERVER_OPTIONS[srv_idx]})")
         ok = _set_persistent_json(RESULT_KEY, {"nonce": REQUEST_NONCE, "status": "saved", "editor_mode": editor_mode, "key_maps_saved": True})
         _write_debug_log("Save ack (key_maps_saved) nonce={0} ok={1}".format(int(REQUEST_NONCE), bool(ok)))
         _close_editor()
@@ -1149,7 +1961,7 @@ def _save_and_exit():
         return
 
     # bind_deed mode: prefer key-map values when present.
-    item_map = _get_item_key_map(SERVER_OPTIONS[srv_idx], PROFESSION_OPTIONS[prof_idx], name)
+    item_map = _get_item_key_map(SERVER_OPTIONS[srv_idx], profession, name)
     if item_map:
         map_buttons = [int(x) for x in (item_map.get("buttons", []) or []) if int(x) > 0][:2]
         if map_buttons and not user_entered_two_buttons:
@@ -1159,7 +1971,7 @@ def _save_and_exit():
         if not mk_text:
             row["material_key"] = str(item_map.get("default_material_key", "") or "").strip().lower()
 
-    mat_map = _get_material_key_map(SERVER_OPTIONS[srv_idx], PROFESSION_OPTIONS[prof_idx], row.get("material_key", mk_text))
+    mat_map = _get_material_key_map(SERVER_OPTIONS[srv_idx], profession, row.get("material_key", mk_text))
     if mat_map:
         map_mbtns = [int(x) for x in (mat_map.get("material_buttons", []) or []) if int(x) > 0][:2]
         if map_mbtns:
@@ -1168,11 +1980,22 @@ def _save_and_exit():
 
     # In bind_deed mode, keep key maps synchronized with the confirmed recipe path.
     existing_category = str(item_map.get("category", "") or "").strip() if isinstance(item_map, dict) else ""
+    category_to_save = selected_category if selected_category else existing_category
     existing_resources = list(item_map.get("resources", []) or []) if isinstance(item_map, dict) else []
-    resources_to_save = list(resources or []) if list(resources or []) else list(existing_resources or [])
+    resources_to_save = (
+        list(resources or [])
+        if list(resources or [])
+        else _normalize_resource_rows(existing_resources)
+    )
+    if not resources_to_save:
+        _say("Resources are required. Add at least one resource and per-item quantity.", 33)
+        return
+    if not _save_resource_item_id_mappings(resources_to_save):
+        _say("Failed to save resource item-id mappings.", 33)
+        return
     if not _upsert_key_maps(
         SERVER_OPTIONS[srv_idx],
-        PROFESSION_OPTIONS[prof_idx],
+        profession,
         name,
         int(row.get("item_id", 0) or 0),
         list(row.get("buttons", []) or []),
@@ -1180,7 +2003,7 @@ def _save_and_exit():
         str(row.get("material_key", mk_text) or mk_text),
         list(row.get("material_buttons", []) or []),
         resources_to_save,
-        existing_category,
+        category_to_save,
     ):
         _say("Failed to save key maps.", 33)
         return
@@ -1217,7 +2040,10 @@ def _prefill_from_request():
 
 
 def _open_editor(pre_override=None):
-    global EDITOR_GUMP, EDITOR_INPUTS, EDITOR_LAST_TYPE_IDX, EDITOR_LAST_MATERIAL_KEY_IDX, EDITOR_LAST_PROFESSION_IDX, EDITOR_LAST_MODE_IDX, SCRIPT_EXIT_REQUESTED
+    global EDITOR_GUMP, EDITOR_INPUTS, EDITOR_LAST_TYPE_IDX, EDITOR_LAST_MATERIAL_KEY_IDX
+    global EDITOR_LAST_PROFESSION_IDX, EDITOR_LAST_MODE_IDX, EDITOR_LAST_SERVER_IDX, EDITOR_LAST_CATEGORY_IDX
+    global EDITOR_LAST_ITEM_IDX
+    global SCRIPT_EXIT_REQUESTED
     _close_editor()
     SCRIPT_EXIT_REQUESTED = False
     pre = pre_override if isinstance(pre_override, dict) else _prefill_from_request()
@@ -1323,23 +2149,50 @@ def _open_editor(pre_override=None):
     l1 = API.CreateGumpTTFLabel("Profession", 12, label_color, "alagard", "left", 90)
     l1.SetPos(10 + x_off, y)
     g.Add(l1)
-    prof = _normalize_profession_name(pre.get("profession", "Blacksmith")) or "Blacksmith"
-    try:
-        prof_idx = PROFESSION_OPTIONS.index(prof)
-    except Exception:
+    profession_options = _load_profession_name_options(srv)
+    if not profession_options:
+        profession_options = list(PROFESSION_OPTIONS)
+    pre_profession = str(pre.get("profession", "Blacksmith") or "Blacksmith")
+    prof_idx = _find_profession_option_index(profession_options, pre_profession)
+    if prof_idx < 0:
         prof_idx = 0
-    d1 = API.CreateDropDown(140, list(PROFESSION_OPTIONS), prof_idx)
+    prof_display = str(profession_options[prof_idx] or "") if profession_options else "Blacksmith"
+    prof = _normalize_profession_name(prof_display) or _normalize_profession_name(pre_profession) or "Blacksmith"
+    d1 = API.CreateDropDown(180, list(profession_options), int(prof_idx))
     d1.SetPos(100 + x_off, y - 2)
     g.Add(d1)
+
+    y += 38
+    l2 = API.CreateGumpTTFLabel("Category", 12, label_color, "alagard", "left", 78)
+    l2.SetPos(10 + x_off, y)
+    g.Add(l2)
+    current_item_name = str(pre.get("name", pre.get("item_name", "")) or "").strip()
+    item_catalog = _load_item_catalog_entry(srv, prof_display, current_item_name) if current_item_name else {}
+    preferred_category = str(pre.get("category", "") or "").strip()
+    if not preferred_category and isinstance(item_catalog, dict):
+        preferred_category = str(item_catalog.get("category", "") or "").strip()
+    category_values = _load_category_name_options(srv, prof_display)
+    category_options = [str(CATEGORY_ALL_LABEL)]
+    category_options.extend(list(category_values or []))
+    if preferred_category and _resource_option_index(category_options, preferred_category) < 0:
+        category_options.append(preferred_category)
+    category_options = _dedupe_str_list(category_options)
+    cat_idx = _resource_option_index(category_options, preferred_category if preferred_category else CATEGORY_ALL_LABEL)
+    if cat_idx < 0:
+        cat_idx = 0
+    d_cat = API.CreateDropDown(220, list(category_options), int(cat_idx))
+    d_cat.SetPos(88 + x_off, y - 2)
+    g.Add(d_cat)
 
     y += 38
     l3 = API.CreateGumpTTFLabel("Item Name", 12, label_color, "alagard", "left", 90)
     l3.SetPos(10 + x_off, y)
     g.Add(l3)
-    current_item_name = str(pre.get("name", pre.get("item_name", "")) or "").strip()
-    name_options = _load_item_name_options(srv, prof)
+    selected_category = str(category_options[cat_idx] if 0 <= int(cat_idx) < len(category_options) else CATEGORY_ALL_LABEL)
+    name_options = _load_item_name_options(srv, prof_display, selected_category)
     if current_item_name and _resource_option_index(name_options, current_item_name) < 0:
         name_options.append(current_item_name)
+    name_options = _dedupe_str_list(name_options)
     if not name_options:
         name_options = [str(ITEM_NONE_LABEL)]
     name_idx = _resource_option_index(name_options, current_item_name)
@@ -1349,20 +2202,46 @@ def _open_editor(pre_override=None):
     d_name.SetPos(100 + x_off, y - 2)
     g.Add(d_name)
 
+    item_name_for_defaults = str(name_options[name_idx] if 0 <= int(name_idx) < len(name_options) else current_item_name).strip()
+    if item_name_for_defaults.lower() == str(ITEM_NONE_LABEL).lower():
+        item_name_for_defaults = ""
+    if item_name_for_defaults and (not item_catalog or _resource_option_index([current_item_name], item_name_for_defaults) < 0):
+        item_catalog = _load_item_catalog_entry(srv, prof_display, item_name_for_defaults)
+
+    item_map_for_defaults = _get_item_key_map(srv, prof, item_name_for_defaults)
     resource_rows = []
     y += 38
     l3b = API.CreateGumpTTFLabel("Item Resource Costs (max 5)", 12, label_color, "alagard", "left", 220)
     l3b.SetPos(10 + x_off, y)
     g.Add(l3b)
-    item_name_for_resources = str(name_options[name_idx] if 0 <= int(name_idx) < len(name_options) else current_item_name).strip()
-    if item_name_for_resources.lower() == str(ITEM_NONE_LABEL).lower():
-        item_name_for_resources = ""
-    item_map_for_resources = _get_item_key_map(srv, prof, item_name_for_resources)
     pre_resources = _normalize_resource_rows(pre.get("resources", []))
     if not pre_resources:
         pre_resources = _normalize_resource_rows(_parse_resources_text(str(pre.get("resources_text", "") or "").strip()))
-    if not pre_resources and isinstance(item_map_for_resources, dict):
-        pre_resources = _normalize_resource_rows(item_map_for_resources.get("resources", []))
+    if not pre_resources and isinstance(item_catalog, dict):
+        pre_resources = _normalize_resource_rows(item_catalog.get("resources", []))
+    if not pre_resources and isinstance(item_map_for_defaults, dict):
+        pre_resources = _normalize_resource_rows(item_map_for_defaults.get("resources", []))
+    resource_item_id_map = _load_resource_item_id_map()
+    if pre_resources and isinstance(resource_item_id_map, dict) and resource_item_id_map:
+        hydrated_resources = []
+        for rr in pre_resources:
+            if not isinstance(rr, dict):
+                continue
+            mat = str(rr.get("material", "") or "").strip().lower()
+            try:
+                qty = int(rr.get("per_item", 0) or 0)
+            except Exception:
+                qty = 0
+            if not mat or qty <= 0:
+                continue
+            item_id = _parse_item_id(rr.get("item_id", 0))
+            if int(item_id) <= 0:
+                item_id = _parse_item_id(resource_item_id_map.get(mat, 0))
+            entry = {"material": mat, "per_item": int(qty)}
+            if int(item_id) > 0:
+                entry["item_id"] = int(item_id)
+            hydrated_resources.append(entry)
+        pre_resources = list(hydrated_resources)
     resource_options = _load_resource_name_options()
     resource_options = list(resource_options or [])
     if not resource_options:
@@ -1373,6 +2252,12 @@ def _open_editor(pre_override=None):
         mat_name = str(rr.get("material", "") or "").strip()
         if mat_name and _resource_option_index(option_values, mat_name) < 0:
             option_values.append(mat_name)
+    qty_hdr = API.CreateGumpTTFLabel("Qty", 11, label_color, "alagard", "left", 32)
+    qty_hdr.SetPos(264 + x_off, y + 4)
+    g.Add(qty_hdr)
+    item_id_hdr = API.CreateGumpTTFLabel("Item ID", 11, label_color, "alagard", "left", 64)
+    item_id_hdr.SetPos(348 + x_off, y + 4)
+    g.Add(item_id_hdr)
     for idx_row in range(int(RESOURCE_SLOT_COUNT)):
         ry = y + 24 + (idx_row * 24)
         slot_lbl = API.CreateGumpTTFLabel(str(int(idx_row + 1)) + ".", 11, label_color, "alagard", "left", 16)
@@ -1380,12 +2265,16 @@ def _open_editor(pre_override=None):
         g.Add(slot_lbl)
         selected_name = ""
         qty_text = ""
+        item_id_text = ""
         if idx_row < len(pre_resources):
             selected_name = str(pre_resources[idx_row].get("material", "") or "").strip()
             try:
                 qty_text = str(int(pre_resources[idx_row].get("per_item", 0) or 0))
             except Exception:
                 qty_text = ""
+            item_id = _parse_item_id(pre_resources[idx_row].get("item_id", 0))
+            if int(item_id) > 0:
+                item_id_text = f"0x{int(item_id):X}"
         opt_idx = _resource_option_index(option_values, selected_name)
         if opt_idx < 0:
             opt_idx = 0
@@ -1395,7 +2284,10 @@ def _open_editor(pre_override=None):
         t_qty = API.CreateGumpTextBox(str(qty_text or ""), 72, 18, False)
         t_qty.SetPos(264 + x_off, ry - 2)
         g.Add(t_qty)
-        resource_rows.append({"resource": dd_res, "qty": t_qty, "options": list(option_values)})
+        t_item_id = API.CreateGumpTextBox(str(item_id_text or ""), 98, 18, False)
+        t_item_id.SetPos(348 + x_off, ry - 2)
+        g.Add(t_item_id)
+        resource_rows.append({"resource": dd_res, "qty": t_qty, "item_id": t_item_id, "options": list(option_values)})
     y += 24 + (int(RESOURCE_SLOT_COUNT) * 24) + 8
 
     y += 38
@@ -1403,13 +2295,26 @@ def _open_editor(pre_override=None):
     l4.SetPos(10 + x_off, y)
     g.Add(l4)
     pre_buttons = pre.get("buttons", [])
+    parsed_pre_buttons = []
     if isinstance(pre_buttons, list):
-        p1 = str(int(pre_buttons[0])) if len(pre_buttons) > 0 else ""
-        p2 = str(int(pre_buttons[1])) if len(pre_buttons) > 1 else ""
+        for x in pre_buttons:
+            try:
+                b = int(x)
+            except Exception:
+                b = 0
+            if b > 0:
+                parsed_pre_buttons.append(int(b))
+            if len(parsed_pre_buttons) >= 2:
+                break
     else:
         parsed = _parse_int_list(str(pre_buttons or ""))
-        p1 = str(int(parsed[0])) if len(parsed) > 0 else ""
-        p2 = str(int(parsed[1])) if len(parsed) > 1 else ""
+        parsed_pre_buttons = [int(x) for x in parsed if int(x) > 0][:2]
+    if not parsed_pre_buttons and isinstance(item_catalog, dict):
+        parsed_pre_buttons = [int(x) for x in (item_catalog.get("buttons", []) or []) if int(x) > 0][:2]
+    if not parsed_pre_buttons and isinstance(item_map_for_defaults, dict):
+        parsed_pre_buttons = [int(x) for x in (item_map_for_defaults.get("buttons", []) or []) if int(x) > 0][:2]
+    p1 = str(int(parsed_pre_buttons[0])) if len(parsed_pre_buttons) > 0 else ""
+    p2 = str(int(parsed_pre_buttons[1])) if len(parsed_pre_buttons) > 1 else ""
     t_btn1 = API.CreateGumpTextBox(p1, 72, 18, False)
     t_btn1.SetPos(250 + x_off, y - 2)
     g.Add(t_btn1)
@@ -1439,13 +2344,20 @@ def _open_editor(pre_override=None):
     l7 = API.CreateGumpTTFLabel("Material Key", 12, label_color, "alagard", "left", 90)
     l7.SetPos(10 + x_off, y)
     g.Add(l7)
+    base_material = str(pre.get("material", "") or "").strip().lower()
+    if not base_material and isinstance(item_catalog, dict):
+        base_material = str(item_catalog.get("material", "") or "").strip().lower()
+    if not base_material:
+        base_material = "ingot"
     mk_current = str(pre.get("material_key", "") or "").strip().lower()
+    if not mk_current and isinstance(item_catalog, dict):
+        mk_current = str(item_catalog.get("default_material_key", "") or "").strip().lower()
     if not mk_current:
-        mk_current = _material_key_from_base(str(pre.get("material", "ingot") or "ingot"))
-    mk_options = _collect_material_key_options(prof)
+        mk_current = _material_key_from_base(base_material)
+    mk_options = _collect_material_key_options(prof, srv)
     mk_labels = list(mk_options)
     mk_labels.append(MATERIAL_KEY_ADD_LABEL)
-    mk_selected = str(pre.get("material_key", "") or "").strip().lower()
+    mk_selected = str(pre.get("material_key", mk_current) or "").strip().lower()
     mk_add_mode = (
         bool(str(pre.get("material_key_new", "") or "").strip())
         or mk_selected == str(MATERIAL_KEY_ADD_LABEL).strip().lower()
@@ -1530,12 +2442,18 @@ def _open_editor(pre_override=None):
     EDITOR_LAST_TYPE_IDX = int(type_idx)
     EDITOR_LAST_MATERIAL_KEY_IDX = int(mk_idx)
     EDITOR_LAST_PROFESSION_IDX = int(prof_idx)
+    EDITOR_LAST_SERVER_IDX = int(srv_idx)
+    EDITOR_LAST_CATEGORY_IDX = int(cat_idx)
+    EDITOR_LAST_ITEM_IDX = int(name_idx)
     EDITOR_INPUTS = {
         "editor_mode": d_mode,
         "recipe_type": d0,
         "server": d0b,
         "profession": d1,
-        "material_hidden": str(pre.get("material", "ingot") or "ingot"),
+        "profession_options": list(profession_options),
+        "category": d_cat,
+        "category_options": list(category_options),
+        "material_hidden": str(base_material or "ingot"),
         "name": d_name,
         "name_options": list(name_options),
         "button_1": t_btn1,
@@ -1556,7 +2474,7 @@ def _open_editor(pre_override=None):
         "raw_text_hidden": str(pre.get("raw_text", "") or ""),
         "item_name_hidden": str(pre.get("item_name", "") or ""),
         "resource_rows": resource_rows,
-        "resources_text": None,  # legacy fallback path
+        "resources_text": None,
     }
 
 
@@ -1574,15 +2492,24 @@ def _main():
             dd_type = f.get("recipe_type")
             dd_mk = f.get("material_key")
             dd_prof = f.get("profession")
+            dd_server = f.get("server")
+            dd_category = f.get("category")
+            dd_item = f.get("name")
             current_mode_idx = int(dd_mode.GetSelectedIndex()) if dd_mode else -1
             current_type_idx = int(dd_type.GetSelectedIndex()) if dd_type else -1
             current_mk_idx = int(dd_mk.GetSelectedIndex()) if dd_mk else -1
             current_prof_idx = int(dd_prof.GetSelectedIndex()) if dd_prof else -1
+            current_server_idx = int(dd_server.GetSelectedIndex()) if dd_server else -1
+            current_category_idx = int(dd_category.GetSelectedIndex()) if dd_category else -1
+            current_item_idx = int(dd_item.GetSelectedIndex()) if dd_item else -1
         except Exception:
             current_mode_idx = -1
             current_type_idx = -1
             current_mk_idx = -1
             current_prof_idx = -1
+            current_server_idx = -1
+            current_category_idx = -1
+            current_item_idx = -1
         if current_mode_idx != -1 and current_mode_idx != int(EDITOR_LAST_MODE_IDX):
             state = _capture_editor_state()
             _open_editor(state)
@@ -1591,7 +2518,19 @@ def _main():
             state = _capture_editor_state()
             _open_editor(state)
             continue
+        if current_server_idx != -1 and current_server_idx != int(EDITOR_LAST_SERVER_IDX):
+            state = _capture_editor_state()
+            _open_editor(state)
+            continue
         if current_prof_idx != -1 and current_prof_idx != int(EDITOR_LAST_PROFESSION_IDX):
+            state = _capture_editor_state()
+            _open_editor(state)
+            continue
+        if current_category_idx != -1 and current_category_idx != int(EDITOR_LAST_CATEGORY_IDX):
+            state = _capture_editor_state()
+            _open_editor(state)
+            continue
+        if current_item_idx != -1 and current_item_idx != int(EDITOR_LAST_ITEM_IDX):
             state = _capture_editor_state()
             _open_editor(state)
             continue

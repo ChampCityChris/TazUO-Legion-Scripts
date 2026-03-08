@@ -42,6 +42,18 @@ AXE_GRAPHICS = [
 ]
 LOG_GRAPHIC = 0x1BDD
 BOARD_GRAPHIC = 0x1BD7
+BARK_FRAGMENT_GRAPHIC = 0x318F
+PARASITIC_PLANT_GRAPHIC = 0x3190
+LUMINESCENT_FUNGI_GRAPHIC = 0x3191
+BRILLIANT_AMBER_GRAPHIC = 0x3199
+UNLOAD_BACKPACK_GRAPHICS = (
+    LOG_GRAPHIC,
+    BOARD_GRAPHIC,
+    BARK_FRAGMENT_GRAPHIC,
+    PARASITIC_PLANT_GRAPHIC,
+    LUMINESCENT_FUNGI_GRAPHIC,
+    BRILLIANT_AMBER_GRAPHIC,
+)
 
 # Tree/harvest behavior.
 SEARCH_RADIUS = 2
@@ -534,7 +546,7 @@ def _unload_wood_resources():
     _responsive_wait(0.6)
     backpack_items = API.ItemsInContainer(API.Backpack, True) or []
     for item in backpack_items:
-        if int(getattr(item, "Graphic", 0)) in (LOG_GRAPHIC, BOARD_GRAPHIC):
+        if int(getattr(item, "Graphic", 0)) in UNLOAD_BACKPACK_GRAPHICS:
             _move_item_to_container(item, DROP_CONTAINER_SERIAL)
     if USE_GIANT_BEETLE and GIANT_BEETLE_SERIAL:
         beetle_items = API.ItemsInContainer(GIANT_BEETLE_SERIAL, True) or []

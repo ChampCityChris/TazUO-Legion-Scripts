@@ -3,6 +3,7 @@ import json
 import ast
 import os
 import re
+import sqlite3
 import sys
 
 """
@@ -70,11 +71,18 @@ try:
     _this_dir = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
 except Exception:
     _this_dir = os.getcwd()
+_project_root_dir = _this_dir
+while _project_root_dir and os.path.basename(_project_root_dir).lower() in ("resources", "utilities", "skills", "scripts"):
+    _project_root_dir = os.path.dirname(_project_root_dir)
 _util_dir = os.path.normpath(os.path.join(_this_dir, "..", "Utilities"))
 if _util_dir and _util_dir not in sys.path:
     sys.path.append(_util_dir)
 try:
     import RecipeStore as RECIPE_STORE
+    try:
+        RECIPE_STORE.set_base_dir(_project_root_dir or _util_dir)
+    except Exception:
+        pass
 except Exception:
     RECIPE_STORE = None
 
@@ -85,6 +93,7 @@ INGOT_ID = 0x1BF2
 IRON_INGOT_HUE = 0
 MIN_INGOTS_IN_PACK = 50
 RESTOCK_AMOUNT = 300
+AUTO_TOOL_INGOT_PULL = 25
 
 RESTOCK_TOOLS = True
 BLACKSMITH_TOOL_IDS = [0x0FBB]  # Tongs
@@ -99,14 +108,7 @@ GUMP_POLL_MS = 200
 STATUS_HUE = 17
 WARN_HUE = 33
 BACKPACK_ITEM_THRESHOLD = 125
-ALLOW_KEEP_GRAPHICS = [
-    0x1BF2,  # Ingots
-    0x1766,  # Cloth
-    0x0E21,  # Bandages
-    0x1081,  # Leather
-    0x0F9F,  # Scissors
-    0x0FBB,  # Tongs
-]
+SALVAGE_BATCH_SIZE = 25
 
 SALVAGE_CONTEXT_INDEX = 2
 
@@ -153,6 +155,7 @@ POST_OPEN_PAUSE_MS = 150
 STOCK_SERIAL = 0
 SALVAGE_SERIAL = 0
 TRASH_SERIAL = 0
+CRAFTS_SINCE_SALVAGE = 0
 
 # === TINKERING SETTINGS ===
 TINKER_TOOL_GRAPHICS = [0x1EB8]  # Tinker's tools (UOAlive).
@@ -180,6 +183,8 @@ TAILOR_CRAFT_SETTLE_MS = 1200
 CARPENTRY_TOOL_GRAPHICS = [0x1028, 0x102C, 0x1034, 0x1035]  # Common carpentry tools.
 CARPENTRY_GUMP_ID = 0xD466EA9C
 BOARD_ID = 0x1BD7
+PLAIN_BOARD_HUE = 0
+BASE_RESOURCE_HUE = 0
 MIN_BOARDS_IN_PACK = 30
 RESTOCK_BOARDS_AMOUNT = 400
 CARPENTRY_CRAFT_SETTLE_MS = 1200
@@ -261,7 +266,7 @@ TRAINING_PLANS_BY_SERVER = {
             {"start_at": 65.0, "end_at": 72.0, "name": "Kasa", "material_key": "cloth"},
             {"start_at": 72.0, "end_at": 78.0, "name": "Ninja Tabi", "material_key": "cloth"},
             {"start_at": 78.0, "end_at": 110.0, "name": "Oil Cloth", "material_key": "cloth"},
-            {"start_at": 110.0, "end_at": 115.0, "name": "Elven Shirt", "material_key": "cloth"},
+            {"start_at": 110.0, "end_at": 115.0, "name": "Elven Shirt A", "material_key": "cloth"},
             {"start_at": 115.0, "end_at": 120.0, "name": "Studded Hiro Sode", "material_key": "leather"},
         ],
         "Carpentry": [
@@ -282,7 +287,7 @@ TRAINING_PLANS_BY_SERVER = {
                 "material_key": "board",
                 "materials": [{"material": "board"}, {"material": "feather"}],
             },
-            {"start_at": 35.0, "end_at": 55.0, "name": "Simple Bow", "material_key": "board"},
+            {"start_at": 35.0, "end_at": 55.0, "name": "Bow", "material_key": "board"},
             {"start_at": 55.0, "end_at": 60.0, "name": "Fukiya Dart", "material_key": "board"},
             {"start_at": 60.0, "end_at": 70.0, "name": "Bow", "material_key": "board"},
             {"start_at": 70.0, "end_at": 80.0, "name": "Composite Bow", "material_key": "board"},
@@ -329,6 +334,7 @@ def _normalize_profession_name(name):
     m = {
         "blacksmith": "Blacksmith",
         "blacksmithy": "Blacksmith",
+        "blacksmithing": "Blacksmith",
         "tailor": "Tailor",
         "tailoring": "Tailor",
         "carpentry": "Carpentry",
@@ -338,6 +344,7 @@ def _normalize_profession_name(name):
         "bowcraft": "Bowcraft",
         "fletching": "Bowcraft",
         "bowcraft/fletching": "Bowcraft",
+        "bowcraft and fletching": "Bowcraft",
         "bowyer": "Bowcraft",
     }
     return m.get(n, "")
@@ -589,6 +596,27 @@ def _skill_to_profession(skill_name):
     return m.get(str(skill_name or ""), "")
 
 
+def _skill_to_db_profession_names(skill_name):
+    m = {
+        "Blacksmithy": ["Blacksmithing", "Blacksmith"],
+        "Tailoring": ["Tailoring", "Tailor"],
+        "Carpentry": ["Carpentry", "Carpenter"],
+        "Tinkering": ["Tinker", "Tinkering"],
+        "Bowcraft/Fletching": ["Bowcraft and Fletching", "Bowcraft", "Fletching"],
+    }
+    return list(m.get(str(skill_name or ""), []) or [])
+
+
+def _recipe_db_path():
+    if RECIPE_STORE is None:
+        return ""
+    try:
+        p = str(RECIPE_STORE._db_path() or "").strip()
+    except Exception:
+        return ""
+    return p if p and os.path.isfile(p) else ""
+
+
 def _training_steps_from_recipe_book(skill_name):
     prof = _skill_to_profession(skill_name)
     if not prof:
@@ -623,36 +651,67 @@ def _training_steps_from_recipe_book(skill_name):
 
 def _build_recipe_lookup_for_skill(skill_name):
     prof = _skill_to_profession(skill_name)
-    if not prof:
+    prof_names = _skill_to_db_profession_names(skill_name)
+    db_path = _recipe_db_path()
+    if not prof or not prof_names or not db_path:
         return {}
-    rows = _load_recipe_book_raw()
     lookup = {}
-    for r in rows:
-        if str(r.get("recipe_type", "")).strip().lower() != RECIPE_TYPE_TRAINING:
+    placeholders = ", ".join(["?"] * len(prof_names))
+    sql = (
+        "SELECT ci.item_display_name, ci.game_item_id, cins.gump_button_id, cins.step_number, "
+        "mf.family_code "
+        "FROM craftable_items ci "
+        "JOIN crafting_contexts cc ON cc.context_id = ci.context_id "
+        "JOIN game_servers gs ON gs.game_server_id = cc.game_server_id "
+        "JOIN crafting_professions cp ON cp.profession_id = cc.profession_id "
+        "LEFT JOIN material_options mo ON mo.material_option_id = ci.default_material_option_id "
+        "LEFT JOIN material_families mf ON mf.material_family_id = mo.material_family_id "
+        "JOIN craftable_item_navigation_steps cins ON cins.craftable_item_id = ci.craftable_item_id "
+        "WHERE lower(trim(gs.server_name)) = lower(?) "
+        f"AND lower(trim(cp.profession_name)) IN ({placeholders}) "
+        "ORDER BY lower(trim(ci.item_display_name)), cins.step_number"
+    )
+    params = [str(SELECTED_SERVER or DEFAULT_SERVER)] + [str(x or "").strip().lower() for x in prof_names]
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path, timeout=0.4)
+        conn.execute("PRAGMA query_only=1;")
+        cur = conn.execute(sql, tuple(params))
+        rows = cur.fetchall() or []
+    except Exception:
+        return {}
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+    by_name = {}
+    for item_name, game_item_id, button_id, _, family_code in rows:
+        name = str(item_name or "").strip()
+        if not name:
             continue
-        if _normalize_server_name(r.get("server", DEFAULT_SERVER)) != _normalize_server_name(SELECTED_SERVER):
-            continue
-        if _normalize_profession_name(r.get("profession", "")) != prof:
-            continue
-        n = _normalize_training_recipe_entry(r)
-        if not n:
-            continue
-        key = (
-            str(n.get("name", "")).strip().lower(),
-            str(n.get("material_key", "") or _material_key_from_base(n.get("material", "ingot"))).strip().lower(),
-        )
-        lookup[key] = {
-            "name": str(n.get("name", "")),
-            "item_id": int(n.get("item_id", 0) or 0),
-            "material": str(n.get("material", "ingot") or "ingot"),
-            "material_key": str(n.get("material_key", "") or _material_key_from_base(n.get("material", "ingot"))),
-            "materials": _normalize_material_requirements(
-                n.get("materials", []),
-                str(n.get("material", "ingot") or "ingot"),
-                prof
-            ),
-            "buttons": [int(x) for x in (n.get("buttons", []) or []) if int(x) > 0],
-        }
+        key_name = name.lower()
+        if key_name not in by_name:
+            base = _normalize_material_base(str(family_code or "").strip().lower(), prof)
+            by_name[key_name] = {
+                "name": name,
+                "item_id": int(game_item_id or 0),
+                "material": base,
+                "material_key": _material_key_from_base(base),
+                "materials": _normalize_material_requirements([], base, prof),
+                "buttons": [],
+            }
+        try:
+            bid = int(button_id or 0)
+        except Exception:
+            bid = 0
+        if bid > 0:
+            by_name[key_name]["buttons"].append(bid)
+
+    for recipe in by_name.values():
+        key = (str(recipe.get("name", "")).strip().lower(), str(recipe.get("material_key", "")).strip().lower())
+        lookup[key] = recipe
     return lookup
 
 
@@ -669,6 +728,7 @@ def _training_steps_from_in_script_plan(skill_name):
         if action:
             out.append({
                 "start_at": float(p.get("start_at", 0.0) or 0.0),
+                "end_at": float(p.get("end_at", 0.0) or 0.0),
                 "name": str(p.get("name", action)),
                 "item_id": 0,
                 "material": str(p.get("material", "cloth") or "cloth"),
@@ -709,11 +769,12 @@ def _training_steps_from_in_script_plan(skill_name):
             continue
         out.append({
             "start_at": float(p.get("start_at", 0.0) or 0.0),
+            "end_at": float(p.get("end_at", 0.0) or 0.0),
             "name": str(recipe.get("name", chosen_name)),
             "item_id": int(recipe.get("item_id", 0) or 0),
             "material": str(recipe.get("material", "ingot") or "ingot"),
             "materials": _normalize_material_requirements(
-                recipe.get("materials", []) or p.get("materials", []),
+                p.get("materials", []) or recipe.get("materials", []),
                 str(recipe.get("material", "ingot") or "ingot"),
                 _skill_to_profession(skill_name)
             ),
@@ -728,9 +789,7 @@ def _training_steps_from_in_script_plan(skill_name):
 
 
 def _resolve_training_steps(skill_name):
-    # Runtime source of truth is the shared recipe book.
-    # (In-script plans are retained only as historical data/migration reference.)
-    return _training_steps_from_recipe_book(skill_name)
+    return _training_steps_from_in_script_plan(skill_name)
 
 
 def _update_caps_from_gump():
@@ -1022,10 +1081,49 @@ def _gump_matches_anchors(gump_id, anchors):
     return False
 
 
+def _extract_gump_id(gump_obj):
+    if gump_obj is None:
+        return 0
+    if isinstance(gump_obj, int):
+        return int(gump_obj)
+    for attr in ("ServerSerial", "ID", "Id", "GumpID", "GumpId", "Serial"):
+        try:
+            value = getattr(gump_obj, attr, None)
+        except Exception:
+            value = None
+        if value is None:
+            continue
+        try:
+            gid = int(value)
+        except Exception:
+            continue
+        if gid > 0:
+            return gid
+    return 0
+
+
+def _get_open_gump_ids():
+    ids = []
+    seen = set()
+    try:
+        all_gumps = API.GetAllGumps() or []
+    except Exception:
+        all_gumps = []
+    for g in all_gumps:
+        gid = _extract_gump_id(g)
+        if gid > 0 and gid not in seen:
+            seen.add(gid)
+            ids.append(gid)
+    return ids
+
+
 def _find_gump_containing(anchors, preferred_id=0):
     probe_ids = []
     for gid in [preferred_id, BLACKSMITH_GUMP_ID, TINKER_GUMP_ID, TAILOR_GUMP_ID, CARPENTRY_GUMP_ID]:
         if gid and gid not in probe_ids:
+            probe_ids.append(gid)
+    for gid in _get_open_gump_ids():
+        if gid not in probe_ids:
             probe_ids.append(gid)
     for gid in probe_ids:
         if API.WaitForGump(gid, 0.1) and _gump_matches_anchors(gid, anchors):
@@ -1052,9 +1150,9 @@ def _find_first_in_container(container_serial, item_id, hue_filter=None):
             return it
     return None
 
-def _find_first_in_container_multi(container_serial, item_ids):
+def _find_first_in_container_multi(container_serial, item_ids, hue_filter=None):
     for item_id in item_ids:
-        item = _find_first_in_container(container_serial, item_id)
+        item = _find_first_in_container(container_serial, item_id, hue_filter=hue_filter)
         if item:
             return item
     return None
@@ -1110,16 +1208,63 @@ def _has_any_in_backpack(item_ids):
     return False
 
 
-def _move_salvage_non_keep_to_trash():
-    if not SALVAGE_SERIAL or not TRASH_SERIAL:
+def _ensure_salvage_and_trash_containers():
+    global SALVAGE_SERIAL, TRASH_SERIAL
+    if SALVAGE_SERIAL == 0:
+        API.SysMsg("Target salvage bag.")
+        serial = API.RequestTarget()
+        if serial:
+            SALVAGE_SERIAL = int(serial)
+    if TRASH_SERIAL == 0:
+        API.SysMsg("Target trash container.")
+        serial = API.RequestTarget()
+        if serial:
+            TRASH_SERIAL = int(serial)
+    if SALVAGE_SERIAL == 0 or TRASH_SERIAL == 0:
+        _say("Salvage or trash container not set. Pausing.", WARN_HUE)
+        return False
+    return True
+
+
+def _move_salvage_item_to_stock_or_trash(item, stock_serial):
+    item_graphic = int(getattr(item, "Graphic", 0) or 0)
+    amount = int(getattr(item, "Amount", 1) or 1)
+    target_serial = 0
+    if item_graphic in (INGOT_ID, CLOTH_ID) or item_graphic in BOLT_OF_CLOTH_IDS:
+        target_serial = int(stock_serial or 0)
+        if target_serial == 0:
+            _say("Stock container missing; keeping ingots/cloth in salvage bag.", WARN_HUE)
+            return False
+    if target_serial == 0:
+        target_serial = int(TRASH_SERIAL or 0)
+    if target_serial == 0:
+        _say("Trash container missing; cannot clear salvage leftovers.", WARN_HUE)
+        return False
+    _pause_if_needed()
+    API.ProcessCallbacks()
+    API.MoveItem(item.Serial, target_serial, amount)
+    _pause_ms(PAUSE_DRAG)
+    return True
+
+
+def _cleanup_salvage_bag(stock_serial):
+    if not SALVAGE_SERIAL:
         return
     for it in _items_in(SALVAGE_SERIAL, True):
-        if it.Graphic in ALLOW_KEEP_GRAPHICS:
-            continue
-        _pause_if_needed()
-        API.ProcessCallbacks()
-        API.MoveItem(it.Serial, TRASH_SERIAL, int(getattr(it, "Amount", 1)))
-        _pause_ms(PAUSE_DRAG)
+        _move_salvage_item_to_stock_or_trash(it, stock_serial)
+
+
+def _process_salvage_cycle(stock_serial, force=False):
+    global CRAFTS_SINCE_SALVAGE
+    if not SALVAGE_SERIAL:
+        CRAFTS_SINCE_SALVAGE = 0
+        return
+    if not force and CRAFTS_SINCE_SALVAGE < SALVAGE_BATCH_SIZE:
+        return
+    _smelt_salvage_bag(SALVAGE_SERIAL)
+    _pause_ms(5000)
+    _cleanup_salvage_bag(stock_serial)
+    CRAFTS_SINCE_SALVAGE = 0
 
 
 def _clear_crafted_items(item_ids):
@@ -1150,7 +1295,7 @@ def _clear_crafted_items(item_ids):
         if not moved and TRASH_SERIAL:
             _move_to_salvage(itm.Graphic, TRASH_SERIAL)
         _pause_ms(PAUSE_DRAG)
-    _move_salvage_non_keep_to_trash()
+    _process_salvage_cycle(STOCK_SERIAL, force=True)
 
 
 def _get_first_tool_serial():
@@ -1377,6 +1522,7 @@ def _open_carpentry_menu(stock_serial):
     if not tool:
         return 0
     for _ in range(2):
+        pre_ids = set(_get_open_gump_ids())
         API.UseObject(tool)
         _pause_ms(POST_OPEN_PAUSE_MS)
         gid = _wait_for_gump(CARPENTRY_GUMP_ANCHORS, timeout_s=3, preferred_id=CARPENTRY_GUMP_ID)
@@ -1385,6 +1531,12 @@ def _open_carpentry_menu(stock_serial):
         # Some shards expose limited carpentry header text; fall back to known id.
         if CARPENTRY_GUMP_ID and API.WaitForGump(CARPENTRY_GUMP_ID, 0.5):
             return CARPENTRY_GUMP_ID
+        post_ids = _get_open_gump_ids()
+        for dynamic_gid in post_ids:
+            if dynamic_gid in pre_ids:
+                continue
+            if API.WaitForGump(dynamic_gid, 0.1):
+                return dynamic_gid
     _say("Carpentry gump not found.", WARN_HUE)
     return 0
 
@@ -1435,20 +1587,27 @@ def _craft_carpentry_once(gump_id, step):
         return False
     if not gump_id:
         gump_id = _wait_for_gump(CARPENTRY_GUMP_ANCHORS, timeout_s=2, preferred_id=CARPENTRY_GUMP_ID)
-    elif not _gump_matches_anchors(gump_id, CARPENTRY_GUMP_ANCHORS):
-        if not (CARPENTRY_GUMP_ID and API.WaitForGump(CARPENTRY_GUMP_ID, 0.2)):
+    if not gump_id:
+        if CARPENTRY_GUMP_ID and API.WaitForGump(CARPENTRY_GUMP_ID, 0.2):
+            gump_id = CARPENTRY_GUMP_ID
+        else:
+            _say("Carpentry gump validation failed.", WARN_HUE)
+            return False
+    if not API.WaitForGump(gump_id, 0.2):
+        if CARPENTRY_GUMP_ID and API.WaitForGump(CARPENTRY_GUMP_ID, 0.2):
+            gump_id = CARPENTRY_GUMP_ID
+        else:
             gump_id = _wait_for_gump(CARPENTRY_GUMP_ANCHORS, timeout_s=2, preferred_id=CARPENTRY_GUMP_ID)
     if not gump_id:
         _say("Carpentry gump validation failed.", WARN_HUE)
         return False
     for b in buttons:
-        if not _gump_matches_anchors(gump_id, CARPENTRY_GUMP_ANCHORS):
-            if not (CARPENTRY_GUMP_ID and API.WaitForGump(CARPENTRY_GUMP_ID, 0.2)):
+        if not API.WaitForGump(gump_id, 0.1):
+            if CARPENTRY_GUMP_ID and API.WaitForGump(CARPENTRY_GUMP_ID, 0.2):
+                gump_id = CARPENTRY_GUMP_ID
+            else:
                 _say("Carpentry gump changed unexpectedly.", WARN_HUE)
                 return False
-        if not API.WaitForGump(gump_id, 0.1):
-            _say("Carpentry gump changed unexpectedly.", WARN_HUE)
-            return False
         API.ReplyGump(b, gump_id)
         _pause_ms(PAUSE_GUMP_CLICK)
     return True
@@ -1510,9 +1669,9 @@ def _reset_blacksmith_menu(stock_serial):
     return gid
 
 
-def _restock_ingots(stock_serial):
+def _restock_ingots(stock_serial, min_in_pack=MIN_INGOTS_IN_PACK, restock_amount=RESTOCK_AMOUNT):
     current = _count_in(API.Backpack, INGOT_ID, IRON_INGOT_HUE)
-    if current >= MIN_INGOTS_IN_PACK:
+    if current >= int(min_in_pack):
         return current
     API.UseObject(stock_serial)
     _pause_ms(PAUSE_DRAG)
@@ -1528,17 +1687,17 @@ def _restock_ingots(stock_serial):
     if not ing:
         _say("No ingots available.", WARN_HUE)
         return 0
-    move_amt = min(RESTOCK_AMOUNT, int(getattr(ing, "Amount", 0)))
+    move_amt = min(int(restock_amount), int(getattr(ing, "Amount", 0)))
     API.MoveItem(ing.Serial, API.Backpack, move_amt)
     _pause_ms(PAUSE_DRAG)
     current = _count_in(API.Backpack, INGOT_ID, IRON_INGOT_HUE)
-    if current < MIN_INGOTS_IN_PACK:
+    if current < int(min_in_pack):
         _say("Ingot restock failed.", WARN_HUE)
         return 0
     return current
 
 
-def _restock_resource(stock_serial, item_id, min_in_pack, restock_amount, hue_filter=None):
+def _restock_resource(stock_serial, item_id, min_in_pack, restock_amount, hue_filter=BASE_RESOURCE_HUE):
     current = _count_in(API.Backpack, item_id, hue_filter)
     if current >= min_in_pack:
         return current
@@ -1569,7 +1728,7 @@ def _cut_bolts_in_backpack():
     cut_any = False
     for bolt_id in BOLT_OF_CLOTH_IDS:
         while True:
-            bolt = _find_first_in_container(API.Backpack, bolt_id)
+            bolt = _find_first_in_container(API.Backpack, bolt_id, hue_filter=BASE_RESOURCE_HUE)
             if not bolt:
                 break
             API.UseObject(scissors.Serial)
@@ -1583,7 +1742,7 @@ def _cut_bolts_in_backpack():
 
 def _craft_scissors_with_tinkering():
     if STOCK_SERIAL:
-        _restock_ingots(STOCK_SERIAL)
+        _restock_ingots(STOCK_SERIAL, min_in_pack=1, restock_amount=AUTO_TOOL_INGOT_PULL)
     gump_id = _open_tinker_menu()
     if not gump_id:
         _say("Tinker gump not found for scissors craft.", WARN_HUE)
@@ -1619,16 +1778,26 @@ def _ensure_scissors_for_tailoring(stock_serial):
 
 
 def _restock_tailor_cloth(stock_serial):
-    current = _count_in(API.Backpack, CLOTH_ID)
+    current = _count_in(API.Backpack, CLOTH_ID, BASE_RESOURCE_HUE)
     if current >= MIN_CLOTH_IN_PACK:
         return current
-    current = _restock_resource(stock_serial, CLOTH_ID, MIN_CLOTH_IN_PACK, RESTOCK_CLOTH_AMOUNT)
+    current = _restock_resource(
+        stock_serial,
+        CLOTH_ID,
+        MIN_CLOTH_IN_PACK,
+        RESTOCK_CLOTH_AMOUNT,
+        hue_filter=BASE_RESOURCE_HUE,
+    )
     if current >= MIN_CLOTH_IN_PACK:
         return current
     attempts = 0
     while current < MIN_CLOTH_IN_PACK and attempts < 6:
         attempts += 1
-        bolt = _find_first_in_container_multi(stock_serial, BOLT_OF_CLOTH_IDS)
+        bolt = _find_first_in_container_multi(
+            stock_serial,
+            BOLT_OF_CLOTH_IDS,
+            hue_filter=BASE_RESOURCE_HUE,
+        )
         if not bolt:
             break
         move_amt = min(6, int(getattr(bolt, "Amount", 1) or 1))
@@ -1638,12 +1807,18 @@ def _restock_tailor_cloth(stock_serial):
             _say("No scissors available to cut bolts.", WARN_HUE)
             break
         _cut_bolts_in_backpack()
-        current = _count_in(API.Backpack, CLOTH_ID)
+        current = _count_in(API.Backpack, CLOTH_ID, BASE_RESOURCE_HUE)
     return current
 
 
 def _restock_boards(stock_serial):
-    return _restock_resource(stock_serial, BOARD_ID, MIN_BOARDS_IN_PACK, RESTOCK_BOARDS_AMOUNT)
+    return _restock_resource(
+        stock_serial,
+        BOARD_ID,
+        MIN_BOARDS_IN_PACK,
+        RESTOCK_BOARDS_AMOUNT,
+        hue_filter=PLAIN_BOARD_HUE,
+    )
 
 
 def _ensure_step_materials(stock_serial, step):
@@ -1662,14 +1837,16 @@ def _ensure_step_materials(stock_serial, step):
             iid = item_id if item_id > 0 else BOARD_ID
             minimum = min_in_pack if min_in_pack > 0 else MIN_BOARDS_IN_PACK
             pull = pull_amount if pull_amount > 0 else RESTOCK_BOARDS_AMOUNT
-            if _restock_resource(stock_serial, iid, minimum, pull, hue_filter=hue) < minimum:
+            board_hue = PLAIN_BOARD_HUE if hue is None else hue
+            if _restock_resource(stock_serial, iid, minimum, pull, hue_filter=board_hue) < minimum:
                 return False
             continue
         if base == "feather":
             iid = item_id if item_id > 0 else FEATHER_ID
             minimum = min_in_pack if min_in_pack > 0 else MIN_FEATHERS_IN_PACK
             pull = pull_amount if pull_amount > 0 else RESTOCK_FEATHERS_AMOUNT
-            if _restock_resource(stock_serial, iid, minimum, pull, hue_filter=hue) < minimum:
+            res_hue = BASE_RESOURCE_HUE if hue is None else hue
+            if _restock_resource(stock_serial, iid, minimum, pull, hue_filter=res_hue) < minimum:
                 return False
             continue
         if base == "cloth":
@@ -1681,50 +1858,53 @@ def _ensure_step_materials(stock_serial, step):
             iid = item_id if item_id > 0 else LEATHER_ID
             minimum = min_in_pack if min_in_pack > 0 else MIN_LEATHER_IN_PACK
             pull = pull_amount if pull_amount > 0 else RESTOCK_LEATHER_AMOUNT
-            if _restock_resource(stock_serial, iid, minimum, pull, hue_filter=hue) < minimum:
+            res_hue = BASE_RESOURCE_HUE if hue is None else hue
+            if _restock_resource(stock_serial, iid, minimum, pull, hue_filter=res_hue) < minimum:
                 return False
             continue
         if base == "ingot":
             iid = item_id if item_id > 0 else INGOT_ID
             minimum = min_in_pack if min_in_pack > 0 else MIN_INGOTS_IN_PACK
             pull = pull_amount if pull_amount > 0 else RESTOCK_AMOUNT
-            if _restock_resource(stock_serial, iid, minimum, pull, hue_filter=hue) < minimum:
+            res_hue = BASE_RESOURCE_HUE if hue is None else hue
+            if _restock_resource(stock_serial, iid, minimum, pull, hue_filter=res_hue) < minimum:
                 return False
             continue
         if item_id > 0:
             minimum = min_in_pack if min_in_pack > 0 else 10
             pull = pull_amount if pull_amount > 0 else max(50, minimum)
-            if _restock_resource(stock_serial, item_id, minimum, pull, hue_filter=hue) < minimum:
+            res_hue = BASE_RESOURCE_HUE if hue is None else hue
+            if _restock_resource(stock_serial, item_id, minimum, pull, hue_filter=res_hue) < minimum:
                 return False
             continue
     return True
 
 
 def _ensure_item_in_backpack_from_stock(stock_serial, item_id, min_in_pack, pull_amount):
-    if _count_in(API.Backpack, item_id) >= min_in_pack:
+    if _count_in(API.Backpack, item_id, BASE_RESOURCE_HUE) >= min_in_pack:
         return True
     if not stock_serial:
         return False
-    item = _find_first_in_container(stock_serial, item_id)
+    item = _find_first_in_container(stock_serial, item_id, hue_filter=BASE_RESOURCE_HUE)
     if not item:
         return False
     move_amt = min(int(getattr(item, "Amount", 1) or 1), int(pull_amount))
     API.MoveItem(item.Serial, API.Backpack, move_amt)
     _pause_ms(PAUSE_DRAG)
-    return _count_in(API.Backpack, item_id) >= min_in_pack
+    return _count_in(API.Backpack, item_id, BASE_RESOURCE_HUE) >= min_in_pack
 
 
 def _ensure_inscription_reagents(stock_serial):
     for reg in INSCRIPTION_REAGENTS:
-        if _count_in(API.Backpack, reg) >= INSCRIPTION_REAGENT_MIN:
+        if _count_in(API.Backpack, reg, BASE_RESOURCE_HUE) >= INSCRIPTION_REAGENT_MIN:
             continue
-        item = _find_first_in_container(stock_serial, reg)
+        item = _find_first_in_container(stock_serial, reg, hue_filter=BASE_RESOURCE_HUE)
         if not item:
             return False
         move_amt = min(int(getattr(item, "Amount", 1) or 1), int(INSCRIPTION_REAGENT_PULL))
         API.MoveItem(item.Serial, API.Backpack, move_amt)
         _pause_ms(PAUSE_DRAG)
-        if _count_in(API.Backpack, reg) < INSCRIPTION_REAGENT_MIN:
+        if _count_in(API.Backpack, reg, BASE_RESOURCE_HUE) < INSCRIPTION_REAGENT_MIN:
             return False
     return True
 
@@ -1841,6 +2021,69 @@ def _smelt_salvage_bag(serial):
     _pause_ms(250)
 
 
+def _snapshot_backpack_items():
+    snapshot = {}
+    for it in _items_in(API.Backpack, recursive=True):
+        serial = int(getattr(it, "Serial", 0) or 0)
+        if serial <= 0:
+            continue
+        snapshot[serial] = int(getattr(it, "Amount", 1) or 1)
+    return snapshot
+
+
+def _move_serial_amount_to_salvage_or_trash(item_serial, amount):
+    if amount <= 0:
+        return False
+    moved = False
+    if SALVAGE_SERIAL:
+        API.MoveItem(item_serial, SALVAGE_SERIAL, int(amount))
+        _pause_ms(PAUSE_DRAG)
+        moved = True
+    if not moved and TRASH_SERIAL:
+        API.MoveItem(item_serial, TRASH_SERIAL, int(amount))
+        _pause_ms(PAUSE_DRAG)
+        moved = True
+    return moved
+
+
+def _handle_unknown_crafted_items(before_snapshot, stock_serial):
+    global CRAFTS_SINCE_SALVAGE
+    moved_any = False
+    after_snapshot = _snapshot_backpack_items()
+
+    for serial, amount in after_snapshot.items():
+        if serial in before_snapshot:
+            continue
+        if _move_serial_amount_to_salvage_or_trash(serial, amount):
+            moved_any = True
+
+    for serial, amount in after_snapshot.items():
+        previous_amount = int(before_snapshot.get(serial, 0) or 0)
+        delta = int(amount) - previous_amount
+        if previous_amount <= 0 or delta <= 0:
+            continue
+        if _move_serial_amount_to_salvage_or_trash(serial, delta):
+            moved_any = True
+
+    if moved_any:
+        CRAFTS_SINCE_SALVAGE += 1
+        _process_salvage_cycle(stock_serial, force=False)
+    return moved_any
+
+
+def _handle_crafted_item(expected_item_id, stock_serial):
+    global CRAFTS_SINCE_SALVAGE
+    moved = False
+    if SALVAGE_SERIAL:
+        moved = _move_to_salvage(expected_item_id, SALVAGE_SERIAL)
+        if moved:
+            CRAFTS_SINCE_SALVAGE += 1
+            _process_salvage_cycle(stock_serial, force=False)
+    if not moved and TRASH_SERIAL:
+        moved = _move_to_salvage(expected_item_id, TRASH_SERIAL)
+    return moved
+
+
 def _normalize_steps(steps):
     s = sorted(steps, key=lambda x: float(x["start_at"]))
     out = []
@@ -1858,7 +2101,7 @@ def _pick_step(skill, steps_sorted):
     chosen = steps_sorted[0]
     for step in steps_sorted:
         s_at = float(step.get("start_at", 0.0) or 0.0)
-        e_at = float(step.get("stop_at", 0.0) or 0.0)
+        e_at = float(step.get("end_at", 0.0) or 0.0)
         if skill >= s_at and (e_at <= 0.0 or skill < e_at):
             return step
         if skill >= s_at:
@@ -1910,7 +2153,7 @@ def _open_tinker_menu_for_tools():
 
 def _craft_tinker_tool():
     if STOCK_SERIAL:
-        _restock_ingots(STOCK_SERIAL)
+        _restock_ingots(STOCK_SERIAL, min_in_pack=1, restock_amount=AUTO_TOOL_INGOT_PULL)
     gump_id = _open_tinker_menu_for_tools()
     if not gump_id:
         _say("Tinker gump not found.", WARN_HUE)
@@ -1923,7 +2166,7 @@ def _craft_tinker_tool():
 
 def _craft_blacksmith_tool_with_tinkering():
     if STOCK_SERIAL:
-        _restock_ingots(STOCK_SERIAL)
+        _restock_ingots(STOCK_SERIAL, min_in_pack=1, restock_amount=AUTO_TOOL_INGOT_PULL)
     gump_id = _open_tinker_menu_for_tools()
     if not gump_id:
         _say("Tinker gump not found for blacksmith tool craft.", WARN_HUE)
@@ -1936,7 +2179,7 @@ def _craft_blacksmith_tool_with_tinkering():
 
 def _craft_tailor_tool_with_tinkering():
     if STOCK_SERIAL:
-        _restock_ingots(STOCK_SERIAL)
+        _restock_ingots(STOCK_SERIAL, min_in_pack=1, restock_amount=AUTO_TOOL_INGOT_PULL)
     gump_id = _open_tinker_menu()
     if not gump_id:
         _say("Tinker gump not found for tailoring tool craft.", WARN_HUE)
@@ -1951,7 +2194,7 @@ def _craft_tailor_tool_with_tinkering():
 
 def _craft_carpentry_tool_with_tinkering():
     if STOCK_SERIAL:
-        _restock_ingots(STOCK_SERIAL)
+        _restock_ingots(STOCK_SERIAL, min_in_pack=1, restock_amount=AUTO_TOOL_INGOT_PULL)
     gump_id = _open_tinker_menu()
     if not gump_id:
         _say("Tinker gump not found for carpentry tool craft.", WARN_HUE)
@@ -2019,6 +2262,8 @@ def _train_tinkering_to(cap):
     if STOCK_SERIAL == 0:
         _say("Stock chest not set. Pausing.", WARN_HUE)
         return False
+    if not _ensure_salvage_and_trash_containers():
+        return False
 
     steps = _resolve_training_steps("Tinkering")
     if not steps:
@@ -2069,20 +2314,18 @@ def _train_tinkering_to(cap):
         last_step_name = step["name"]
         expected_item_id = int(step.get("item_id", 0) or 0)
         baseline = _count_in(API.Backpack, expected_item_id) if expected_item_id else 0
+        before_snapshot = _snapshot_backpack_items()
 
         if not _craft_tinker_once(gump_id, step["buttons"]):
             return False
         _say(f"Skill {skill:.1f} Making {step['name']}", STATUS_HUE)
 
+        moved = False
         if expected_item_id:
             if _wait_for_expected_item_or_fail(gump_id, expected_item_id, baseline):
-                moved = False
-                if SALVAGE_SERIAL:
-                    moved = _move_to_salvage(expected_item_id, SALVAGE_SERIAL)
-                if not moved and TRASH_SERIAL:
-                    _move_to_salvage(expected_item_id, TRASH_SERIAL)
-        else:
-            _pause_ms(PAUSE_AFTER_CRAFT)
+                moved = _handle_crafted_item(expected_item_id, stock.Serial)
+        if not moved:
+            _handle_unknown_crafted_items(before_snapshot, stock.Serial)
         _pause_ms(PAUSE_AFTER_CRAFT)
 
     return True
@@ -2102,6 +2345,8 @@ def _train_blacksmithy_to(cap):
         serial = API.RequestTarget()
         if serial:
             SALVAGE_SERIAL = int(serial)
+    if not _ensure_salvage_and_trash_containers():
+        return False
 
     steps = _resolve_training_steps("Blacksmithy")
     if not steps:
@@ -2114,14 +2359,15 @@ def _train_blacksmithy_to(cap):
         API.ProcessCallbacks()
         if not RUNNING:
             break
-        if not STOCK_SERIAL or not SALVAGE_SERIAL:
-            _say("Stock or Salvage not set. Pausing.", WARN_HUE)
+        if not STOCK_SERIAL or not SALVAGE_SERIAL or not TRASH_SERIAL:
+            _say("Stock, salvage, or trash not set. Pausing.", WARN_HUE)
             return False
 
         stock = API.FindItem(STOCK_SERIAL)
         salvage_bag = API.FindItem(SALVAGE_SERIAL)
-        if not stock or not salvage_bag:
-            _say("Stock or Salvage invalid. Pausing.", WARN_HUE)
+        trash = API.FindItem(TRASH_SERIAL)
+        if not stock or not salvage_bag or not trash:
+            _say("Stock, salvage, or trash invalid. Pausing.", WARN_HUE)
             return False
 
         if _backpack_item_count() >= BACKPACK_ITEM_THRESHOLD:
@@ -2150,18 +2396,17 @@ def _train_blacksmithy_to(cap):
         last_step_name = step["name"]
         expected_item_id = step["item_id"]
         baseline = _count_in(API.Backpack, expected_item_id)
+        before_snapshot = _snapshot_backpack_items()
 
         if not _craft_once(gump_id, step["buttons"]):
             return False
         _say(f"Skill {skill:.1f} Making {step['name']}", STATUS_HUE)
 
+        moved = False
         if _wait_for_expected_item_or_fail(gump_id, expected_item_id, baseline):
-            moved = False
-            if SALVAGE_SERIAL and _move_to_salvage(expected_item_id, SALVAGE_SERIAL):
-                _smelt_salvage_bag(SALVAGE_SERIAL)
-                moved = True
-            if not moved and TRASH_SERIAL:
-                _move_to_salvage(expected_item_id, TRASH_SERIAL)
+            moved = _handle_crafted_item(expected_item_id, stock.Serial)
+        if not moved:
+            _handle_unknown_crafted_items(before_snapshot, stock.Serial)
 
         _pause_ms(PAUSE_AFTER_CRAFT)
 
@@ -2183,6 +2428,8 @@ def _train_tailoring_to(cap):
             STOCK_SERIAL = int(serial)
     if STOCK_SERIAL == 0:
         _say("Tailoring stock not set. Pausing.", WARN_HUE)
+        return False
+    if not _ensure_salvage_and_trash_containers():
         return False
 
     steps = _resolve_training_steps("Tailoring")
@@ -2240,21 +2487,20 @@ def _train_tailoring_to(cap):
         last_step_name = step["name"]
         expected_item_id = int(step.get("item_id", 0) or 0)
         baseline = _count_in(API.Backpack, expected_item_id) if expected_item_id else 0
+        before_snapshot = _snapshot_backpack_items()
 
         if not _craft_tailor_once(gump_id, step):
             return False
         _say(f"Skill {skill:.1f} Making {step['name']}", STATUS_HUE)
 
+        moved = False
         if expected_item_id:
             if _wait_for_expected_item_or_fail(gump_id, expected_item_id, baseline):
-                moved = False
-                if SALVAGE_SERIAL and _move_to_salvage(expected_item_id, SALVAGE_SERIAL):
-                    _smelt_salvage_bag(SALVAGE_SERIAL)
-                    moved = True
-                if not moved and TRASH_SERIAL:
-                    _move_to_salvage(expected_item_id, TRASH_SERIAL)
+                moved = _handle_crafted_item(expected_item_id, stock.Serial)
         else:
             _pause_ms(TAILOR_CRAFT_SETTLE_MS)
+        if not moved:
+            _handle_unknown_crafted_items(before_snapshot, stock.Serial)
 
         _pause_ms(PAUSE_AFTER_CRAFT)
 
@@ -2276,6 +2522,8 @@ def _train_carpentry_to(cap):
             STOCK_SERIAL = int(serial)
     if STOCK_SERIAL == 0:
         _say("Carpentry stock not set. Pausing.", WARN_HUE)
+        return False
+    if not _ensure_salvage_and_trash_containers():
         return False
 
     steps = _resolve_training_steps("Carpentry")
@@ -2327,23 +2575,20 @@ def _train_carpentry_to(cap):
         last_step_name = step["name"]
         expected_item_id = int(step.get("item_id", 0) or 0)
         baseline = _count_in(API.Backpack, expected_item_id) if expected_item_id else 0
+        before_snapshot = _snapshot_backpack_items()
 
         if not _craft_carpentry_once(gump_id, step):
             return False
         _say(f"Skill {skill:.1f} Making {step['name']}", STATUS_HUE)
 
+        moved = False
         if expected_item_id:
             if _wait_for_expected_item_or_fail(gump_id, expected_item_id, baseline):
-                moved = False
-                if SALVAGE_SERIAL and _move_to_salvage(expected_item_id, SALVAGE_SERIAL):
-                    _smelt_salvage_bag(SALVAGE_SERIAL)
-                    moved = True
-                if moved:
-                    _move_salvage_non_keep_to_trash()
-                if not moved and TRASH_SERIAL:
-                    _move_to_salvage(expected_item_id, TRASH_SERIAL)
+                moved = _handle_crafted_item(expected_item_id, stock.Serial)
         else:
             _pause_ms(CARPENTRY_CRAFT_SETTLE_MS)
+        if not moved:
+            _handle_unknown_crafted_items(before_snapshot, stock.Serial)
 
         _pause_ms(PAUSE_AFTER_CRAFT)
 
@@ -2365,6 +2610,8 @@ def _train_bowcraft_to(cap):
             STOCK_SERIAL = int(serial)
     if STOCK_SERIAL == 0:
         _say("Bowcraft/Fletching stock not set. Pausing.", WARN_HUE)
+        return False
+    if not _ensure_salvage_and_trash_containers():
         return False
 
     steps = _resolve_training_steps("Bowcraft/Fletching")
@@ -2415,23 +2662,20 @@ def _train_bowcraft_to(cap):
         last_step_name = step["name"]
         expected_item_id = int(step.get("item_id", 0) or 0)
         baseline = _count_in(API.Backpack, expected_item_id) if expected_item_id else 0
+        before_snapshot = _snapshot_backpack_items()
 
         if not _craft_bowcraft_once(gump_id, step):
             return False
         _say(f"Skill {skill:.1f} Making {step['name']}", STATUS_HUE)
 
+        moved = False
         if expected_item_id:
             if _wait_for_expected_item_or_fail(gump_id, expected_item_id, baseline):
-                moved = False
-                if SALVAGE_SERIAL and _move_to_salvage(expected_item_id, SALVAGE_SERIAL):
-                    _smelt_salvage_bag(SALVAGE_SERIAL)
-                    moved = True
-                if moved:
-                    _move_salvage_non_keep_to_trash()
-                if not moved and TRASH_SERIAL:
-                    _move_to_salvage(expected_item_id, TRASH_SERIAL)
+                moved = _handle_crafted_item(expected_item_id, stock.Serial)
         else:
             _pause_ms(BOWCRAFT_CRAFT_SETTLE_MS)
+        if not moved:
+            _handle_unknown_crafted_items(before_snapshot, stock.Serial)
 
         _pause_ms(PAUSE_AFTER_CRAFT)
 
@@ -2546,7 +2790,7 @@ def _main():
                 break
             _train_skill(name, cap)
             if RUNNING and _get_skill_value(name) >= cap:
-                _move_salvage_non_keep_to_trash()
+                _process_salvage_cycle(STOCK_SERIAL, force=True)
 
         API.Pause(0.2)
 

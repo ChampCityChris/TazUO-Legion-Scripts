@@ -5,6 +5,8 @@ import re
 import os
 import time
 import sys
+import importlib
+import traceback
 
 """
 BODAssist
@@ -116,6 +118,9 @@ Phase 5
 DATA_KEY = "auto_bod_config"
 DEBUG_LOG_FILE = "BODAssist.debug.log"
 DEBUG_LOG_ENABLED = True
+DEBUG_LOG_MAX_CHARS = 80000
+LOG_DATA_KEY = "auto_bod_log_config"
+LOG_EXPORT_FILE = "BODAssistDebug.txt"
 SERVER_OPTIONS = ["OSI", "UOAlive", "Sosaria Reforged", "InsaneUO"]
 DEFAULT_SERVER = "UOAlive"
 RECIPE_TYPE_OPTIONS = ["bod", "training"]
@@ -157,6 +162,9 @@ BOD_DEED_GUMP_ID = 0x344E24
 BOD_COMBINE_BUTTON_ID = 4
 BOD_COMBINE_TARGET_WAIT_S = 2.5
 BOD_CRAFT_TIMEOUT_S = 4.0
+LARGE_BOD_MAX_COMBINE_CYCLES = 24
+LARGE_BOD_ABSOLUTE_MAX_CYCLES = 64
+LARGE_BOD_NO_PROGRESS_LIMIT = 2
 CRAFT_INDEX_MAX_PAGES_PER_CATEGORY = 8
 CRAFT_NEXT_PAGE_BUTTON_ID = 3
 CRAFT_BUTTON_PAUSE_S = 0.28
@@ -253,12 +261,19 @@ if os.path.basename(str(_util_dir or "")).lower() != "utilities":
     _cand = os.path.join(_script_dir, "Utilities")
     if os.path.isdir(_cand):
         _util_dir = _cand
+_project_root_dir = _util_dir
+while _project_root_dir and os.path.basename(str(_project_root_dir or "")).lower() in ("resources", "utilities", "skills", "scripts"):
+    _project_root_dir = os.path.dirname(_project_root_dir)
 if _util_dir and _util_dir not in sys.path:
     sys.path.insert(0, _util_dir)
 try:
     import RecipeStore as RECIPE_STORE
     try:
-        RECIPE_STORE.set_base_dir(_util_dir)
+        RECIPE_STORE = importlib.reload(RECIPE_STORE)
+    except Exception:
+        pass
+    try:
+        RECIPE_STORE.set_base_dir(_project_root_dir or _util_dir)
     except Exception:
         pass
 except Exception:
@@ -409,15 +424,22 @@ ACTIVE_CRAFT_GUMP_ID = 0
 ACTIVE_CRAFT_PROFESSION = ""
 RESTOCK_BLOCK_UNTIL = {}
 CALLBACK_ERR_LAST_AT = 0.0
+LOG_TEXT = ""
+LOG_LINES = []
+LOG_GUMP = None
+LOG_PATH_TEXTBOX = None
+LOG_EXPORT_BASE = ""
 
 
 def _debug_log_path():
-    try:
-        base = os.path.dirname(__file__)
-    except Exception:
-        base = os.getcwd()
-    if os.path.basename(base).lower() in ("resources", "utilities", "skills"):
-        base = os.path.dirname(base)
+    base = str(_project_root_dir or "").strip()
+    if not base:
+        try:
+            base = os.path.dirname(__file__)
+        except Exception:
+            base = os.getcwd()
+        while os.path.basename(str(base or "")).lower() in ("resources", "utilities", "skills", "scripts"):
+            base = os.path.dirname(base)
     logs_dir = os.path.join(base, "Logs")
     return os.path.join(logs_dir, DEBUG_LOG_FILE)
 
@@ -434,6 +456,136 @@ def _write_debug_log(line):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "a", encoding="utf-8") as f:
             f.write(f"[{ts}] {line}\n")
+    except Exception:
+        pass
+
+
+def _append_log(msg):
+    global LOG_TEXT, LOG_LINES
+    text = str(msg or "")
+    LOG_TEXT = (LOG_TEXT + text + "\n")[-DEBUG_LOG_MAX_CHARS:]
+    LOG_LINES = LOG_TEXT.splitlines() or ["(log empty)"]
+    if LOG_GUMP:
+        _update_log_gump()
+
+
+def _get_log_export_dir():
+    global LOG_EXPORT_BASE
+    if LOG_EXPORT_BASE:
+        return LOG_EXPORT_BASE
+    base = str(_project_root_dir or "").strip()
+    if not base:
+        try:
+            base = os.path.dirname(__file__)
+        except Exception:
+            base = os.getcwd()
+        while os.path.basename(str(base or "")).lower() in ("resources", "utilities", "skills", "scripts"):
+            base = os.path.dirname(base)
+    LOG_EXPORT_BASE = os.path.join(base, "Logs")
+    return LOG_EXPORT_BASE
+
+
+def _load_log_config():
+    global LOG_EXPORT_BASE
+    raw = API.GetPersistentVar(LOG_DATA_KEY, "", API.PersistentVar.Char)
+    if not raw:
+        return
+    try:
+        data = json.loads(raw)
+    except Exception:
+        try:
+            data = ast.literal_eval(raw)
+        except Exception:
+            return
+    path = str(data.get("export_path", "") or "").strip()
+    if path:
+        LOG_EXPORT_BASE = path
+
+
+def _save_log_config():
+    data = {"export_path": LOG_EXPORT_BASE or ""}
+    API.SavePersistentVar(LOG_DATA_KEY, json.dumps(data), API.PersistentVar.Char)
+
+
+def _export_log_to_file():
+    export_dir = _get_log_export_dir()
+    if LOG_PATH_TEXTBOX and LOG_PATH_TEXTBOX.Text.strip():
+        export_dir = LOG_PATH_TEXTBOX.Text.strip()
+        global LOG_EXPORT_BASE
+        LOG_EXPORT_BASE = export_dir
+        _save_log_config()
+    path = ""
+    try:
+        os.makedirs(export_dir, exist_ok=True)
+        path = os.path.join(export_dir, LOG_EXPORT_FILE)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(LOG_TEXT)
+        _say(f"Saved: {LOG_EXPORT_FILE}")
+    except Exception as ex:
+        _say(f"Failed to export debug log path='{path or export_dir}': {ex}", 33)
+
+
+def _open_log_gump():
+    _update_log_gump()
+
+
+def _update_log_gump():
+    global LOG_GUMP, LOG_PATH_TEXTBOX
+    if LOG_GUMP:
+        LOG_GUMP.Dispose()
+        LOG_GUMP = None
+
+    g = API.CreateGump(True, True, False)
+    g.SetRect(350, 140, 360, 420)
+    bg = API.CreateGumpColorBox(0.7, "#1B1B1B")
+    bg.SetRect(0, 0, 360, 420)
+    g.Add(bg)
+
+    title = API.CreateGumpTTFLabel("BODAssist Debug Log", 14, "#FFFFFF", "alagard", "center", 360)
+    title.SetPos(0, 6)
+    g.Add(title)
+
+    path_label = API.CreateGumpTTFLabel("Save Path:", 12, "#FFFFFF", "alagard", "left", 120)
+    path_label.SetPos(10, 32)
+    g.Add(path_label)
+    path_box = API.CreateGumpTextBox(_get_log_export_dir() or "", 230, 18, False)
+    path_box.SetPos(90, 30)
+    g.Add(path_box)
+    LOG_PATH_TEXTBOX = path_box
+
+    exp = API.CreateSimpleButton("Export", 70, 20)
+    exp.SetPos(275, 52)
+    g.Add(exp)
+    API.AddControlOnClick(exp, _export_log_to_file)
+
+    scroll = API.CreateGumpScrollArea(10, 76, 340, 330)
+    g.Add(scroll)
+    y = 0
+    lines = LOG_LINES or ["(log empty)"]
+    for line in lines:
+        label = API.CreateGumpTTFLabel(line, 12, "#FFFFFF", "alagard", "left", 330)
+        label.SetRect(0, y, 330, 16)
+        scroll.Add(label)
+        y += 18
+
+    API.AddGump(g)
+    LOG_GUMP = g
+
+
+def _reset_debug_log_for_new_session():
+    global LOG_TEXT, LOG_LINES
+    LOG_TEXT = ""
+    LOG_LINES = ["(log empty)"]
+    if LOG_GUMP:
+        _update_log_gump()
+    if not DEBUG_LOG_ENABLED:
+        return
+    try:
+        path = _debug_log_path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        ts = time.strftime("%Y-%m-%d %H:%M:%S")
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(f"[{ts}] [RUN] Debug log reset for new BODAssist session.\n")
     except Exception:
         pass
 
@@ -581,6 +733,10 @@ def _say(msg, hue=88):
         API.SysMsg(text, hue)
     except Exception:
         pass
+    try:
+        _append_log(text)
+    except Exception:
+        pass
     _write_debug_log(text)
 
 
@@ -655,9 +811,14 @@ def _deed_signature(text):
         low = _normalize_text(ln)
         if low.startswith(("weight:", "hue:", "insured:", "durability:", "blessed:", "crafted by:")):
             continue
-        line = re.sub(r"\b\d+\s*/\s*\d+\b", "<progress>", low)
-        line = re.sub(r"\bamount made\s*[: ]+\d+\b", "amount made <n>", line, flags=re.I)
-        line = re.sub(r"\buses remaining\s*[: ]+\d+\b", "uses remaining <n>", line, flags=re.I)
+        line = re.sub(r"\b\d+\s*/\s*\d+\b", "count", low)
+        line = re.sub(r"\bamount made\s*[: ]+\d+\b", "amount made count", line, flags=re.I)
+        line = re.sub(r"\bamount to make\s*[: ]+\d+\b", "amount to make count", line, flags=re.I)
+        line = re.sub(r"\buses remaining\s*[: ]+\d+\b", "uses remaining count", line, flags=re.I)
+        if re.match(r"^[a-z][a-z0-9 '\-()/]*\s*:\s*\d+\s*$", line, re.I):
+            line = re.sub(r"\s*:\s*\d+\s*$", ": count", line)
+        elif re.match(r"^[a-z][a-z0-9 '\-()/]*\s+\d+\s*$", line, re.I):
+            line = re.sub(r"\s+\d+\s*$", " count", line)
         norm = _normalize_name(line)
         if norm:
             out.append(norm)
@@ -1132,11 +1293,13 @@ def _normalize_recipe_entry(r):
     try:
         if not isinstance(r, dict):
             return None
-        if not r.get("name") or not r.get("profession"):
+        name = str(r.get("name", "") or "").strip()
+        profession = _canonical_profession_name(r.get("profession", ""))
+        if not name or not profession:
             return None
         return {
-            "name": str(r.get("name")).strip(),
-            "profession": str(r.get("profession")).strip(),
+            "name": name,
+            "profession": profession,
             "item_id": int(r.get("item_id", 0) or 0),
             "buttons": [int(x) for x in (r.get("buttons", []) or []) if int(x) > 0],
             "material": str(r.get("material", "ingot")).strip().lower(),
@@ -1149,10 +1312,6 @@ def _normalize_recipe_entry(r):
         }
     except Exception:
         return None
-
-
-def _recipe_book_payload():
-    return [r for r in (_normalize_recipe_entry(x) for x in RECIPE_BOOK) if r]
 
 
 def _normalize_item_key_name(name):
@@ -1201,34 +1360,76 @@ def _load_recipe_book_from_file():
     if RECIPE_STORE is None:
         return None
     try:
-        raw = RECIPE_STORE.load_recipes() or []
+        raw = RECIPE_STORE.load_recipes()
+        if raw is None:
+            _write_debug_log("Config: recipe load invalid type: NoneType")
+            return None
+        if not isinstance(raw, list):
+            _write_debug_log(f"Config: recipe load invalid type: {type(raw).__name__}")
+            return None
         out = [r for r in (_normalize_recipe_entry(x) for x in raw) if r]
         return out if out else []
-    except Exception:
+    except Exception as ex:
+        _write_debug_log(f"Config: recipe load error: {ex}")
+        try:
+            if hasattr(RECIPE_STORE, "last_init_error"):
+                init_err = str(RECIPE_STORE.last_init_error() or "").strip()
+                if init_err:
+                    _write_debug_log(f"Config: recipe load DB init error: {init_err}")
+        except Exception:
+            pass
         return None
     return None
 
 
 def _load_key_maps_from_file():
     if RECIPE_STORE is None:
-        return {}
+        return None
     try:
-        raw = RECIPE_STORE.load_key_maps() or {}
-        return dict(raw) if isinstance(raw, dict) else {}
-    except Exception:
-        return {}
+        raw = RECIPE_STORE.load_key_maps()
+        if raw is None:
+            _write_debug_log("Config: key-map load invalid type: NoneType")
+            return None
+        if not isinstance(raw, dict):
+            _write_debug_log(f"Config: key-map load invalid type: {type(raw).__name__}")
+            return None
+        return dict(raw)
+    except Exception as ex:
+        _write_debug_log(f"Config: key-map load error: {ex}")
+        try:
+            if hasattr(RECIPE_STORE, "last_init_error"):
+                init_err = str(RECIPE_STORE.last_init_error() or "").strip()
+                if init_err:
+                    _write_debug_log(f"Config: key-map load DB init error: {init_err}")
+        except Exception:
+            pass
+        return None
 
 
 def _load_resource_item_map_from_file():
     if RECIPE_STORE is None:
-        return {}
+        return None
     if not hasattr(RECIPE_STORE, "load_resource_item_map"):
-        return {}
+        return None
     try:
-        raw = RECIPE_STORE.load_resource_item_map() or {}
-        return dict(raw) if isinstance(raw, dict) else {}
-    except Exception:
-        return {}
+        raw = RECIPE_STORE.load_resource_item_map()
+        if raw is None:
+            _write_debug_log("Config: resource-map load invalid type: NoneType")
+            return None
+        if not isinstance(raw, dict):
+            _write_debug_log(f"Config: resource-map load invalid type: {type(raw).__name__}")
+            return None
+        return dict(raw)
+    except Exception as ex:
+        _write_debug_log(f"Config: resource-map load error: {ex}")
+        try:
+            if hasattr(RECIPE_STORE, "last_init_error"):
+                init_err = str(RECIPE_STORE.last_init_error() or "").strip()
+                if init_err:
+                    _write_debug_log(f"Config: resource-map DB init error: {init_err}")
+        except Exception:
+            pass
+        return None
 
 
 def _reload_recipe_cache_from_store(reason=""):
@@ -1267,16 +1468,6 @@ def _reload_recipe_cache_from_store(reason=""):
             )
         )
     return changed
-
-
-def _save_recipe_book_to_file():
-    if RECIPE_STORE is None:
-        return
-    try:
-        RECIPE_STORE.save_recipes(_recipe_book_payload())
-    except Exception:
-        # Keep runtime stable even if file IO fails.
-        pass
 
 
 def _get_persistent_json(key):
@@ -1544,22 +1735,60 @@ def _load_config():
 
     # DB-backed recipe book overrides persistent config when present.
     _write_debug_log("Config: recipe DB stage begin.")
-    if RECIPE_STORE is not None:
-        _write_debug_log("Config: startup DB init skipped (lazy-load mode).")
-    else:
-        _say("Recipe DB module unavailable.", 33)
-    _write_debug_log("Config: recipe load begin.")
-    file_book = _load_recipe_book_from_file()
-    if isinstance(file_book, list):
-        # Respect empty recipe files so users can intentionally start fresh.
-        RECIPE_BOOK = list(file_book)
-    else:
-        RECIPE_BOOK = []
-        _write_debug_log("Config: recipe load unavailable; continuing with empty recipe book.")
-    _write_debug_log("Config: key-map load begin.")
-    KEY_MAPS = dict(_load_key_maps_from_file() or {})
-    _write_debug_log("Config: resource-map load begin.")
-    RESOURCE_ITEM_MAP = dict(_load_resource_item_map_from_file() or {})
+    if RECIPE_STORE is None:
+        raise RuntimeError("Recipe DB module unavailable.")
+    try:
+        rs_file = str(getattr(RECIPE_STORE, "__file__", "<unknown>") or "<unknown>")
+    except Exception:
+        rs_file = "<unknown>"
+    has_diag_logger = bool(hasattr(RECIPE_STORE, "set_diag_logger"))
+    _write_debug_log(f"Config: RecipeStore module={rs_file} has_diag_logger={has_diag_logger}")
+    if not has_diag_logger:
+        _write_debug_log("Config: RecipeStore diagnostics unavailable (missing set_diag_logger).")
+    recipe_store_diag_attached = False
+    try:
+        if hasattr(RECIPE_STORE, "set_diag_logger"):
+            RECIPE_STORE.set_diag_logger(lambda msg: _write_debug_log(f"RecipeStore: {msg}"))
+            recipe_store_diag_attached = True
+    except Exception:
+        recipe_store_diag_attached = False
+    try:
+        _write_debug_log("Config: startup DB init skipped (read-only startup).")
+
+        _write_debug_log("Config: recipe load begin.")
+        recipe_started_at = time.time()
+        file_book = _load_recipe_book_from_file()
+        recipe_elapsed_s = max(0.0, float(time.time() - float(recipe_started_at)))
+        _write_debug_log(f"Config: recipe load complete in {recipe_elapsed_s:.3f}s.")
+        if isinstance(file_book, list):
+            # Respect empty recipe files so users can intentionally start fresh.
+            RECIPE_BOOK = list(file_book)
+        else:
+            raise RuntimeError("Recipe load failed.")
+
+        _write_debug_log("Config: key-map load begin.")
+        key_started_at = time.time()
+        key_maps = _load_key_maps_from_file()
+        key_elapsed_s = max(0.0, float(time.time() - float(key_started_at)))
+        _write_debug_log(f"Config: key-map load complete in {key_elapsed_s:.3f}s.")
+        if not isinstance(key_maps, dict):
+            raise RuntimeError("Key-map load failed.")
+        KEY_MAPS = dict(key_maps)
+
+        _write_debug_log("Config: resource-map load begin.")
+        resource_started_at = time.time()
+        resource_item_map = _load_resource_item_map_from_file()
+        resource_elapsed_s = max(0.0, float(time.time() - float(resource_started_at)))
+        _write_debug_log(f"Config: resource-map load complete in {resource_elapsed_s:.3f}s.")
+        if not isinstance(resource_item_map, dict):
+            raise RuntimeError("Resource-map load failed.")
+        RESOURCE_ITEM_MAP = dict(resource_item_map)
+    finally:
+        if recipe_store_diag_attached:
+            try:
+                RECIPE_STORE.set_diag_logger(None)
+            except Exception:
+                pass
     _refresh_recall_buttons()
     try:
         km_ct = len(KEY_MAPS)
@@ -1768,6 +1997,27 @@ def _normalize_text(text):
     return str(text or "").strip().lower()
 
 
+def _canonical_profession_name(name):
+    low = _normalize_text(name)
+    if low in ("blacksmith", "blacksmithing", "blacksmithy"):
+        return "Blacksmith"
+    if low in ("tailor", "tailoring"):
+        return "Tailor"
+    if low in ("carpentry", "carpenter"):
+        return "Carpentry"
+    if low in ("tinker", "tinkering"):
+        return "Tinker"
+    if low in ("bowcraft", "bowcraft and fletching", "bowcraft/fletching", "fletching", "bowyer"):
+        return "Bowcraft"
+    if low in ("alchemy", "alchemist"):
+        return "Alchemy"
+    if low in ("inscription", "scribe", "scribing"):
+        return "Inscription"
+    if low in ("cooking", "cook"):
+        return "Cooking"
+    return str(name or "").strip()
+
+
 def _detect_profession_from_text(lower_text):
     low = _normalize_text(lower_text)
     # Direct profession words first.
@@ -1798,13 +2048,14 @@ def _find_recipe_for_item_name(item_name, preferred_profession=None, preferred_m
     needle = _normalize_name(item_name)
     if not needle:
         return None
+    preferred_prof = _canonical_profession_name(preferred_profession) if preferred_profession else ""
     matches = []
     for r in RECIPE_BOOK:
         if _normalize_recipe_type(r.get("recipe_type", "bod")) != "bod":
             continue
         if _normalize_server_name(r.get("server", DEFAULT_SERVER)) != _normalize_server_name(SELECTED_SERVER):
             continue
-        if preferred_profession and str(r.get("profession", "")) != str(preferred_profession):
+        if preferred_prof and _canonical_profession_name(r.get("profession", "")) != preferred_prof:
             continue
         key = _normalize_name(r.get("name", ""))
         if not key:
@@ -2637,6 +2888,37 @@ def _run_db_diag():
     _say("DBDiag: done.")
 
 
+def _run_all_diagnostics():
+    _say("[RUN] Starting all-phase diagnostics.", DIAG_HUE_RUN)
+
+    try:
+        px = int(getattr(API.Player, "X", 0) or 0)
+        py = int(getattr(API.Player, "Y", 0) or 0)
+        pz = int(getattr(API.Player, "Z", 0) or 0)
+        w = int(getattr(API.Player, "Weight", 0) or 0)
+        wmax = int(getattr(API.Player, "MaxWeight", 0) or 0)
+        _say(f"[RUN] Player state: pos=({px},{py},{pz}) weight={w}/{wmax}", DIAG_HUE_RUN)
+    except Exception as ex:
+        _say(f"[RUN] Player state probe failed: {ex}", 53)
+
+    _say(
+        "[RUN] Config: "
+        f"runebook=0x{int(RUNBOOK_SERIAL or 0):08X} "
+        f"resource=0x{int(RESOURCE_CONTAINER_SERIAL or 0):08X} "
+        f"bod_items=0x{int(BOD_ITEM_CONTAINER_SERIAL or 0):08X} "
+        f"salvage=0x{int(SALVAGE_BAG_SERIAL or 0):08X} "
+        f"trash=0x{int(TRASH_CONTAINER_SERIAL or 0):08X} "
+        f"server={str(SELECTED_SERVER or DEFAULT_SERVER)}",
+        DIAG_HUE_RUN,
+    )
+
+    _run_db_diag()
+    _run_container_diag()
+    _run_transfer_diag()
+
+    _say("[RUN] All-phase diagnostics complete.", DIAG_HUE_RUN)
+
+
 def _clear_pending_target_context(tag=""):
     cleared = False
     for _ in range(3):
@@ -3255,9 +3537,10 @@ def _upsert_recipe(recipe):
 
 
 def _find_recipe_for_text(text, preferred_profession=None, preferred_material_key=None):
+    preferred_prof = _canonical_profession_name(preferred_profession) if preferred_profession else ""
     deed_key = _build_deed_key(
         _extract_item_name_from_deed_text(text),
-        preferred_profession or "",
+        preferred_prof or "",
         preferred_material_key or "",
         text,
     )
@@ -3268,7 +3551,7 @@ def _find_recipe_for_text(text, preferred_profession=None, preferred_material_ke
                 continue
             if _normalize_server_name(r.get("server", DEFAULT_SERVER)) != _normalize_server_name(SELECTED_SERVER):
                 continue
-            if preferred_profession and r["profession"] != preferred_profession:
+            if preferred_prof and _canonical_profession_name(r.get("profession", "")) != preferred_prof:
                 continue
             if str(r.get("deed_key", "") or "").strip() == deed_key:
                 exact_key.append(r)
@@ -3282,7 +3565,7 @@ def _find_recipe_for_text(text, preferred_profession=None, preferred_material_ke
             continue
         if _normalize_server_name(r.get("server", DEFAULT_SERVER)) != _normalize_server_name(SELECTED_SERVER):
             continue
-        if preferred_profession and r["profession"] != preferred_profession:
+        if preferred_prof and _canonical_profession_name(r.get("profession", "")) != preferred_prof:
             continue
         key = _normalize_name(r["name"])
         if key and hay == key:
@@ -3297,21 +3580,56 @@ def _find_recipe_for_deed_key(deed_key, preferred_profession=None):
     key = str(deed_key or "").strip()
     if not key:
         return None
+    preferred_prof = _canonical_profession_name(preferred_profession) if preferred_profession else ""
+    key_relaxed = _normalize_deed_key_for_match(key)
     matches = []
     for r in RECIPE_BOOK:
         if _normalize_recipe_type(r.get("recipe_type", "bod")) != "bod":
             continue
         if _normalize_server_name(r.get("server", DEFAULT_SERVER)) != _normalize_server_name(SELECTED_SERVER):
             continue
-        if preferred_profession and str(r.get("profession", "")) != str(preferred_profession):
+        if preferred_prof and _canonical_profession_name(r.get("profession", "")) != preferred_prof:
             continue
-        if str(r.get("deed_key", "") or "").strip() != key:
-            continue
+        row_key = str(r.get("deed_key", "") or "").strip()
+        if row_key != key:
+            if not key_relaxed:
+                continue
+            if _normalize_deed_key_for_match(row_key) != key_relaxed:
+                continue
         matches.append(r)
     if not matches:
         return None
     matches.sort(key=lambda r: len(str(r.get("name", ""))), reverse=True)
     return matches[0]
+
+
+def _normalize_deed_key_for_match(deed_key):
+    text = str(deed_key or "").strip()
+    if not text:
+        return ""
+    parts = text.split("|", 3)
+    while len(parts) < 4:
+        parts.append("")
+    profession = _normalize_text(parts[0])
+    material_key = _normalize_text(parts[1])
+    item_name = _normalize_name(parts[2])
+    signature = str(parts[3] or "")
+    out = []
+    for ln in [str(x).strip() for x in signature.split("|") if str(x).strip()]:
+        line = _normalize_text(ln)
+        line = re.sub(r"\b\d+\s*/\s*\d+\b", "count", line)
+        line = re.sub(r"\bamount made\s*[: ]+\d+\b", "amount made count", line, flags=re.I)
+        line = re.sub(r"\bamount to make\s*[: ]+\d+\b", "amount to make count", line, flags=re.I)
+        line = re.sub(r"\buses remaining\s*[: ]+\d+\b", "uses remaining count", line, flags=re.I)
+        if re.match(r"^[a-z][a-z0-9 '\-()/]*\s*:\s*\d+\s*$", line, re.I):
+            line = re.sub(r"\s*:\s*\d+\s*$", ": count", line)
+        elif re.match(r"^[a-z][a-z0-9 '\-()/]*\s+\d+\s*$", line, re.I):
+            line = re.sub(r"\s+\d+\s*$", " count", line)
+        norm = _normalize_name(line)
+        if norm:
+            out.append(norm)
+    sig = " | ".join(out)
+    return f"{profession}|{material_key}|{item_name}|{sig}".strip("|")
 
 
 def _extract_item_name_from_deed_text(text):
@@ -3386,6 +3704,199 @@ def _parse_material_needed(text, profession=""):
     if p == "Tailor":
         return "cloth"
     return ""
+
+
+def _deed_item_progress_lines(text):
+    lines = _deed_tooltip_lines(text)
+    out = []
+    skip_left = {
+        "amount made",
+        "amount to make",
+        "contained items",
+        "items contained",
+        "contains",
+        "weight",
+        "hue",
+        "insured",
+        "durability",
+        "uses remaining",
+        "crafted by",
+        "quality",
+        "material",
+        "item name",
+    }
+    for ln in lines:
+        m = re.match(r"^\s*(.+?)\s*:\s*(\d+)\s*/\s*(\d+)\s*$", str(ln), re.I)
+        if not m:
+            continue
+        left = _normalize_text(m.group(1))
+        if not left or left in skip_left:
+            continue
+        if left.startswith("amount "):
+            continue
+        out.append({
+            "label": str(m.group(1)).strip(),
+            "filled": int(m.group(2)),
+            "required": int(m.group(3)),
+        })
+    return out
+
+
+def _deed_item_count_lines(text):
+    lines = _deed_tooltip_lines(text)
+    out = []
+    skip_left = {
+        "amount made",
+        "amount to make",
+        "contained items",
+        "items contained",
+        "contains",
+        "weight",
+        "hue",
+        "insured",
+        "durability",
+        "uses remaining",
+        "crafted by",
+        "quality",
+        "material",
+        "item name",
+    }
+    for ln in lines:
+        if "/" in str(ln):
+            continue
+        m = re.match(r"^\s*(.+?)\s*:\s*(\d+)\s*$", str(ln), re.I)
+        if not m:
+            continue
+        left = _normalize_text(m.group(1))
+        if not left or left in skip_left:
+            continue
+        if left.startswith("amount "):
+            continue
+        out.append({
+            "label": str(m.group(1)).strip(),
+            "count": int(m.group(2)),
+        })
+    return out
+
+
+def _classify_bod_size(text):
+    low = _normalize_text(text)
+    if not low:
+        return "unknown"
+    lines = [_normalize_text(x) for x in _deed_tooltip_lines(text)]
+    for ln in lines:
+        # Primary shard signal: explicit BOD size line in tooltip.
+        if re.fullmatch(r"large\s+bulk\s+order(?:\s+deed)?", ln):
+            return "large"
+        if re.fullmatch(r"small\s+bulk\s+order(?:\s+deed)?", ln):
+            return "small"
+    if re.search(r"\blarge\s+bulk\s+order\s+deed\b", low):
+        return "large"
+    if re.search(r"\bsmall\s+bulk\s+order\s+deed\b", low):
+        return "small"
+    item_progress = _deed_item_progress_lines(text)
+    item_counts = _deed_item_count_lines(text)
+    if len(item_progress) >= 2:
+        return "large"
+    if len(item_counts) >= 2:
+        return "large"
+    if (
+        "another deed" in low
+        or "completed small" in low
+        or "small bulk order deed" in low
+        or "fill this large" in low
+    ):
+        return "large"
+    if "contained items" in low or "items contained" in low:
+        return "large"
+    if "amount to make" in low:
+        return "small"
+    if len(item_progress) == 1:
+        return "small"
+    if len(item_counts) == 1:
+        return "small"
+    return "unknown"
+
+
+def _parse_large_deed_progress(text):
+    low = _normalize_text(text)
+    patterns = [
+        r"\bcontained items?\s*[: ]+\s*(\d+)\s*/\s*(\d+)\b",
+        r"\bitems? contained\s*[: ]+\s*(\d+)\s*/\s*(\d+)\b",
+        r"\bcontains?\s*[: ]+\s*(\d+)\s*/\s*(\d+)\b",
+    ]
+    for pat in patterns:
+        m = re.search(pat, low)
+        if not m:
+            continue
+        return int(m.group(1)), int(m.group(2))
+    item_progress = _deed_item_progress_lines(text)
+    if len(item_progress) >= 2:
+        made = sum(int(x.get("filled", 0) or 0) for x in item_progress)
+        req = sum(int(x.get("required", 0) or 0) for x in item_progress)
+        return int(made), int(req)
+    item_counts = _deed_item_count_lines(text)
+    if len(item_counts) >= 2:
+        made = sum(int(x.get("count", 0) or 0) for x in item_counts)
+        return int(made), 0
+    return None, None
+
+
+def _read_deed_gump_text(deed_serial):
+    sid = int(deed_serial or 0)
+    if sid <= 0 or _should_stop():
+        return ""
+    try:
+        API.CloseGump(int(BOD_DEED_GUMP_ID))
+    except Exception:
+        pass
+    _sleep(0.1)
+    try:
+        API.UseObject(int(sid))
+    except Exception:
+        return ""
+    _sleep(0.1)
+    if not _wait_for_gump_safe(int(BOD_DEED_GUMP_ID), 1.8):
+        return ""
+    try:
+        txt = API.GetGumpContents(int(BOD_DEED_GUMP_ID)) or ""
+    except Exception:
+        txt = ""
+    try:
+        API.CloseGump(int(BOD_DEED_GUMP_ID))
+    except Exception:
+        pass
+    return str(txt or "")
+
+
+def _refresh_large_deed_parse_from_gump(item, parsed):
+    current = dict(parsed or {})
+    if bool(current.get("is_large", False)):
+        return current
+    deed_serial = int(current.get("deed_serial", getattr(item, "Serial", 0)) or 0)
+    gump_text = _read_deed_gump_text(deed_serial)
+    if not gump_text:
+        return current
+    merged_text = f"{str(current.get('raw_text', '') or '')}\n{gump_text}".strip()
+    deed_size = _classify_bod_size(merged_text)
+    if deed_size != "large":
+        return current
+    made, req = _parse_large_deed_progress(merged_text)
+    progress_lines = int(len(_deed_item_progress_lines(merged_text)))
+    count_lines = int(len(_deed_item_count_lines(merged_text)))
+    current["deed_size"] = "large"
+    current["is_large"] = True
+    current["raw_text"] = merged_text
+    current["item_progress_lines"] = progress_lines
+    current["item_count_lines"] = count_lines
+    if made is not None:
+        current["filled"] = int(made)
+        current["item_count"] = int(made)
+    if req is not None:
+        current["required"] = int(req)
+        current["amount_to_make"] = int(req)
+    _say("Large deed detected from deed gump text.")
+    return current
 
 
 def _candidate_page_buttons(profession):
@@ -3583,6 +4094,9 @@ def _learn_recipe_for_deed(parsed):
 def _parse_bod_deed(item):
     txt = _get_item_text(item)
     lower = txt.lower()
+    deed_size = _classify_bod_size(txt)
+    item_progress_lines = _deed_item_progress_lines(txt)
+    item_count_lines = _deed_item_count_lines(txt)
     item_name = _extract_item_name_from_deed_text(txt)
     profession = _detect_profession_from_deed_hue(item)
     if not profession:
@@ -3603,24 +4117,31 @@ def _parse_bod_deed(item):
         amount_to_make = int(m2.group(1))
         if required is None:
             required = int(amount_to_make)
+    large_filled, large_required = _parse_large_deed_progress(txt)
+    if deed_size == "large" and large_required is not None:
+        filled = int(large_filled)
+        required = int(large_required)
+        amount_to_make = int(large_required)
+        item_count = int(large_filled)
     # Try to capture explicit crafted-item progress line from the tooltip.
     # Common variants seen are "<Item Name>: <count>" or "Item Name: <count>".
-    if item_name:
-        try:
-            name_pat = re.compile(r"\b%s\s*:\s*(\d+)\b" % re.escape(str(item_name)), re.I)
-            m3 = name_pat.search(txt)
-            if m3:
-                item_count = int(m3.group(1))
-        except Exception:
-            item_count = None
-    if item_count is None:
-        m4 = re.search(r"\bitem name\s*:\s*(\d+)\b", lower)
-        if m4:
-            item_count = int(m4.group(1))
-    if item_count is None:
-        m5 = re.search(r"\bamount made\s*:\s*(\d+)\b", lower)
-        if m5:
-            item_count = int(m5.group(1))
+    if deed_size != "large":
+        if item_name:
+            try:
+                name_pat = re.compile(r"\b%s\s*:\s*(\d+)\b" % re.escape(str(item_name)), re.I)
+                m3 = name_pat.search(txt)
+                if m3:
+                    item_count = int(m3.group(1))
+            except Exception:
+                item_count = None
+        if item_count is None:
+            m4 = re.search(r"\bitem name\s*:\s*(\d+)\b", lower)
+            if m4:
+                item_count = int(m4.group(1))
+        if item_count is None:
+            m5 = re.search(r"\bamount made\s*:\s*(\d+)\b", lower)
+            if m5:
+                item_count = int(m5.group(1))
     if item_count is not None and filled <= 0:
         filled = int(item_count)
     if required is None:
@@ -3671,6 +4192,10 @@ def _parse_bod_deed(item):
         "amount_to_make": int(amount_to_make) if amount_to_make is not None else int(required),
         "item_count": int(item_count) if item_count is not None else int(filled),
         "exceptional": bool(exceptional),
+        "deed_size": deed_size,
+        "is_large": bool(deed_size == "large"),
+        "item_progress_lines": int(len(item_progress_lines)),
+        "item_count_lines": int(len(item_count_lines)),
         "raw_text": txt,
     }
     return result
@@ -4375,6 +4900,87 @@ def combine_and_recount(deed_serial, fallback_amount=0):
     return True, refreshed, item_count, amount_to_make
 
 
+def _large_deed_progress(parsed):
+    made, req = _parse_large_deed_progress((parsed or {}).get("raw_text", ""))
+    if req is None:
+        req = int((parsed or {}).get("amount_to_make", (parsed or {}).get("required", 0)) or 0)
+    if made is None:
+        made = int((parsed or {}).get("item_count", (parsed or {}).get("filled", 0)) or 0)
+    return int(made), int(req)
+
+
+def _fill_large_deed(item, parsed=None):
+    _diag_step("L01", "LARGE", f"fill_large_deed: start deed=0x{int(getattr(item, 'Serial', 0) or 0):08X}", DIAG_HUE_COMBINE)
+    if parsed is None:
+        parsed = _parse_bod_deed(item)
+    if not parsed:
+        _say(f"Fill skip: unrecognized large BOD 0x{int(getattr(item, 'Serial', 0) or 0):08X}.", 33)
+        return False
+    if not bool(parsed.get("is_large", False)):
+        _say("Internal skip: large fill called for non-large deed.", 33)
+        return False
+
+    deed_serial = int(parsed.get("deed_serial", getattr(item, "Serial", 0)) or 0)
+    made, req = _large_deed_progress(parsed)
+    req_label = str(req) if int(req) > 0 else "?"
+    if int(req) > 0 and int(made) >= int(req):
+        _say(f"Large deed already complete: {made}/{req}.")
+        return True
+
+    _say(f"Filling large deed via combine: {made}/{req_label}")
+    max_cycles = LARGE_BOD_MAX_COMBINE_CYCLES
+    if int(req) > 0:
+        max_cycles = min(
+            int(LARGE_BOD_ABSOLUTE_MAX_CYCLES),
+            max(int(LARGE_BOD_MAX_COMBINE_CYCLES), int(req) * 2)
+        )
+    no_progress_cycles = 0
+    last_made = int(made)
+    cycle = 0
+
+    while cycle < int(max_cycles):
+        if _should_stop():
+            _say("Fill interrupted by stop request.", 33)
+            return False
+        cycle += 1
+        _diag_step("L02", "LARGE", f"fill_large_deed: cycle={cycle}/{int(max_cycles)}", DIAG_HUE_COMBINE)
+        if not _combine_deed_from_container(deed_serial):
+            _say("Large deed combine step failed.", 33)
+            return False
+        _fill_phase_delay("L02D", "LARGE", "combine->progress_check", DIAG_HUE_COMBINE)
+
+        deed_item = _find_backpack_item_by_serial(deed_serial)
+        if not deed_item:
+            _say("Large deed no longer in backpack after combine.", 33)
+            return False
+        refreshed = _parse_bod_deed(deed_item)
+        if not refreshed:
+            _say("Could not re-parse large deed progress after combine.", 33)
+            return False
+        made, req = _large_deed_progress(refreshed)
+        req_label = str(req) if int(req) > 0 else "?"
+        _say(f"Large deed progress: {made}/{req_label}")
+
+        if int(req) > 0 and int(made) >= int(req):
+            try:
+                API.CloseGump(int(BOD_DEED_GUMP_ID))
+            except Exception:
+                pass
+            return True
+
+        if int(made) <= int(last_made):
+            no_progress_cycles += 1
+        else:
+            no_progress_cycles = 0
+        last_made = int(made)
+        if int(no_progress_cycles) >= int(LARGE_BOD_NO_PROGRESS_LIMIT):
+            _say("No large deed progress after combine; stopping to avoid loop.", 33)
+            return False
+
+    _say(f"Large deed combine cycle limit reached ({int(max_cycles)}).", 33)
+    return False
+
+
 def _fill_single_deed(item, parsed=None):
     global LAST_CRAFT_ERROR
     _diag_step("D01", "PARSE", f"fill_single_deed: start deed=0x{int(getattr(item, 'Serial', 0) or 0):08X}", DIAG_HUE_PARSE)
@@ -4389,6 +4995,11 @@ def _fill_single_deed(item, parsed=None):
         _diag_step("D01", "PARSE", "fill_single_deed: parse failed", DIAG_HUE_PARSE)
         _say(f"Skipping unrecognized BOD: 0x{int(item.Serial):08X}", 33)
         return False
+    if not bool(parsed.get("is_large", False)):
+        parsed = _refresh_large_deed_parse_from_gump(item, parsed)
+    if bool(parsed.get("is_large", False)):
+        _say("Large BOD detected in single-deed flow; redirecting to large combine flow.")
+        return _fill_large_deed(item, parsed)
     profession = parsed.get("profession", "")
     supported = ("Blacksmith", "Tailor", "Carpentry", "Tinker")
     if profession not in supported:
@@ -4655,7 +5266,8 @@ def _run_fill():
         _say("No fill-supported BOD types selected. Enable one of Blacksmith/Tailor/Carpentry/Tinker.", 33)
         return
 
-    work = []
+    small_work = []
+    large_work = []
     skipped = 0
     for deed in all_bods:
         parsed = _parse_bod_deed(deed)
@@ -4665,6 +5277,14 @@ def _run_fill():
             continue
         deed_name = str(parsed.get("item_name", "") or "unknown item")
         prof = str(parsed.get("profession", "") or "")
+        deed_size = str(parsed.get("deed_size", "unknown") or "unknown")
+        progress_lines = int(parsed.get("item_progress_lines", 0) or 0)
+        count_lines = int(parsed.get("item_count_lines", 0) or 0)
+        _say(
+            f"Fill parse: deed=0x{int(getattr(deed, 'Serial', 0) or 0):08X} "
+            f"size={deed_size} progress_lines={progress_lines} count_lines={count_lines} "
+            f"name='{deed_name}' profession='{prof or 'unknown'}'"
+        )
         if prof not in supported:
             _say(f"Fill skip: '{deed_name}' unresolved profession '{prof or 'unknown'}'.", 33)
             skipped += 1
@@ -4673,20 +5293,30 @@ def _run_fill():
             _say(f"Fill skip: '{deed_name}' is {prof}, not selected.", 33)
             skipped += 1
             continue
-        work.append((deed, parsed))
-    if not work:
+        if bool(parsed.get("is_large", False)):
+            made = int(parsed.get("item_count", parsed.get("filled", 0)) or 0)
+            req = int(parsed.get("amount_to_make", parsed.get("required", 0)) or 0)
+            _say(f"Fill defer: large deed '{deed_name}' {made}/{req if req > 0 else '?'}")
+            large_work.append((deed, parsed))
+            continue
+        small_work.append((deed, parsed))
+    if not small_work and not large_work:
         _say("No deeds matched selected fill types in backpack.", 33)
         return
 
     _diag_recall_state("F06S", "RUN", "post deed filtering", DIAG_HUE_RUN)
     _fill_phase_delay("F06D", "RUN", "filter->process_worklist", DIAG_HUE_RUN)
-    _diag_step("F07", "RUN", f"run_fill: processing worklist count={len(work)}", DIAG_HUE_RUN)
+    total_work = int(len(small_work) + len(large_work))
+    _diag_step("F07", "RUN", f"run_fill: processing worklist count={total_work}", DIAG_HUE_RUN)
     _diag_recall_state("F07S", "RUN", "pre run loop setup", DIAG_HUE_RUN)
     _set_running(True)
     try:
         _diag_recall_state("F07S", "RUN", "post run loop setup", DIAG_HUE_RUN)
-        _say(f"Fill: processing {len(work)} deed(s). Skipped {skipped}.")
-        for deed, parsed in work:
+        _say(
+            f"Fill: small deeds={len(small_work)}, "
+            f"deferred large deeds={len(large_work)}. Skipped {skipped}."
+        )
+        for deed, parsed in small_work:
             if not _pause_if_needed():
                 _say("Fill interrupted.", 33)
                 break
@@ -4698,10 +5328,24 @@ def _run_fill():
             _diag_recall_state("F08S", "RUN", "pre fill_single_deed", DIAG_HUE_RUN)
             _fill_single_deed(deed, parsed)
             _fill_phase_delay("F08D", "RUN", "deed->next_deed", DIAG_HUE_RUN)
+        if large_work and _pause_if_needed() and _process_callbacks_safe():
+            _say(f"Fill: processing deferred large deeds ({len(large_work)}).")
+        for deed, parsed in large_work:
+            if not _pause_if_needed():
+                _say("Fill interrupted.", 33)
+                break
+            if not _process_callbacks_safe():
+                _say("Fill interrupted by callback stop.", 33)
+                break
+            _diag_recall_state("F10S", "RUN", "loop tick pre-large-deed", DIAG_HUE_RUN)
+            _diag_step("F10", "RUN", f"run_fill: large deed 0x{int(getattr(deed, 'Serial', 0) or 0):08X}", DIAG_HUE_RUN)
+            _diag_recall_state("F10LS", "RUN", "pre fill_large_deed", DIAG_HUE_RUN)
+            _fill_large_deed(deed, parsed)
+            _fill_phase_delay("F10D", "RUN", "large_deed->next_deed", DIAG_HUE_RUN)
         _diag_step("F09", "RUN", "run_fill: salvage cycle", DIAG_HUE_RUN)
         _run_salvage_cycle()
         _say("Fill pass complete.")
-        _diag_step("F10", "RUN", "run_fill: complete", DIAG_HUE_RUN)
+        _diag_step("F11", "RUN", "run_fill: complete", DIAG_HUE_RUN)
     finally:
         _set_running(False)
 
@@ -4953,30 +5597,25 @@ def _create_control_gump():
     CONTROL_CONTROLS.append(turn_btn)
 
     y += 24
-    row_x = int((w - 404) / 2)
+    diag_row_w = 64 + 6 + 120 + 6 + 120
+    row_x = int((w - diag_row_w) / 2)
     stop_btn = API.CreateSimpleButton("Stop", 64, 20)
     stop_btn.SetPos(row_x, y)
     g.Add(stop_btn)
     API.AddControlOnClick(stop_btn, _hard_stop)
     CONTROL_CONTROLS.append(stop_btn)
 
-    diag_btn = API.CreateSimpleButton("Container Diag", 98, 20)
-    diag_btn.SetPos(row_x + 68, y)
+    diag_btn = API.CreateSimpleButton("Diagnostics", 120, 20)
+    diag_btn.SetPos(row_x + 70, y)
     g.Add(diag_btn)
-    API.AddControlOnClick(diag_btn, _run_container_diag)
+    API.AddControlOnClick(diag_btn, _run_all_diagnostics)
     CONTROL_CONTROLS.append(diag_btn)
 
-    xfer_btn = API.CreateSimpleButton("Transfer Diag", 98, 20)
-    xfer_btn.SetPos(row_x + 170, y)
-    g.Add(xfer_btn)
-    API.AddControlOnClick(xfer_btn, _run_transfer_diag)
-    CONTROL_CONTROLS.append(xfer_btn)
-
-    db_btn = API.CreateSimpleButton("DB Diagnostics", 130, 20)
-    db_btn.SetPos(row_x + 272, y)
-    g.Add(db_btn)
-    API.AddControlOnClick(db_btn, _run_db_diag)
-    CONTROL_CONTROLS.append(db_btn)
+    log_btn = API.CreateSimpleButton("Debug Log", 120, 20)
+    log_btn.SetPos(row_x + 196, y)
+    g.Add(log_btn)
+    API.AddControlOnClick(log_btn, _open_log_gump)
+    CONTROL_CONTROLS.append(log_btn)
 
     y += 24
     loop_btn = API.CreateSimpleButton("Run Full Loop", 100, 20)
@@ -4998,6 +5637,8 @@ def _rebuild_gump():
 
 
 def _main():
+    _load_log_config()
+    _reset_debug_log_for_new_session()
     try:
         sr = bool(getattr(API, "StopRequested", False))
     except Exception:
@@ -5027,7 +5668,6 @@ def _main():
 
 
 try:
-    _write_debug_log("Startup: entering _main.")
     _main()
 except Exception as ex:
     msg = str(ex or "")
@@ -5035,5 +5675,7 @@ except Exception as ex:
         _write_debug_log(f"Startup interrupted: {msg}")
         pass
     else:
+        _say(f"BODAssist startup failed: {msg or type(ex).__name__}", 33)
         _write_debug_log(f"Startup fatal exception: {msg}")
+        _write_debug_log(traceback.format_exc())
         raise

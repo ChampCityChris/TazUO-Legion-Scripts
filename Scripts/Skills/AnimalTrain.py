@@ -52,8 +52,13 @@ RELEASE_WARNING_BUTTON = 1
 RELEASE_GUMP_WAIT_SEC = 1.0
 POST_RELEASE_DELAY_SEC = 0.40
 NEW_HAVEN_RELEASE_GUMP_ID = 0x94F89BE1
-NEW_HAVEN_RELEASE_BUTTON_ID = 1
-NEW_HAVEN_RELEASE_CLICK_COUNT = 2
+YEW_RELEASE_GUMP_ID = 0xA723F23E
+CUSTOM_RELEASE_GUMP_ID = 0xCB45DE37
+SPECIAL_RELEASE_GUMP_ACTIONS = (
+    (NEW_HAVEN_RELEASE_GUMP_ID, 1, 2),
+    (YEW_RELEASE_GUMP_ID, 1, 2),
+    (CUSTOM_RELEASE_GUMP_ID, 2, 1),
+)
 NEW_HAVEN_RELEASE_CLICK_DELAY_SEC = 0.12
 
 INSTRUMENT_GRAPHICS = (
@@ -354,9 +359,9 @@ def _run_prechecks(state, tameable_graphics):
 # 6. Recovery logic (gumps/UI)
 def _handle_release_gumps():
     global NEW_HAVEN_RELEASE_HANDLED
-    if _clear_new_haven_release_gump():
+    if _clear_special_release_gump():
         NEW_HAVEN_RELEASE_HANDLED = True
-        _log_info("Handled New Haven release gump.")
+        _log_info("Handled shard release gump.")
 
     for _ in range(MAX_RELEASE_GUMP_STEPS):
         if _stop_requested():
@@ -380,14 +385,23 @@ def _handle_release_gumps():
     return True
 
 
-def _clear_new_haven_release_gump():
-    if not API.HasGump(NEW_HAVEN_RELEASE_GUMP_ID):
+def _clear_special_release_gump():
+    target_gump_id = 0
+    target_button_id = 0
+    target_click_count = 0
+    for gump_id, button_id, click_count in SPECIAL_RELEASE_GUMP_ACTIONS:
+        if API.HasGump(gump_id):
+            target_gump_id = int(gump_id)
+            target_button_id = int(button_id)
+            target_click_count = int(click_count)
+            break
+    if target_gump_id <= 0 or target_button_id <= 0 or target_click_count <= 0:
         return False
 
-    for _ in range(NEW_HAVEN_RELEASE_CLICK_COUNT):
+    for _ in range(target_click_count):
         if _stop_requested():
             return False
-        API.ReplyGump(NEW_HAVEN_RELEASE_BUTTON_ID, NEW_HAVEN_RELEASE_GUMP_ID)
+        API.ReplyGump(target_button_id, target_gump_id)
         if not _pause_with_callbacks(NEW_HAVEN_RELEASE_CLICK_DELAY_SEC):
             return False
 
@@ -399,9 +413,9 @@ def _release_tame(state, serial):
     for attempt in range(1, MAX_RELEASE_RETRIES + 1):
         NEW_HAVEN_RELEASE_HANDLED = False
 
-        if _clear_new_haven_release_gump():
+        if _clear_special_release_gump():
             state.released_targets += 1
-            _log_info(f"Released tame via New Haven gump (attempt {attempt}).")
+            _log_info(f"Released tame via shard release gump (attempt {attempt}).")
             return True
 
         API.ContextMenu(serial, RELEASE_CONTEXT_ENTRY)
@@ -411,11 +425,11 @@ def _release_tame(state, serial):
             return False
         if NEW_HAVEN_RELEASE_HANDLED:
             state.released_targets += 1
-            _log_info(f"Released tame via New Haven gump (attempt {attempt}).")
+            _log_info(f"Released tame via shard release gump (attempt {attempt}).")
             return True
-        if _clear_new_haven_release_gump():
+        if _clear_special_release_gump():
             state.released_targets += 1
-            _log_info(f"Released tame via New Haven gump (attempt {attempt}).")
+            _log_info(f"Released tame via shard release gump (attempt {attempt}).")
             return True
         if not _pause_with_callbacks(POST_RELEASE_DELAY_SEC):
             return False
@@ -828,7 +842,7 @@ def _main():
     while not _stop_requested():
         state.cycles += 1
         API.ProcessCallbacks()
-        _clear_new_haven_release_gump()
+        _clear_special_release_gump()
 
         if not API.Player:
             state.stop_reason = "Player context unavailable during runtime."
