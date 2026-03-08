@@ -173,6 +173,8 @@ RESTOCK_RETRY_COOLDOWN_S = 1.5
 FILL_PHASE_DELAY_S = 0.5
 OPEN_CRAFT_RETRY_BACKOFF_S = 1.1
 OPEN_CRAFT_FAIL_COOLDOWN_S = 6.0
+CONFIG_DB_LOCK_RETRY_ATTEMPTS = 4
+CONFIG_DB_LOCK_RETRY_DELAY_S = 1.0
 
 # Fill diagnostics hues by helper/phase.
 DIAG_HUE_RUN = 88
@@ -652,6 +654,29 @@ def _dedupe_case_preserving(values):
     return out
 
 
+def _is_database_lock_error(ex):
+    txt = str(ex or "").strip().lower()
+    return ("database is locked" in txt) or ("database schema is locked" in txt)
+
+
+def _read_with_lock_retries(read_fn, label):
+    attempts = int(CONFIG_DB_LOCK_RETRY_ATTEMPTS or 1)
+    if attempts < 1:
+        attempts = 1
+    for attempt in range(1, attempts + 1):
+        try:
+            return read_fn()
+        except Exception as ex:
+            if not _is_database_lock_error(ex) or attempt >= attempts:
+                raise
+            delay_s = float(CONFIG_DB_LOCK_RETRY_DELAY_S) * float(attempt)
+            _write_debug_log(
+                f"Config: {label} lock retry {attempt}/{attempts} after {delay_s:.1f}s: {ex}"
+            )
+            _sleep(delay_s)
+    return read_fn()
+
+
 def _server_options_from_key_maps():
     if not isinstance(KEY_MAPS, dict):
         return []
@@ -672,7 +697,7 @@ def _preferred_default_server(options):
     return str(opts[0])
 
 
-def _load_server_options_from_store():
+def _load_server_options_from_store(raise_on_lock=False):
     if RECIPE_STORE is None:
         return []
     if not hasattr(RECIPE_STORE, "load_server_names"):
@@ -681,6 +706,8 @@ def _load_server_options_from_store():
         raw = RECIPE_STORE.load_server_names()
     except Exception as ex:
         _write_debug_log(f"Config: server-list load error: {ex}")
+        if bool(raise_on_lock) and _is_database_lock_error(ex):
+            raise
         return []
     if not isinstance(raw, list):
         _write_debug_log(f"Config: server-list load invalid type: {type(raw).__name__}")
@@ -1444,7 +1471,7 @@ def _normalize_item_buttons_for_category(server, profession, category, buttons):
     return [int(x) for x in (buttons or []) if int(x) > 0][:2]
 
 
-def _load_recipe_book_from_file():
+def _load_recipe_book_from_file(raise_on_lock=False):
     if RECIPE_STORE is None:
         return None
     try:
@@ -1466,11 +1493,13 @@ def _load_recipe_book_from_file():
                     _write_debug_log(f"Config: recipe load DB init error: {init_err}")
         except Exception:
             pass
+        if bool(raise_on_lock) and _is_database_lock_error(ex):
+            raise
         return None
     return None
 
 
-def _load_key_maps_from_file():
+def _load_key_maps_from_file(raise_on_lock=False):
     if RECIPE_STORE is None:
         return None
     try:
@@ -1491,10 +1520,12 @@ def _load_key_maps_from_file():
                     _write_debug_log(f"Config: key-map load DB init error: {init_err}")
         except Exception:
             pass
+        if bool(raise_on_lock) and _is_database_lock_error(ex):
+            raise
         return None
 
 
-def _load_resource_item_map_from_file():
+def _load_resource_item_map_from_file(raise_on_lock=False):
     if RECIPE_STORE is None:
         return None
     if not hasattr(RECIPE_STORE, "load_resource_item_map"):
@@ -1517,6 +1548,8 @@ def _load_resource_item_map_from_file():
                     _write_debug_log(f"Config: resource-map DB init error: {init_err}")
         except Exception:
             pass
+        if bool(raise_on_lock) and _is_database_lock_error(ex):
+            raise
         return None
 
 
@@ -1786,7 +1819,10 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
 def _load_config():
     global RUNBOOK_SERIAL, RESOURCE_CONTAINER_SERIAL, BOD_ITEM_CONTAINER_SERIAL, SALVAGE_BAG_SERIAL, TRASH_CONTAINER_SERIAL, AUTO_TOOLING, LEARN_MODE, RECIPE_BOOK, KEY_MAPS, RESOURCE_ITEM_MAP, SELECTED_SERVER, SERVER_OPTIONS, DEFAULT_SERVER
     global CRAFT_STATION_X, CRAFT_STATION_Y, CRAFT_STATION_Z, CRAFT_STATION_SET, USE_SACRED_JOURNEY, ENABLED_BOD_TYPES
-    server_options = _load_server_options_from_store()
+    server_options = _read_with_lock_retries(
+        lambda: _load_server_options_from_store(raise_on_lock=True),
+        "server-list",
+    )
     SERVER_OPTIONS = _dedupe_case_preserving(server_options)
     DEFAULT_SERVER = _preferred_default_server(SERVER_OPTIONS)
     raw = API.GetPersistentVar(DATA_KEY, "", API.PersistentVar.Char)
@@ -1874,7 +1910,10 @@ def _load_config():
 
         _write_debug_log("Config: recipe load begin.")
         recipe_started_at = time.time()
-        file_book = _load_recipe_book_from_file()
+        file_book = _read_with_lock_retries(
+            lambda: _load_recipe_book_from_file(raise_on_lock=True),
+            "recipe",
+        )
         recipe_elapsed_s = max(0.0, float(time.time() - float(recipe_started_at)))
         _write_debug_log(f"Config: recipe load complete in {recipe_elapsed_s:.3f}s.")
         if isinstance(file_book, list):
@@ -1885,7 +1924,10 @@ def _load_config():
 
         _write_debug_log("Config: key-map load begin.")
         key_started_at = time.time()
-        key_maps = _load_key_maps_from_file()
+        key_maps = _read_with_lock_retries(
+            lambda: _load_key_maps_from_file(raise_on_lock=True),
+            "key-map",
+        )
         key_elapsed_s = max(0.0, float(time.time() - float(key_started_at)))
         _write_debug_log(f"Config: key-map load complete in {key_elapsed_s:.3f}s.")
         if not isinstance(key_maps, dict):
@@ -1894,7 +1936,10 @@ def _load_config():
 
         _write_debug_log("Config: resource-map load begin.")
         resource_started_at = time.time()
-        resource_item_map = _load_resource_item_map_from_file()
+        resource_item_map = _read_with_lock_retries(
+            lambda: _load_resource_item_map_from_file(raise_on_lock=True),
+            "resource-map",
+        )
         resource_elapsed_s = max(0.0, float(time.time() - float(resource_started_at)))
         _write_debug_log(f"Config: resource-map load complete in {resource_elapsed_s:.3f}s.")
         if not isinstance(resource_item_map, dict):

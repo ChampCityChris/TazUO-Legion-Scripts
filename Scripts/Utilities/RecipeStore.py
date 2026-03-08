@@ -566,6 +566,11 @@ def _schema_is_current(conn):
     return int(_stored_schema_version(conn) or 0) == int(SCHEMA_VERSION)
 
 
+def _is_database_lock_error(ex):
+    txt = str(ex or "").strip().lower()
+    return ("database is locked" in txt) or ("database schema is locked" in txt)
+
+
 def _ensure_schema_ready(conn):
     _diag("_ensure_schema_ready: check current schema/version")
     if _schema_is_current(conn):
@@ -584,14 +589,22 @@ def _ensure_schema_ready(conn):
         query_only = False
     if query_only:
         _diag("_ensure_schema_ready: read connection is query-only; migrating on write connection")
-        write_conn = _connect()
         try:
-            if not _schema_is_current(write_conn):
-                _ensure_schema(write_conn)
-        finally:
-            write_conn.close()
-        if not _schema_is_current(conn):
-            raise sqlite3.DatabaseError("schema migration failed on cached read connection")
+            write_conn = _connect()
+            try:
+                if not _schema_is_current(write_conn):
+                    _ensure_schema(write_conn)
+            finally:
+                write_conn.close()
+        except Exception as ex:
+            if _is_database_lock_error(ex):
+                _diag("_ensure_schema_ready: migration deferred (database locked); proceeding read-only")
+                return
+            raise
+        if _schema_is_current(conn):
+            _diag("_ensure_schema_ready: schema ensure complete (write connection)")
+            return
+        _diag("_ensure_schema_ready: schema version not current after migration; proceeding read-only")
         _diag("_ensure_schema_ready: schema ensure complete (write connection)")
         return
     _diag("_ensure_schema_ready: schema not current; running _ensure_schema")
