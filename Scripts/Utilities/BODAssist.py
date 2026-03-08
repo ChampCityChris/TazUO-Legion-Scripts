@@ -3637,6 +3637,35 @@ def _run_salvage_cycle():
     _move_non_keep_from_salvage_to_trash()
 
 
+def _salvage_backpack_leftovers_for_recipe(recipe):
+    if not SALVAGE_BAG_SERIAL or not isinstance(recipe, dict):
+        return
+    recipe_item_id = int(recipe.get("item_id", 0) or 0)
+    recipe_name = str(recipe.get("name", "") or "")
+    moved_stacks = 0
+    moved_items = 0
+    for it in _items_in(API.Backpack, False):
+        if _is_bod_deed(it):
+            continue
+        serial = int(getattr(it, "Serial", 0) or 0)
+        if serial <= 0:
+            continue
+        if recipe_item_id > 0 and int(getattr(it, "Graphic", 0) or 0) != recipe_item_id:
+            continue
+        if recipe_item_id <= 0 and not _item_name_matches_recipe(it, recipe_name):
+            continue
+        amount = int(getattr(it, "Amount", 1) or 1)
+        _move_item_to_container(serial, SALVAGE_BAG_SERIAL, amount)
+        moved_stacks += 1
+        moved_items += amount
+    if moved_stacks > 0:
+        _say(
+            f"Small deed cleanup: moved {moved_items} leftover item(s) "
+            f"across {moved_stacks} stack(s) to salvage bag."
+        )
+        _run_salvage_cycle()
+
+
 def _get_item_text(item):
     txt = ""
     try:
@@ -3902,7 +3931,7 @@ def _extract_item_name_from_deed_text(text):
 
     skip_words = (
         "bulk", "order", "deed", "amount", "made", "material", "quality",
-        "exceptional", "large", "small", "combine", "contained", "items",
+        "exceptional", "combine", "contained", "items",
         "blessed", "bleesed", "bless", "filled", "completed",
         "blacksmith", "tailor", "carpentry", "tinker", "tinkering",
         "weight", "stone", "hue", "insured", "durability", "uses remaining",
@@ -4348,6 +4377,33 @@ def _learn_recipe_for_deed(parsed):
     return _manual_learn_recipe_for_deed(parsed)
 
 
+def _infer_profession_from_deed_item_lines(item_progress_lines, item_count_lines):
+    score = {}
+    rows = list(item_progress_lines or []) + list(item_count_lines or [])
+    for row in rows:
+        label = str((row or {}).get("label", "") or "").strip()
+        if not label:
+            continue
+        prof = _detect_profession_from_item_name(label)
+        if not prof:
+            continue
+        score[prof] = int(score.get(prof, 0)) + 1
+    if not score:
+        return ""
+    order = ("Blacksmith", "Tailor", "Carpentry", "Tinker", "Bowcraft", "Alchemy", "Inscription", "Cooking")
+    best_prof = ""
+    best_score = 0
+    for prof in order:
+        val = int(score.get(prof, 0) or 0)
+        if val > best_score:
+            best_prof = prof
+            best_score = val
+    if best_prof:
+        return best_prof
+    # Non-standard profession labels still win if they had score.
+    return sorted(score.items(), key=lambda kv: int(kv[1]), reverse=True)[0][0]
+
+
 def _parse_bod_deed(item):
     txt = _get_item_text(item)
     lower = txt.lower()
@@ -4360,6 +4416,33 @@ def _parse_bod_deed(item):
         profession = _detect_profession_from_text(lower)
     if not profession:
         profession = _detect_profession_from_item_name(item_name)
+    if not profession:
+        profession = _infer_profession_from_deed_item_lines(item_progress_lines, item_count_lines)
+
+    # Some shards only expose full deed details in the opened BOD gump.
+    weak_parse = (
+        deed_size == "unknown"
+        or not item_name
+        or not profession
+        or (len(item_progress_lines) == 0 and len(item_count_lines) == 0)
+    )
+    if weak_parse:
+        gump_text = _read_deed_gump_text(int(getattr(item, "Serial", 0) or 0))
+        if gump_text:
+            txt = f"{txt}\n{gump_text}".strip()
+            lower = txt.lower()
+            deed_size = _classify_bod_size(txt)
+            item_progress_lines = _deed_item_progress_lines(txt)
+            item_count_lines = _deed_item_count_lines(txt)
+            parsed_name = _extract_item_name_from_deed_text(txt)
+            if parsed_name:
+                item_name = parsed_name
+            if not profession:
+                profession = _detect_profession_from_text(lower)
+            if not profession:
+                profession = _detect_profession_from_item_name(item_name)
+            if not profession:
+                profession = _infer_profession_from_deed_item_lines(item_progress_lines, item_count_lines)
 
     required = None
     filled = 0
@@ -4399,6 +4482,12 @@ def _parse_bod_deed(item):
             m5 = re.search(r"\bamount made\s*:\s*(\d+)\b", lower)
             if m5:
                 item_count = int(m5.group(1))
+        # Small deed fallback: when only one "<item>: <count>" line exists, treat it as deed count.
+        if item_count is None and len(item_count_lines) == 1:
+            row = item_count_lines[0]
+            item_count = int(row.get("count", 0) or 0)
+            if not item_name:
+                item_name = str(row.get("label", "") or "").strip()
     if item_count is not None and filled <= 0:
         filled = int(item_count)
     if required is None:
@@ -5204,13 +5293,17 @@ def craft_n_items(recipe, exceptional_required, n, open_gid=0):
     return crafted_ok, gid, last_err
 
 
-# Combine helper: open deed and combine from configured BOD item container.
-def _combine_deed_from_container(deed_serial):
-    if not BOD_ITEM_CONTAINER_SERIAL:
+# Combine helper: open deed, click Combine, and target the provided container.
+def _combine_deed_from_container(deed_serial, target_serial=0):
+    combine_target = int(target_serial or 0)
+    if combine_target <= 0:
+        combine_target = int(BOD_ITEM_CONTAINER_SERIAL or 0)
+    if combine_target <= 0:
         return False
     if _should_stop():
         return False
     # Open the specific deed by serial, wait for the deed gump, then click Combine (button 4).
+    _clear_pending_target_context("combine_pre")
     try:
         API.CloseGump(int(BOD_DEED_GUMP_ID))
     except Exception:
@@ -5225,7 +5318,7 @@ def _combine_deed_from_container(deed_serial):
             except Exception:
                 pass
         if _wait_for_target_safe("any", BOD_COMBINE_TARGET_WAIT_S):
-            API.Target(int(BOD_ITEM_CONTAINER_SERIAL))
+            API.Target(int(combine_target))
             _sleep(0.6)
             try:
                 API.CloseGump(int(BOD_DEED_GUMP_ID))
@@ -5240,7 +5333,7 @@ def _combine_deed_from_container(deed_serial):
         except Exception:
             pass
         if _wait_for_target_safe("any", BOD_COMBINE_TARGET_WAIT_S):
-            API.Target(int(BOD_ITEM_CONTAINER_SERIAL))
+            API.Target(int(combine_target))
             _sleep(0.6)
             try:
                 API.CloseGump(int(BOD_DEED_GUMP_ID))
@@ -5292,6 +5385,10 @@ def _fill_large_deed(item, parsed=None):
         return False
 
     deed_serial = int(parsed.get("deed_serial", getattr(item, "Serial", 0)) or 0)
+    backpack_serial = int(_backpack_serial() or 0)
+    if backpack_serial <= 0:
+        _say("Large deed combine failed: backpack serial unavailable.", 33)
+        return False
     made, req = _large_deed_progress(parsed)
     req_label = str(req) if int(req) > 0 else "?"
     if int(req) > 0 and int(made) >= int(req):
@@ -5315,7 +5412,7 @@ def _fill_large_deed(item, parsed=None):
             return False
         cycle += 1
         _diag_step("L02", "LARGE", f"fill_large_deed: cycle={cycle}/{int(max_cycles)}", DIAG_HUE_COMBINE)
-        if not _combine_deed_from_container(deed_serial):
+        if not _combine_deed_from_container(deed_serial, backpack_serial):
             _say("Large deed combine step failed.", 33)
             return False
         _fill_phase_delay("L02D", "LARGE", "combine->progress_check", DIAG_HUE_COMBINE)
@@ -5403,6 +5500,8 @@ def _fill_single_deed(item, parsed=None):
         _say("Could not determine Amount to Make from deed.", 33)
         return False
     if item_count >= amount_to_make:
+        _say(f"Deed already complete: {item_count}/{amount_to_make}; skipping craft.")
+        _salvage_backpack_leftovers_for_recipe(parsed.get("recipe", {}))
         try:
             API.CloseGump(int(BOD_DEED_GUMP_ID))
         except Exception:
@@ -5484,6 +5583,8 @@ def _fill_single_deed(item, parsed=None):
             return False
 
     done = int(item_count) >= int(amount_to_make)
+    if done:
+        _salvage_backpack_leftovers_for_recipe(parsed.get("recipe", {}))
     _diag_step("D13", "PARSE", f"fill_single_deed: done={done}", DIAG_HUE_PARSE)
     try:
         API.CloseGump(int(BOD_DEED_GUMP_ID))
