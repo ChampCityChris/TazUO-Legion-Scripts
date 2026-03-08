@@ -26,7 +26,7 @@ Implemented:
   - Parses deed tooltip for profession/material/quality/amount.
   - Uses recipe mappings from `Databases/craftables.db`.
   - Runs helperized fill phases (Travel -> Move -> Materials -> Tools -> Context -> Craft -> Combine/Recount).
-- Learn Mode is manual-only (shared `RecipeBookEditor.py`).
+- Learn Mode is manual-only (shared `recipeconfirm.py`).
   - Pulls resources from Resource Container.
   - Auto-tools via tinkering when possible.
   - Crafts items, stages in BOD Item Container, combines via deed gump, and re-checks deed progress until complete.
@@ -44,7 +44,7 @@ Setup:
 - Set `Resource Container` for ingots/cloth/leather/boards used during fill.
 - Set `BOD Item Container` where crafted items are staged for deed combine/turn-in combine targeting.
 - Optional: set `Salvage Bag` and `Trash Container` for exceptional failures and recycle overflow.
-- Learn Mode is manual-only: use `Manual Recipe` to open `RecipeBookEditor.py` and enter recipe/material data.
+- Learn Mode is manual-only: use `Manual Recipe` to open `recipeconfirm.py` and enter recipe/material data.
 - Recipes are stored in `Databases/craftables.db` for shared editing across scripts.
 
 Not implemented yet:
@@ -99,7 +99,7 @@ Phase 3
 - [x] BOD parsing helpers (type/material/amount/fill status)
 - [x] Initial filler for one profession (expanded to Blacksmith/Tailor/Carpentry/Tinker)
 - [x] Run Fill implementation with progress/status logs
-- [x] Shared RecipeBookEditor integration + persistent recipe book
+- [x] Shared recipeconfirm integration + persistent recipe book
 - [x] Fill helper pipeline stabilization and context handoff hardening
 
 Phase 4
@@ -125,16 +125,24 @@ SERVER_OPTIONS = []
 DEFAULT_SERVER = ""
 RECIPE_EDITOR_REQUEST_KEY = "recipe_editor_request"
 RECIPE_EDITOR_RESULT_KEY = "recipe_editor_result"
+RECIPE_EDIT_REQUEST_KEY = "recipe_edit_request"
+RECIPE_EDIT_RESULT_KEY = "recipe_edit_result"
 RECIPE_EDITOR_WAIT_FAILSAFE_S = 180.0
 RECIPE_EDITOR_SCRIPT_CANDIDATES = [
-    "RecipeBookEditor.py",
-    "RecipeBookEditor",
-    "Utilities/RecipeBookEditor.py",
-    "Utilities\\RecipeBookEditor.py",
+    "recipeconfirm.py",
+    "recipeconfirm",
+    "Utilities/recipeconfirm.py",
+    "Utilities\\recipeconfirm.py",
 ]
 RECIPE_EDITOR_FILE_CANDIDATES = [
-    "RecipeBookEditor.py",
-    os.path.join("Utilities", "RecipeBookEditor.py"),
+    "recipeconfirm.py",
+    os.path.join("Utilities", "recipeconfirm.py"),
+]
+RECIPE_EDIT_SCRIPT_CANDIDATES = [
+    "recipeedit.py",
+    "recipeedit",
+    "Utilities/recipeedit.py",
+    "Utilities\\recipeedit.py",
 ]
 
 # Runebook recall defaults.
@@ -251,6 +259,7 @@ LEARN_MODE = True
 CRAFT_INDEX_CACHE = {}
 SELECTED_SERVER = DEFAULT_SERVER
 RECIPE_EDITOR_NONCE = 0
+RECIPE_EDIT_NONCE = 0
 # If true, ingot restock will fail for unknown hues instead of pulling any hue.
 STRICT_INGOT_HUE_MATCH = True
 
@@ -475,6 +484,8 @@ def _wait_and_pump(total_s, step_s=0.1):
     step = max(0.05, float(step_s or 0.1))
     elapsed = 0.0
     while elapsed < total:
+        if not _pause_if_needed():
+            return False
         if _should_stop():
             return False
         chunk = min(step, total - elapsed)
@@ -994,7 +1005,10 @@ def _parse_material_key_needed(text, material_needed="", profession=""):
     )
 
     # Strict parse on material-focused lines first.
-    material_lines = [ln for ln in lines if ("material" in ln or "ingot" in ln or "scale" in ln)]
+    material_lines = [
+        ln for ln in lines
+        if ("material" in ln or "ingot" in ln or "scale" in ln or "made with" in ln)
+    ]
     explicit_hits = []
     for ln in material_lines:
         m = re.search(r"\b(dull copper|shadow iron|copper|bronze|gold|agapite|verite|valorite|iron)\s+ingots?\b", ln)
@@ -1004,7 +1018,7 @@ def _parse_material_key_needed(text, material_needed="", profession=""):
                 explicit_hits.append(hit)
             continue
         # Some shards omit the word ingot but still use "material: dull copper".
-        if "material" in ln:
+        if "material" in ln or "made with" in ln:
             for name in ingot_map:
                 if name in ln:
                     hit = _find_material_key_by_terms("ingot", [name], profession)
@@ -1018,13 +1032,23 @@ def _parse_material_key_needed(text, material_needed="", profession=""):
         # Ambiguous tooltip data; do not guess subtype.
         return ""
 
-    # Fallback to base material only (no guessed ingot subtype).
+    # Fallback to base material.
     mk = _infer_material_key(material_needed or "", "")
     opt = _material_option_by_key(mk, profession) if mk else None
     base = _normalize_text(opt.get("base", "") if isinstance(opt, dict) else "")
     if base in ("cloth", "leather", "hide", "hides", "board", "scale", "scales"):
         return mk
-    # No explicit ingot subtype found in deed text.
+    if base == "ingot":
+        # For ingot deeds that omit subtype text, treat default as iron.
+        if _material_option_by_key("ingot_iron", profession):
+            return "ingot_iron"
+        if _material_option_by_key("ingot", profession):
+            return "ingot"
+        fallback_ingot = _default_material_key_for_base("ingot", profession)
+        if fallback_ingot:
+            return str(fallback_ingot)
+        return "ingot_iron"
+    # No explicit subtype found in deed text.
     return ""
 
 
@@ -1369,7 +1393,7 @@ def _wanted_hue_for_item(recipe, item_id):
 
 
 def _manual_learn_recipe_for_deed(parsed, wait_s=-1.0):
-    _say("Manual recipe required. Opening RecipeBookEditor.", 33)
+    _say("Manual recipe required. Opening recipeconfirm.", 33)
     out = _launch_recipe_editor({
         "editor_mode": "bind_deed",
         "recipe_type": "bod",
@@ -1395,15 +1419,16 @@ def _manual_learn_recipe_for_deed(parsed, wait_s=-1.0):
     deed_key = str(parsed.get("deed_key", "") or "").strip()
     profession = str(parsed.get("profession", "") or "").strip()
     item_name = str(parsed.get("item_name", "") or "").strip()
+    material_key = str(parsed.get("material_key", "") or "").strip()
     raw_text = str(parsed.get("raw_text", "") or "")
 
     learned = None
     if deed_key:
         learned = _find_recipe_for_deed_key(deed_key, profession or None)
     if not learned and item_name:
-        learned = _find_recipe_for_item_name(item_name, profession or None, None)
+        learned = _find_recipe_for_item_name(item_name, profession or None, material_key or None)
     if not learned and raw_text:
-        learned = _find_recipe_for_text(raw_text, profession or None, None)
+        learned = _find_recipe_for_text(raw_text, profession or None, material_key or None)
     if learned:
         _write_debug_log(
             f"Manual learn: recovered mapping from refreshed cache for '{item_name or deed_key}'."
@@ -1419,7 +1444,7 @@ def _set_running(value):
     if RUNNING:
         FORCE_STOP = False
     if CONTROL_BUTTON:
-        CONTROL_BUTTON.Text = "Pause" if RUNNING else "Start"
+        CONTROL_BUTTON.Text = "Pause" if RUNNING else "Resume"
 
 
 def _toggle_running():
@@ -1684,7 +1709,7 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
     play_sent = False
     script_candidates = []
     try:
-        abs_editor = os.path.normpath(os.path.join(_util_dir, "RecipeBookEditor.py"))
+        abs_editor = os.path.normpath(os.path.join(_util_dir, "recipeconfirm.py"))
         if abs_editor:
             script_candidates.append(abs_editor)
     except Exception:
@@ -1787,7 +1812,7 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
                 _write_debug_log(f"RecipeEditor fallback exec failed [{p}]: {ex}")
                 continue
         if not launched:
-            _say("RecipeBookEditor fallback lookup failed: " + " | ".join(candidate_paths[:6]), 33)
+            _say("recipeconfirm fallback lookup failed: " + " | ".join(candidate_paths[:6]), 33)
     if not launched:
         init_err = ""
         try:
@@ -1796,16 +1821,16 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
         except Exception:
             init_err = ""
         if init_err:
-            _say(f"Could not launch RecipeBookEditor.py (DB: {init_err}).", 33)
+            _say(f"Could not launch recipeconfirm.py (DB: {init_err}).", 33)
         elif play_sent:
-            _say("Could not launch RecipeBookEditor.py (PlayScript sent but no editor ack).", 33)
+            _say("Could not launch recipeconfirm.py (PlayScript sent but no editor ack).", 33)
         else:
-            _say("Could not launch RecipeBookEditor.py (check script path/name in Script Manager).", 33)
+            _say("Could not launch recipeconfirm.py (check script path/name in Script Manager).", 33)
         return None
     if float(wait_s) == 0.0:
         return None
     if float(wait_s) < 0:
-        _say("RecipeBookEditor opened. Waiting for Save/Cancel...", 88)
+        _say("recipeconfirm opened. Waiting for Save/Cancel...", 88)
         wait_limit = None
     else:
         wait_limit = float(wait_s)
@@ -1848,7 +1873,7 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
         if got_nonce != nonce:
             continue
         if status == "error":
-            _say("RecipeBookEditor reported a startup error. Check RecipeBookEditor.debug.log.", 33)
+            _say("recipeconfirm reported a startup error. Check recipeconfirm.debug.log.", 33)
             _write_debug_log(
                 "RecipeEditor wait error: requested={0} detail={1}".format(
                     int(nonce), str(res.get("error", "") or "")
@@ -1861,6 +1886,33 @@ def _launch_recipe_editor(payload=None, wait_s=0.0):
                 return out
             return None
     return None
+
+
+def _launch_recipe_edit(payload=None):
+    global RECIPE_EDIT_NONCE
+    RECIPE_EDIT_NONCE += 1
+    nonce = int(RECIPE_EDIT_NONCE)
+    req = {
+        "nonce": nonce,
+        "caller": "BODAssist",
+        "payload": dict(payload or {}),
+    }
+    _set_persistent_json(RECIPE_EDIT_REQUEST_KEY, req)
+    _set_persistent_json(RECIPE_EDIT_RESULT_KEY, {"nonce": nonce, "status": "pending"})
+    launched = False
+    for script_name in RECIPE_EDIT_SCRIPT_CANDIDATES:
+        try:
+            API.PlayScript(str(script_name))
+            launched = True
+            break
+        except Exception as ex:
+            _write_debug_log(f"RecipeEdit PlayScript failed [{script_name}]: {ex}")
+            continue
+    if not launched:
+        _say("Could not launch recipeedit.py (check script path/name in Script Manager).", 33)
+        return False
+    _say("recipeedit opened.", 88)
+    return True
 
 
 def _load_config():
@@ -2148,6 +2200,16 @@ def _open_manual_recipe_from_control():
     }, wait_s=0.0)
 
 
+def _open_recipe_edit_from_control():
+    if RUNNING:
+        _set_running(False)
+        _say("BODAssist paused for recipe edits.", 88)
+    _launch_recipe_edit({
+        "server": str(SELECTED_SERVER or DEFAULT_SERVER),
+        "recipe_type": "bod",
+    })
+
+
 def _set_work_anchor():
     global CRAFT_STATION_X, CRAFT_STATION_Y, CRAFT_STATION_Z, CRAFT_STATION_SET
     _say("Target crafting station tile.")
@@ -2268,6 +2330,9 @@ def _find_recipe_for_item_name(item_name, preferred_profession=None, preferred_m
     if not needle:
         return None
     preferred_prof = _canonical_profession_name(preferred_profession) if preferred_profession else ""
+    preferred_mk = _normalize_text(preferred_material_key or "")
+    if preferred_mk == "ingot":
+        preferred_mk = "ingot_iron"
     matches = []
     for r in RECIPE_BOOK:
         if _normalize_recipe_type(r.get("recipe_type", "bod")) != "bod":
@@ -2283,6 +2348,27 @@ def _find_recipe_for_item_name(item_name, preferred_profession=None, preferred_m
             matches.append(r)
     if not matches:
         return None
+    if preferred_mk:
+        material_matches = []
+        for r in matches:
+            row_mk = _normalize_text(_recipe_material_key(r))
+            if row_mk == "ingot":
+                row_mk = "ingot_iron"
+            if row_mk == preferred_mk:
+                material_matches.append(r)
+        if not material_matches:
+            return None
+        matches = material_matches
+    else:
+        material_keys = set()
+        for r in matches:
+            row_mk = _normalize_text(_recipe_material_key(r))
+            if row_mk == "ingot":
+                row_mk = "ingot_iron"
+            if row_mk:
+                material_keys.add(row_mk)
+        if len(material_keys) > 1:
+            return None
     matches.sort(key=lambda r: len(str(r.get("name", ""))), reverse=True)
     return matches[0]
 
@@ -2594,16 +2680,75 @@ def _request_bod_from_giver(giver_serial, attempts_override=None):
 
     def _accept_bod_offer_if_present():
         # Shard-specific: both small and large BOD offer gumps use Accept button 1.
+        # Some shards can emit different offer gump IDs after turn-in, so also detect by gump text.
         offer_gump_ids = [int(BOD_OFFER_GUMP_ID), int(BOD_LARGE_OFFER_GUMP_ID)]
+        candidate_ids = []
+        seen = set()
+
+        def _queue_candidate(gid):
+            try:
+                g = int(gid or 0)
+            except Exception:
+                g = 0
+            if g <= 0 or g in seen:
+                return
+            seen.add(g)
+            candidate_ids.append(g)
+
+        def _looks_like_bod_offer_gump(gid):
+            g = int(gid or 0)
+            if g <= 0:
+                return False
+            if g == int(BOD_DEED_GUMP_ID) or g == int(RECALL_GUMP_ID):
+                return False
+            try:
+                raw = API.GetGumpContents(int(g)) or ""
+            except Exception:
+                raw = ""
+            txt = _normalize_text(raw)
+            if not txt:
+                return False
+            if "bulk order" not in txt:
+                return False
+            if "deed" not in txt:
+                return False
+            offer_hints = (
+                "would you like",
+                "offer",
+                "accept",
+                "new bulk order",
+                "large bulk order",
+                "small bulk order",
+            )
+            return any(h in txt for h in offer_hints)
+
         try:
+            for gid in _gump_ids_snapshot():
+                if int(gid) in offer_gump_ids:
+                    _queue_candidate(gid)
             for offer_gump_id in offer_gump_ids:
                 if API.WaitForGump(int(offer_gump_id), float(BOD_OFFER_WAIT_S)):
-                    try:
-                        API.ReplyGump(int(BOD_OFFER_ACCEPT_BUTTON_ID), int(offer_gump_id))
-                    except Exception:
-                        API.ReplyGump(int(BOD_OFFER_ACCEPT_BUTTON_ID))
-                    _sleep(0.15)
-                    return True
+                    _queue_candidate(offer_gump_id)
+            if not candidate_ids:
+                _wait_for_gump_safe(None, float(BOD_OFFER_WAIT_S))
+                for gid in _gump_ids_snapshot():
+                    if _looks_like_bod_offer_gump(gid):
+                        _queue_candidate(gid)
+        except Exception:
+            pass
+        try:
+            for offer_gump_id in candidate_ids:
+                try:
+                    API.ReplyGump(int(BOD_OFFER_ACCEPT_BUTTON_ID), int(offer_gump_id))
+                except Exception:
+                    API.ReplyGump(int(BOD_OFFER_ACCEPT_BUTTON_ID))
+                _write_debug_log(f"BOD offer accepted gump=0x{int(offer_gump_id):08X}")
+                _sleep(0.15)
+                return True
+        except Exception:
+            pass
+        try:
+            _write_debug_log(f"BOD offer not detected; open_gumps={_gump_ids_snapshot()}")
         except Exception:
             pass
         return False
@@ -3855,8 +4000,12 @@ def _upsert_recipe(recipe):
 
 def _find_recipe_for_text(text, preferred_profession=None, preferred_material_key=None):
     preferred_prof = _canonical_profession_name(preferred_profession) if preferred_profession else ""
+    preferred_mk = _normalize_text(preferred_material_key or "")
+    if preferred_mk == "ingot":
+        preferred_mk = "ingot_iron"
+    item_name = _extract_item_name_from_deed_text(text)
     deed_key = _build_deed_key(
-        _extract_item_name_from_deed_text(text),
+        item_name,
         preferred_prof or "",
         preferred_material_key or "",
         text,
@@ -3870,11 +4019,23 @@ def _find_recipe_for_text(text, preferred_profession=None, preferred_material_ke
                 continue
             if preferred_prof and _canonical_profession_name(r.get("profession", "")) != preferred_prof:
                 continue
+            if preferred_mk:
+                row_mk = _normalize_text(_recipe_material_key(r))
+                if row_mk == "ingot":
+                    row_mk = "ingot_iron"
+                if row_mk != preferred_mk:
+                    continue
             if str(r.get("deed_key", "") or "").strip() == deed_key:
                 exact_key.append(r)
         if exact_key:
             exact_key.sort(key=lambda r: len(str(r.get("name", ""))), reverse=True)
             return exact_key[0]
+    if item_name:
+        return _find_recipe_for_item_name(
+            item_name,
+            preferred_prof or None,
+            preferred_mk or None,
+        )
     hay = _normalize_name(text)
     matches = []
     for r in RECIPE_BOOK:
@@ -3884,6 +4045,12 @@ def _find_recipe_for_text(text, preferred_profession=None, preferred_material_ke
             continue
         if preferred_prof and _canonical_profession_name(r.get("profession", "")) != preferred_prof:
             continue
+        if preferred_mk:
+            row_mk = _normalize_text(_recipe_material_key(r))
+            if row_mk == "ingot":
+                row_mk = "ingot_iron"
+            if row_mk != preferred_mk:
+                continue
         key = _normalize_name(r["name"])
         if key and hay == key:
             matches.append(r)
@@ -4532,13 +4699,13 @@ def _parse_bod_deed(item):
     if deed_key:
         recipe = _find_recipe_for_deed_key(deed_key, profession or None)
     if item_name:
-        recipe = recipe or _find_recipe_for_item_name(item_name, profession or None, None)
+        recipe = recipe or _find_recipe_for_item_name(item_name, profession or None, material_key or None)
     if not recipe:
-        recipe = _find_recipe_for_text(txt, profession, None)
+        recipe = _find_recipe_for_text(txt, profession, material_key or None)
     if not recipe:
-        recipe = _find_recipe_for_text(txt, None, None)
+        recipe = _find_recipe_for_text(txt, None, material_key or None)
     if not recipe and item_name:
-        recipe = _find_recipe_for_item_name(item_name, None, None)
+        recipe = _find_recipe_for_item_name(item_name, None, material_key or None)
     if recipe:
         recipe = _merge_item_key_map_into_recipe(recipe)
 
@@ -5560,13 +5727,23 @@ def _fill_single_deed(item, parsed=None):
         if not ensure_materials_for_deed(parsed):
             LAST_CRAFT_ERROR = "missing_material"
             _say(f"Missing materials for {parsed['recipe']['name']}.", 33)
-            return False
+            no_progress_cycles += 1
+            if no_progress_cycles >= 2:
+                _say("Stopping deed after repeated material restock failure.", 33)
+                return False
+            _fill_phase_delay("D07R", "MATERIAL", "materials retry backoff", DIAG_HUE_MATERIAL)
+            continue
         _fill_phase_delay("D07D", "MATERIAL", "materials->tools", DIAG_HUE_MATERIAL)
 
         if AUTO_TOOLING and not ensure_tool_for_profession(parsed["profession"]):
             LAST_CRAFT_ERROR = "missing_tools"
             _say(f"Auto tooling could not ensure {parsed['profession']} tools.", 33)
-            return False
+            no_progress_cycles += 1
+            if no_progress_cycles >= 2:
+                _say("Stopping deed after repeated tool recovery failure.", 33)
+                return False
+            _fill_phase_delay("D08R", "TOOL", "tool retry backoff", DIAG_HUE_TOOL)
+            continue
         _fill_phase_delay("D08D", "TOOL", "tools->context", DIAG_HUE_TOOL)
 
         craft_gid, ctx_err = ensure_craft_context(parsed["profession"], parsed["recipe"], craft_gid)
@@ -5599,6 +5776,12 @@ def _fill_single_deed(item, parsed=None):
         if not ok or not refreshed:
             _say("Combine step did not trigger target cursor.", 33)
             return False
+        parsed["filled"] = int(refreshed.get("filled", item_count) or item_count)
+        parsed["item_count"] = int(item_count)
+        parsed["required"] = int(amount_to_make)
+        parsed["amount_to_make"] = int(amount_to_make)
+        parsed["remaining"] = max(0, int(amount_to_make) - int(item_count))
+        parsed["raw_text"] = str(refreshed.get("raw_text", parsed.get("raw_text", "")) or "")
         _fill_phase_delay("D11D", "COMBINE", "combine->progress_check", DIAG_HUE_COMBINE)
 
         _say(f"Deed progress: {item_count}/{amount_to_make}")
@@ -6100,7 +6283,7 @@ def _create_control_gump():
     CONTROL_CONTROLS = []
     g = API.CreateGump(True, True, False)
     w = 460
-    h = 486
+    h = 510
     g.SetRect(420, 200, w, h)
     bg = API.CreateGumpColorBox(0.7, "#1B1B1B")
     bg.SetRect(0, 0, w, h)
@@ -6283,6 +6466,13 @@ def _create_control_gump():
     CONTROL_CONTROLS.append(manual_btn)
 
     y += 24
+    edit_recipe_btn = API.CreateSimpleButton("Edit Recipe", 100, 18)
+    edit_recipe_btn.SetPos(230, y - 2)
+    g.Add(edit_recipe_btn)
+    API.AddControlOnClick(edit_recipe_btn, _open_recipe_edit_from_control)
+    CONTROL_CONTROLS.append(edit_recipe_btn)
+
+    y += 24
     auto_label = API.CreateGumpTTFLabel("Collect BODs", 13, "#FFFFFF", "alagard", "left", 330)
     auto_label.SetPos(10, y)
     g.Add(auto_label)
@@ -6340,7 +6530,7 @@ def _create_control_gump():
     CONTROL_CONTROLS.append(turn_btn)
 
     y += 24
-    diag_row_w = 64 + 6 + 120 + 6 + 120
+    diag_row_w = 64 + 6 + 90 + 6 + 120 + 6 + 120
     row_x = int((w - diag_row_w) / 2)
     stop_btn = API.CreateSimpleButton("Stop", 64, 20)
     stop_btn.SetPos(row_x, y)
@@ -6348,14 +6538,20 @@ def _create_control_gump():
     API.AddControlOnClick(stop_btn, _hard_stop)
     CONTROL_CONTROLS.append(stop_btn)
 
+    CONTROL_BUTTON = API.CreateSimpleButton("Pause" if RUNNING else "Resume", 90, 20)
+    CONTROL_BUTTON.SetPos(row_x + 70, y)
+    g.Add(CONTROL_BUTTON)
+    API.AddControlOnClick(CONTROL_BUTTON, _toggle_running)
+    CONTROL_CONTROLS.append(CONTROL_BUTTON)
+
     diag_btn = API.CreateSimpleButton("Diagnostics", 120, 20)
-    diag_btn.SetPos(row_x + 70, y)
+    diag_btn.SetPos(row_x + 166, y)
     g.Add(diag_btn)
     API.AddControlOnClick(diag_btn, _run_all_diagnostics)
     CONTROL_CONTROLS.append(diag_btn)
 
     log_btn = API.CreateSimpleButton("Debug Log", 120, 20)
-    log_btn.SetPos(row_x + 196, y)
+    log_btn.SetPos(row_x + 292, y)
     g.Add(log_btn)
     API.AddControlOnClick(log_btn, _open_log_gump)
     CONTROL_CONTROLS.append(log_btn)
@@ -6393,7 +6589,7 @@ def _main():
     _write_debug_log("Startup: _create_control_gump begin.")
     _create_control_gump()
     _write_debug_log("Startup: _create_control_gump end.")
-    _say("BODAssist loaded. Learn Mode uses RecipeBookEditor to map unknown deeds into the persistent recipe book.")
+    _say("BODAssist loaded. Learn Mode uses recipeconfirm to map unknown deeds into the persistent recipe book.")
     while not _should_stop():
         try:
             if not _process_callbacks_safe():

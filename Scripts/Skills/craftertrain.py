@@ -54,14 +54,14 @@ SELECTED_SERVER = DEFAULT_SERVER
 RECIPE_TYPE_TRAINING = "training"
 RECIPE_EDITOR_REQUEST_KEY = "recipe_editor_request"
 RECIPE_EDITOR_SCRIPT_CANDIDATES = [
-    "RecipeBookEditor.py",
-    "RecipeBookEditor",
-    "Utilities/RecipeBookEditor.py",
-    "Utilities\\RecipeBookEditor.py",
+    "recipeconfirm.py",
+    "recipeconfirm",
+    "Utilities/recipeconfirm.py",
+    "Utilities\\recipeconfirm.py",
 ]
 RECIPE_EDITOR_FILE_CANDIDATES = [
-    os.path.join("Utilities", "RecipeBookEditor.py"),
-    "RecipeBookEditor.py",
+    os.path.join("Utilities", "recipeconfirm.py"),
+    "recipeconfirm.py",
 ]
 RECIPE_EDITOR_NONCE = 0
 RECIPE_EDITOR_RESULT_KEY = "recipe_editor_result"
@@ -528,7 +528,7 @@ def _launch_shared_recipe_editor(payload=None):
             except Exception:
                 continue
     if not launched:
-        _say("Could not launch RecipeBookEditor.py (check script path/name in Script Manager).", WARN_HUE)
+        _say("Could not launch recipeconfirm.py (check script path/name in Script Manager).", WARN_HUE)
 
 
 def _normalize_training_recipe_entry(r):

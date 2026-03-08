@@ -6,7 +6,7 @@ import sqlite3
 import sys
 
 """
-RecipeBookViewer (read-only)
+recipeview (read-only)
 
 Key-driven viewer for recipe data in Databases/craftables.db.
 Selection flow:
@@ -262,23 +262,23 @@ def _table_columns(conn, table_name):
 def _load_rows():
     path = _db_path()
     if not os.path.exists(path):
-        _say(f"RecipeBookViewer: DB not found: {path}", 33)
+        _say(f"recipeview: DB not found: {path}", 33)
         return []
 
     if RECIPE_STORE is None:
-        _say("RecipeBookViewer: RecipeStore unavailable.", 33)
+        _say("recipeview: RecipeStore unavailable.", 33)
         return []
 
     rows = []
     try:
         key_maps = RECIPE_STORE.load_key_maps() or {}
     except Exception as ex:
-        _say(f"RecipeBookViewer: key-map load failed: {ex}", 33)
+        _say(f"recipeview: key-map load failed: {ex}", 33)
         key_maps = {}
     try:
         recipe_rows = RECIPE_STORE.load_recipes() or []
     except Exception as ex:
-        _say(f"RecipeBookViewer: recipe load failed: {ex}", 33)
+        _say(f"recipeview: recipe load failed: {ex}", 33)
         recipe_rows = []
 
     try:
@@ -542,7 +542,7 @@ def _load_rows():
                     }
                 )
     except Exception as ex:
-        _say(f"RecipeBookViewer: query failed: {ex}", 33)
+        _say(f"recipeview: query failed: {ex}", 33)
     return rows
 
 
@@ -991,7 +991,7 @@ def _main():
     server_count = len({str(r.get("server", "") or "").strip() for r in DATA_ROWS if str(r.get("server", "") or "").strip()})
     prof_count = len({str(r.get("profession", "") or "").strip() for r in DATA_ROWS if str(r.get("profession", "") or "").strip()})
     _say(
-        "RecipeBookViewer loaded (read-only). rows="
+        "recipeview loaded (read-only). rows="
         + str(len(DATA_ROWS))
         + ", servers="
         + str(server_count)
@@ -1003,11 +1003,17 @@ def _main():
         API.Pause(0.1)
 
 
-try:
-    _main()
-except Exception as ex:
-    msg = str(ex or "")
-    if "ThreadInterrupted" in msg or "interrupted" in msg.lower():
-        pass
-    else:
-        raise
+def _should_autostart_main():
+    # TODO (human): add any additional runner contexts if needed.
+    return str(globals().get("__name__", "")) in ("__main__", "<module>")
+
+
+if _should_autostart_main():
+    try:
+        _main()
+    except Exception as ex:
+        msg = str(ex or "")
+        if "ThreadInterrupted" in msg or "interrupted" in msg.lower():
+            pass
+        else:
+            raise

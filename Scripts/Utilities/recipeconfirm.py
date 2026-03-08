@@ -8,7 +8,7 @@ import sqlite3
 import traceback
 
 """
-RecipeBookEditor
+recipeconfirm
 
 Shared manual recipe editor for split recipe/key-map files.
 Supports single or multi-material recipes.
@@ -25,7 +25,7 @@ ingot:0x1BF2:60:400;gem:0x0F26:10:80;super_gem:0x1234:10:80
 
 REQUEST_KEY = "recipe_editor_request"
 RESULT_KEY = "recipe_editor_result"
-DEBUG_LOG_FILE = "RecipeBookEditor.debug.log"
+DEBUG_LOG_FILE = "recipeconfirm.debug.log"
 LOGS_DIR = r"F:\Games\Ultima_Online\Clients\TazUO\TazUO\LegionScripts\Logs"
 SQLITE_CONNECT_TIMEOUT_S = 2.5
 SQLITE_BUSY_TIMEOUT_MS = 2500
@@ -2566,4 +2566,10 @@ def _main():
     _write_debug_log("Main exit requested={0} gump_alive={1}".format(bool(SCRIPT_EXIT_REQUESTED), bool(EDITOR_GUMP is not None)))
 
 
-_main()
+def _should_autostart_main():
+    # TODO (human): add any additional runner contexts if needed.
+    return str(globals().get("__name__", "")) in ("__main__", "<module>")
+
+
+if _should_autostart_main():
+    _main()
