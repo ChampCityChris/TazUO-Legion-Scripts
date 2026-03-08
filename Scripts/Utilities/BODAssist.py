@@ -160,6 +160,8 @@ BOD_REQUEST_BETWEEN_ATTEMPTS_S = 2.0
 BOD_REQUEST_ATTEMPTS = 3
 BOD_TURN_IN_REQUEST_ATTEMPTS = 1
 BOD_TURN_IN_HANDIN_SETTLE_S = 0.8
+BOD_TURN_IN_POST_HANDIN_REQUEST_DELAY_S = 2.2
+BOD_TURN_IN_OFFER_WAIT_S = 3.5
 BOD_TURN_IN_HANDIN_ATTEMPTS = 3
 BOD_TURN_IN_PATH_RETRIES = 2
 BOD_TURN_IN_RANGE = 2
@@ -2670,13 +2672,17 @@ def _run_fill_move_phase():
         _set_running(False)
 
 
-def _request_bod_from_giver(giver_serial, attempts_override=None):
+def _request_bod_from_giver(giver_serial, attempts_override=None, allow_reissue=True, offer_wait_override=None):
     if not giver_serial or _should_stop():
         return False
     mobile = API.FindMobile(int(giver_serial))
     if not mobile:
         _say(f"Giver 0x{int(giver_serial):08X} not found at this stop.", 33)
         return False
+    if offer_wait_override is None:
+        offer_wait_s = float(BOD_OFFER_WAIT_S)
+    else:
+        offer_wait_s = max(0.2, float(offer_wait_override))
 
     def _accept_bod_offer_if_present():
         # Shard-specific: both small and large BOD offer gumps use Accept button 1.
@@ -2708,17 +2714,28 @@ def _request_bod_from_giver(giver_serial, attempts_override=None):
             txt = _normalize_text(raw)
             if not txt:
                 return False
-            if "bulk order" not in txt:
-                return False
-            if "deed" not in txt:
+            # Accept both plain text and localized-ID payloads.
+            # Some shards/client states return localized IDs instead of expanded text.
+            bulk_hints = (
+                "bulk order",
+                "1045133",  # A bulk order
+                "1045134",  # A large bulk order
+            )
+            if not any(h in txt for h in bulk_hints):
                 return False
             offer_hints = (
                 "would you like",
+                "would you help me out",
                 "offer",
-                "accept",
+                "accept this order",
+                "do you want to accept this order",
                 "new bulk order",
                 "large bulk order",
                 "small bulk order",
+                "1045135",  # Ah! Thanks for the goods! Would you help me out?
+                "1045139",  # Do you want to accept this order?
+                "1006044",  # OK
+                "1011012",  # CANCEL
             )
             return any(h in txt for h in offer_hints)
 
@@ -2727,13 +2744,18 @@ def _request_bod_from_giver(giver_serial, attempts_override=None):
                 if int(gid) in offer_gump_ids:
                     _queue_candidate(gid)
             for offer_gump_id in offer_gump_ids:
-                if API.WaitForGump(int(offer_gump_id), float(BOD_OFFER_WAIT_S)):
+                if API.WaitForGump(int(offer_gump_id), float(offer_wait_s)):
                     _queue_candidate(offer_gump_id)
             if not candidate_ids:
-                _wait_for_gump_safe(None, float(BOD_OFFER_WAIT_S))
-                for gid in _gump_ids_snapshot():
-                    if _looks_like_bod_offer_gump(gid):
-                        _queue_candidate(gid)
+                poll_deadline = _now_s() + float(offer_wait_s)
+                while _now_s() < poll_deadline:
+                    for gid in _gump_ids_snapshot():
+                        if _looks_like_bod_offer_gump(gid):
+                            _queue_candidate(gid)
+                    if candidate_ids or _should_stop():
+                        break
+                    if not _wait_and_pump(0.12, 0.04):
+                        break
         except Exception:
             pass
         try:
@@ -2753,34 +2775,40 @@ def _request_bod_from_giver(giver_serial, attempts_override=None):
             pass
         return False
 
-    success_any = False
     if attempts_override is None:
         attempts = int(BOD_REQUEST_ATTEMPTS)
     else:
         attempts = int(attempts_override)
     attempts = max(1, attempts)
+
+    if _accept_bod_offer_if_present():
+        _write_debug_log(f"BOD request accepted existing-offer giver=0x{int(giver_serial):08X}")
+        return True
+
     for attempt_index in range(attempts):
         if _should_stop():
-            break
+            return False
         _write_debug_log(
             f"BOD request attempt {attempt_index + 1}/{attempts} giver=0x{int(giver_serial):08X}"
         )
         API.ContextMenu(int(giver_serial), int(FIXED_BOD_CONTEXT_INDEX))
         if not _wait_and_pump(BOD_REQUEST_PAUSE_S, 0.1):
-            break
+            return False
         if _accept_bod_offer_if_present():
-            success_any = True
             _write_debug_log(
                 f"BOD request accepted attempt {attempt_index + 1}/{attempts} giver=0x{int(giver_serial):08X}"
             )
+            return True
         else:
             _write_debug_log(
                 f"BOD request no-offer attempt {attempt_index + 1}/{attempts} giver=0x{int(giver_serial):08X}"
             )
+        if not bool(allow_reissue):
+            break
         if attempt_index < (attempts - 1):
             if not _wait_and_pump(BOD_REQUEST_BETWEEN_ATTEMPTS_S, 0.1):
-                break
-    return success_any
+                return False
+    return False
 
 
 def _find_givers_by_titles(title_filters, max_distance=14):
@@ -6250,7 +6278,19 @@ def _run_turn_in():
                     f"Turn-In handed in: 0x{deed_serial:08X} ({deed_name}) "
                     f"{int(deed.get('made', 0) or 0)}/{int(deed.get('required', 0) or 0)}."
                 )
-                if _request_bod_from_giver(handin_giver, attempts_override=BOD_TURN_IN_REQUEST_ATTEMPTS):
+                _write_debug_log(
+                    f"Turn-In: waiting {float(BOD_TURN_IN_POST_HANDIN_REQUEST_DELAY_S):.1f}s "
+                    f"before replacement request for 0x{deed_serial:08X}."
+                )
+                if not _wait_and_pump(float(BOD_TURN_IN_POST_HANDIN_REQUEST_DELAY_S), 0.1):
+                    stopped = True
+                    break
+                if _request_bod_from_giver(
+                    handin_giver,
+                    attempts_override=BOD_TURN_IN_REQUEST_ATTEMPTS,
+                    allow_reissue=False,
+                    offer_wait_override=BOD_TURN_IN_OFFER_WAIT_S,
+                ):
                     replacement_requests += 1
                 else:
                     _say(
