@@ -1054,7 +1054,24 @@ def _key_map_item_entry(recipe):
             return None
         node = (KEY_MAPS.get(srv, {}) or {}).get(prof, {}) or {}
         item_keys = node.get("item_keys", {}) if isinstance(node, dict) else {}
-        ent = item_keys.get(nm, {}) if isinstance(item_keys, dict) else {}
+        ent = {}
+        if isinstance(item_keys, dict):
+            lookup_keys = []
+            for candidate in [
+                nm,
+                nm.replace(" ", "_"),
+                nm.replace("-", "_"),
+                nm.replace("-", " "),
+                nm.replace(" ", "_").replace("-", "_"),
+            ]:
+                key = str(candidate or "").strip()
+                if key and key not in lookup_keys:
+                    lookup_keys.append(key)
+            for key in lookup_keys:
+                hit = item_keys.get(key, {})
+                if isinstance(hit, dict):
+                    ent = hit
+                    break
         if not isinstance(ent, dict):
             return None
         out = dict(ent)
@@ -1225,6 +1242,23 @@ def _resource_item_defaults(material):
     return 0, 10, 50, hue
 
 
+def _parse_material_requirement_entry(raw_entry):
+    if isinstance(raw_entry, dict):
+        return dict(raw_entry)
+    text = str(raw_entry or "").strip()
+    if not text:
+        return None
+    if not (text.startswith("{") and text.endswith("}")):
+        return None
+    try:
+        parsed = json.loads(text)
+    except ValueError:
+        return None
+    if not isinstance(parsed, dict):
+        return None
+    return dict(parsed)
+
+
 def _material_requirements_from_recipe(recipe, required_items=1):
     reqs = []
     needed = max(1, int(required_items or 1))
@@ -1251,24 +1285,27 @@ def _material_requirements_from_recipe(recipe, required_items=1):
     raw = recipe.get("materials", []) or []
     if isinstance(raw, list) and not reqs:
         for ent in raw:
-            if isinstance(ent, dict):
-                base = _normalize_text(ent.get("material", "") or "")
+            payload = _parse_material_requirement_entry(ent)
+            if payload is None and isinstance(ent, dict):
+                payload = dict(ent)
+            if isinstance(payload, dict):
+                base = _normalize_text(payload.get("material", "") or "")
                 if not base:
                     base = _normalize_text(_material_base_from_recipe(recipe))
                 iid_default, _, pull_default, hue_default = _resource_item_defaults(base)
-                iid = int(ent.get("item_id", 0) or 0)
+                iid = int(payload.get("item_id", 0) or 0)
                 if iid <= 0:
                     iid = int(iid_default or 0)
-                hue = ent.get("hue", None)
+                hue = payload.get("hue", None)
                 if hue is None:
                     hue = hue_default
-                pull_amount = int(ent.get("pull_amount", 0) or 0)
+                pull_amount = int(payload.get("pull_amount", 0) or 0)
                 if pull_amount <= 0:
                     pull_amount = int(pull_default or 0)
                 reqs.append({
                     "material": base,
                     "item_id": int(iid or 0),
-                    "min_in_pack": int(ent.get("min_in_pack", 0) or 0),
+                    "min_in_pack": int(payload.get("min_in_pack", 0) or 0),
                     "pull_amount": int(pull_amount or 0),
                     "hue": hue,
                 })
