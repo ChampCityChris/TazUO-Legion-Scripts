@@ -28,6 +28,8 @@ import sys
 import sqlite3
 import traceback
 
+LOGS_DIR = r"F:\Games\Ultima_Online\Clients\TazUO\TazUO\LegionScripts\Logs"
+
 # Early startup heartbeat for diagnosing silent launch failures.
 # This runs at import-time before gump/UI code.
 def _write_boot_heartbeat():
@@ -43,13 +45,7 @@ def _write_boot_heartbeat():
         Appends one line to `Logs/AutoMiner.startup.log` when possible.
     """
     try:
-        base = os.path.dirname(__file__) if "__file__" in globals() else os.getcwd()
-    except Exception:
-        base = os.getcwd()
-    try:
-        if os.path.basename(base).lower() in ("resources", "utilities", "skills", "scripts"):
-            base = os.path.dirname(base)
-        logs_dir = os.path.join(base, "Logs")
+        logs_dir = LOGS_DIR
         os.makedirs(logs_dir, exist_ok=True)
         path = os.path.join(logs_dir, "AutoMiner.startup.log")
         ts = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -69,7 +65,7 @@ CUSTOM_GUMP = False
 LOG_GUMP = None  # Current debug log gump instance.
 LOG_TEXT = ""  # Rolling in-memory log text buffer.
 LOG_LINES = []  # Pre-split log lines used by the scroll area UI.
-LOG_EXPORT_BASE = None  # User-selected default export directory.
+LOG_EXPORT_BASE = LOGS_DIR  # Fixed export directory for debug logs.
 LOG_PATH_TEXTBOX = None  # Textbox control reference from the log gump.
 
 # Journal texts that mark tiles as depleted.
@@ -2022,14 +2018,7 @@ def _debug_log_path():
     Side Effects:
         No side effects beyond local calculations.
     """
-    try:
-        base = os.path.dirname(__file__)
-    except Exception:
-        base = os.getcwd()
-    if os.path.basename(base).lower() in ("resources", "utilities", "skills", "scripts"):
-        base = os.path.dirname(base)
-    logs_dir = os.path.join(base, "Logs")
-    return os.path.join(logs_dir, DEBUG_LOG_FILE)
+    return os.path.join(LOGS_DIR, DEBUG_LOG_FILE)
 
 
 # Write one timestamped debug line to disk (best-effort).
@@ -2218,14 +2207,7 @@ def _startup_error_log_path():
     Side Effects:
         No side effects beyond local calculations.
     """
-    try:
-        base = os.path.dirname(__file__)
-    except Exception:
-        base = os.getcwd()
-    if os.path.basename(base).lower() in ("resources", "utilities", "skills", "scripts"):
-        base = os.path.dirname(base)
-    logs_dir = os.path.join(base, "Logs")
-    return os.path.join(logs_dir, "AutoMiner.startup.log")
+    return os.path.join(LOGS_DIR, "AutoMiner.startup.log")
 
 
 def _report_startup_exception(startup_step, ex):
@@ -2838,15 +2820,7 @@ def _get_log_export_dir():
         Updates module-level runtime state.
     """
     global LOG_EXPORT_BASE
-    if LOG_EXPORT_BASE:
-        return LOG_EXPORT_BASE
-    try:
-        base = os.path.dirname(__file__)
-    except Exception:
-        base = os.getcwd()
-    if os.path.basename(base).lower() in ("resources", "utilities", "skills", "scripts"):
-        base = os.path.dirname(base)
-    LOG_EXPORT_BASE = os.path.join(base, "Logs")
+    LOG_EXPORT_BASE = LOGS_DIR
     return LOG_EXPORT_BASE
 
 
@@ -2865,23 +2839,7 @@ def _load_log_config():
     """
     global LOG_EXPORT_BASE
 
-    raw = API.GetPersistentVar(LOG_DATA_KEY, "", API.PersistentVar.Char)
-    if not raw:
-        return
-
-    parse_result = _parse_persisted_dict(raw, "AutoMiner log")
-    if not parse_result.get("ok", False):
-        _diag_warn(
-            "AutoMiner log config defaults applied reason={0}".format(
-                str(parse_result.get("error", "unknown"))
-            ),
-            phase="CONFIG",
-        )
-        return
-    data = parse_result.get("data", {})
-    path = str(data.get("export_path", "")).strip()
-    if path:
-        LOG_EXPORT_BASE = path
+    LOG_EXPORT_BASE = LOGS_DIR
 
 # Persist log export settings.
 def _save_log_config():
@@ -2896,7 +2854,7 @@ def _save_log_config():
     Side Effects:
         Interacts with the TazUO client through API calls.
     """
-    data = {"export_path": LOG_EXPORT_BASE or ""}
+    data = {"export_path": LOGS_DIR}
     API.SavePersistentVar(LOG_DATA_KEY, json.dumps(data), API.PersistentVar.Char)
 
 
@@ -2914,11 +2872,6 @@ def _export_log_to_file():
         Updates module-level runtime state.
     """
     export_dir = _get_log_export_dir()
-    if LOG_PATH_TEXTBOX and LOG_PATH_TEXTBOX.Text.strip():
-        export_dir = LOG_PATH_TEXTBOX.Text.strip()
-        global LOG_EXPORT_BASE
-        LOG_EXPORT_BASE = export_dir
-        _save_log_config()
     path = ""
     try:
         os.makedirs(export_dir, exist_ok=True)
@@ -2979,10 +2932,10 @@ def _update_log_gump():
     title.SetPos(0, 6)
     g.Add(title)
 
-    path_label = API.CreateGumpTTFLabel("Save Path:", 12, "#FFFFFF", "alagard", "left", 120)
+    path_label = API.CreateGumpTTFLabel("Log Folder:", 12, "#FFFFFF", "alagard", "left", 120)
     path_label.SetPos(10, 32)
     g.Add(path_label)
-    path_box = API.CreateGumpTextBox(LOG_EXPORT_BASE or "", 230, 18, False)
+    path_box = API.CreateGumpTextBox(_get_log_export_dir(), 230, 18, False)
     path_box.SetPos(90, 30)
     g.Add(path_box)
     LOG_PATH_TEXTBOX = path_box

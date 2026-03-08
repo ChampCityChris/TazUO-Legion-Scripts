@@ -1,11 +1,12 @@
 import json
 import os
+import re
 import sqlite3
 import time
 
 DB_FILE = "craftables.db"
 DB_FOLDER = "Databases"
-SCHEMA_VERSION = 9
+SCHEMA_VERSION = 10
 BASE_DIR_OVERRIDE = ""
 SQLITE_CONNECT_TIMEOUT_S = 0.35
 SQLITE_BUSY_TIMEOUT_MS = 350
@@ -16,10 +17,13 @@ _INIT_LAST_ERROR = ""
 _DIAG_LOGGER = None
 _READ_CONN = None
 _READ_CONN_PATH = ""
-# Manual validation checklist (schema v9):
-# 1) Run init_store() and verify app_metadata.schema_version == 9.
+_ALLOWED_TEMP_DROP_TABLES = {"temp._recipe_link_cache"}
+# Manual validation checklist (schema v10):
+# 1) Run init_store() and verify app_metadata.schema_version == 10.
 # 2) Verify craft_categories queries succeed with context/category keys.
 # 3) Run save_key_maps(...) and confirm caller logs contain no schema/insert errors.
+# 4) Verify save_key_maps does not clear non-saved tables in craftables.db.
+# 5) Verify full-table DELETE/DROP on non-saved tables raises a blocked error.
 RESOURCE_ITEM_ID_SEEDS = {
     "ingot": 0x1BF2,
     "board": 0x1BD7,
@@ -38,6 +42,18 @@ RESOURCE_ITEM_ID_SEEDS = {
     "diamond": 0x0F26,
     "blank scroll": 0x0EF3,
     "mandrake": 0x0F86,
+}
+MATERIAL_OPTION_HUE_SEEDS = {
+    "ingot": 0,
+    "ingot_iron": 0,
+    "ingot_dull_copper": 2419,
+    "ingot_shadow_iron": 2406,
+    "ingot_copper": 2413,
+    "ingot_bronze": 2418,
+    "ingot_gold": 2213,
+    "ingot_agapite": 2425,
+    "ingot_verite": 2207,
+    "ingot_valorite": 2219,
 }
 
 
@@ -162,9 +178,57 @@ def _db_path():
     return out
 
 
+def _normalized_sql_statement(statement):
+    text = str(statement or "")
+    normalized = " ".join(text.split()).strip().lower()
+    while normalized.endswith(";"):
+        normalized = normalized[:-1].strip()
+    return normalized
+
+
+def _guard_sql_statement(statement):
+    normalized = _normalized_sql_statement(statement)
+    if not normalized:
+        return
+
+    delete_match = re.match(r"^delete from ([a-z0-9_\.]+)$", normalized)
+    if delete_match:
+        table_name = str(delete_match.group(1) or "").strip().lower()
+        base_name = table_name.split(".")[-1]
+        if not base_name.startswith("saved_"):
+            raise sqlite3.DatabaseError("blocked full-table delete on protected table: " + str(table_name))
+        return
+
+    drop_match = re.match(r"^drop table(?: if exists)? ([a-z0-9_\.]+)$", normalized)
+    if drop_match:
+        table_name = str(drop_match.group(1) or "").strip().lower()
+        if table_name not in _ALLOWED_TEMP_DROP_TABLES:
+            raise sqlite3.DatabaseError("blocked drop table on protected table: " + str(table_name))
+
+
+def _guard_sql_script(script):
+    text = str(script or "")
+    for statement in text.split(";"):
+        _guard_sql_statement(statement)
+
+
+class _GuardedConnection(sqlite3.Connection):
+    def execute(self, sql, parameters=()):
+        _guard_sql_statement(sql)
+        return super().execute(sql, parameters)
+
+    def executemany(self, sql, seq_of_parameters):
+        _guard_sql_statement(sql)
+        return super().executemany(sql, seq_of_parameters)
+
+    def executescript(self, sql_script):
+        _guard_sql_script(sql_script)
+        return super().executescript(sql_script)
+
+
 def _connect_raw(db_path):
     _diag("_connect_raw: sqlite connect begin path=" + str(db_path))
-    conn = sqlite3.connect(db_path, timeout=float(SQLITE_CONNECT_TIMEOUT_S))
+    conn = sqlite3.connect(db_path, timeout=float(SQLITE_CONNECT_TIMEOUT_S), factory=_GuardedConnection)
     _diag("_connect_raw: sqlite connect complete")
     conn.execute("PRAGMA busy_timeout=" + str(int(SQLITE_BUSY_TIMEOUT_MS)) + ";")
     _diag("_connect_raw: busy_timeout set ms=" + str(int(SQLITE_BUSY_TIMEOUT_MS)))
@@ -440,9 +504,26 @@ def _is_normalized_schema(conn):
         and _has_columns(conn, "game_servers", ["game_server_id", "server_name"])
         and _has_columns(conn, "crafting_professions", ["profession_id", "profession_name"])
         and _has_columns(conn, "crafting_contexts", ["context_id", "game_server_id", "profession_id"])
-        and _has_columns(conn, "material_options", ["material_option_id", "context_id", "material_option_key"])
+        and _has_columns(
+            conn,
+            "material_options",
+            ["material_option_id", "context_id", "material_option_key", "material_option_hue"],
+        )
         and _has_columns(conn, "craftable_items", ["craftable_item_id", "context_id", "item_key_slug"])
         and _has_columns(conn, "saved_craft_recipes", ["saved_recipe_id", "context_id", "recipe_type_code"])
+        and _has_columns(
+            conn,
+            "saved_recipe_material_requirements",
+            [
+                "saved_recipe_id",
+                "requirement_sequence",
+                "material_name",
+                "resource_id",
+                "required_in_pack_quantity",
+                "pull_quantity",
+                "game_item_id_override",
+            ],
+        )
     )
 
 
@@ -476,6 +557,29 @@ def _ensure_schema_ready(conn):
     _diag("_ensure_schema_ready: check current schema/version")
     if _schema_is_current(conn):
         _diag("_ensure_schema_ready: schema current")
+        return
+    query_only = False
+    try:
+        cur = conn.execute("PRAGMA query_only;")
+        row = cur.fetchone()
+        query_only = bool(int((row[0] if row else 0) or 0))
+        try:
+            cur.close()
+        except Exception:
+            pass
+    except Exception:
+        query_only = False
+    if query_only:
+        _diag("_ensure_schema_ready: read connection is query-only; migrating on write connection")
+        write_conn = _connect()
+        try:
+            if not _schema_is_current(write_conn):
+                _ensure_schema(write_conn)
+        finally:
+            write_conn.close()
+        if not _schema_is_current(conn):
+            raise sqlite3.DatabaseError("schema migration failed on cached read connection")
+        _diag("_ensure_schema_ready: schema ensure complete (write connection)")
         return
     _diag("_ensure_schema_ready: schema not current; running _ensure_schema")
     _ensure_schema(conn)
@@ -578,7 +682,7 @@ def _lookup_material_option_id(conn, context_id, material_key):
         return 0
 
 
-def _ensure_material_option_id(conn, context_id, material_key, material):
+def _ensure_material_option_id(conn, context_id, material_key, material, hue=None):
     ctx = int(context_id or 0)
     mk = str(material_key or "").strip()
     if ctx <= 0 or not mk:
@@ -586,15 +690,23 @@ def _ensure_material_option_id(conn, context_id, material_key, material):
     mfid = int(_ensure_material_family_id(conn, material or "ingot") or 0)
     if mfid <= 0:
         return 0
+    hue_value = None
+    if hue is not None:
+        try:
+            hue_value = int(hue)
+        except Exception:
+            hue_value = None
     try:
         conn.execute(
             """
-            INSERT INTO material_options(context_id, material_option_key, material_family_id)
-            VALUES (?, ?, ?)
+            INSERT INTO material_options(context_id, material_option_key, material_family_id, material_option_hue)
+            VALUES (?, ?, ?, ?)
             ON CONFLICT(context_id, material_option_key) DO UPDATE
-            SET material_family_id=excluded.material_family_id
+            SET
+                material_family_id=excluded.material_family_id,
+                material_option_hue=coalesce(excluded.material_option_hue, material_options.material_option_hue)
             """,
-            (int(ctx), mk, int(mfid)),
+            (int(ctx), mk, int(mfid), hue_value),
         )
     except Exception:
         pass
@@ -723,7 +835,6 @@ def _parse_recipe_material_text(raw_material):
         "item_id": 0,
         "min_in_pack": 0,
         "pull_amount": 0,
-        "hue": None,
     }
     if not text:
         return out
@@ -746,11 +857,6 @@ def _parse_recipe_material_text(raw_material):
             out["pull_amount"] = int(payload.get("pull_amount", 0) or 0)
         except Exception:
             out["pull_amount"] = 0
-        hue = payload.get("hue", None)
-        try:
-            out["hue"] = int(hue) if hue is not None else None
-        except Exception:
-            out["hue"] = None
     return out
 
 
@@ -950,6 +1056,31 @@ def _seed_resource_item_ids(conn):
             pass
 
 
+def _seed_material_option_hues(conn):
+    if not _has_columns(conn, "material_options", ["material_option_key", "material_option_hue"]):
+        return
+    for key, hue in (MATERIAL_OPTION_HUE_SEEDS or {}).items():
+        mk = str(key or "").strip()
+        try:
+            hv = int(hue)
+        except Exception:
+            continue
+        if not mk:
+            continue
+        try:
+            conn.execute(
+                """
+                UPDATE material_options
+                SET material_option_hue=?
+                WHERE lower(material_option_key)=lower(?)
+                  AND material_option_hue IS NULL
+                """,
+                (int(hv), mk),
+            )
+        except Exception:
+            pass
+
+
 def _write_recipe_child_lists(conn, recipe_id, buttons, materials, material_buttons):
     rid = int(recipe_id or 0)
     if rid <= 0:
@@ -979,8 +1110,8 @@ def _write_recipe_child_lists(conn, recipe_id, buttons, materials, material_butt
             """
             INSERT OR REPLACE INTO saved_recipe_material_requirements
             (saved_recipe_id, requirement_sequence, material_name, resource_id, required_in_pack_quantity,
-             pull_quantity, game_item_id_override, hue_override)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             pull_quantity, game_item_id_override)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 rid,
@@ -990,7 +1121,6 @@ def _write_recipe_child_lists(conn, recipe_id, buttons, materials, material_butt
                 int(parsed.get("min_in_pack", 0) or 0),
                 int(parsed.get("pull_amount", 0) or 0),
                 (int(parsed.get("item_id", 0) or 0) if int(parsed.get("item_id", 0) or 0) > 0 else None),
-                parsed.get("hue", None),
             ),
         )
 
@@ -1028,7 +1158,7 @@ def _load_recipe_child_lists(conn):
         conn,
         """
         SELECT saved_recipe_id, requirement_sequence, material_name, required_in_pack_quantity,
-               pull_quantity, game_item_id_override, hue_override
+               pull_quantity, game_item_id_override
         FROM saved_recipe_material_requirements
         ORDER BY saved_recipe_id, requirement_sequence
         """,
@@ -1051,12 +1181,6 @@ def _load_recipe_child_lists(conn):
             iid = 0
         if iid > 0:
             payload["item_id"] = int(iid)
-        hue_val = row[6]
-        if hue_val is not None:
-            try:
-                payload["hue"] = int(hue_val)
-            except Exception:
-                pass
         out[rid]["materials"].append(_safe_json_dumps(payload, {}))
 
     rows = _fetchall(
@@ -1077,7 +1201,7 @@ def _load_recipe_child_lists(conn):
     return out
 
 
-def _write_material_key_buttons(conn, server, profession, material_key, material_buttons):
+def _write_material_key_buttons(conn, server, profession, material_key, material_buttons, material="ingot", hue=None):
     srv_id = int(_ensure_server_id(conn, server) or 0)
     prof_id = int(_ensure_profession_id(conn, profession) or 0)
     mk = str(material_key or "")
@@ -1088,7 +1212,9 @@ def _write_material_key_buttons(conn, server, profession, material_key, material
         return
     mo_id = int(_lookup_material_option_id(conn, int(ctx_id), mk) or 0)
     if mo_id <= 0:
-        mo_id = int(_ensure_material_option_id(conn, int(ctx_id), mk, "ingot") or 0)
+        mo_id = int(_ensure_material_option_id(conn, int(ctx_id), mk, material or "ingot", hue=hue) or 0)
+    else:
+        _ensure_material_option_id(conn, int(ctx_id), mk, material or "ingot", hue=hue)
     if mo_id <= 0:
         return
     conn.execute("DELETE FROM material_option_navigation_steps WHERE material_option_id=?", (int(mo_id),))
@@ -1172,6 +1298,7 @@ def _ensure_schema(conn):
           context_id INTEGER NOT NULL,
           material_option_key TEXT NOT NULL,
           material_family_id INTEGER NOT NULL,
+          material_option_hue INTEGER,
           UNIQUE (context_id, material_option_key),
           FOREIGN KEY (context_id) REFERENCES crafting_contexts(context_id) ON DELETE CASCADE,
           FOREIGN KEY (material_family_id) REFERENCES material_families(material_family_id)
@@ -1299,7 +1426,6 @@ def _ensure_schema(conn):
           required_in_pack_quantity INTEGER NOT NULL DEFAULT 0,
           pull_quantity INTEGER NOT NULL DEFAULT 0,
           game_item_id_override INTEGER,
-          hue_override INTEGER,
           PRIMARY KEY (saved_recipe_id, requirement_sequence),
           FOREIGN KEY (saved_recipe_id) REFERENCES saved_craft_recipes(saved_recipe_id) ON DELETE CASCADE,
           FOREIGN KEY (resource_id) REFERENCES resource_catalog(resource_id),
@@ -1319,9 +1445,14 @@ def _ensure_schema(conn):
             ON saved_recipe_material_navigation_steps(saved_recipe_id, step_number);
         """
     )
+    if not _has_columns(conn, "material_options", ["material_option_hue"]):
+        conn.execute("ALTER TABLE material_options ADD COLUMN material_option_hue INTEGER")
+    if _has_columns(conn, "saved_recipe_material_requirements", ["hue_override"]):
+        conn.execute("ALTER TABLE saved_recipe_material_requirements DROP COLUMN hue_override")
     if not _is_normalized_schema(conn):
         raise sqlite3.DatabaseError("normalized craftables schema required")
     _seed_resource_item_ids(conn)
+    _seed_material_option_hues(conn)
     conn.execute(
         "INSERT OR REPLACE INTO app_metadata(metadata_key, metadata_value) VALUES (?, ?)",
         ("schema_version", str(int(SCHEMA_VERSION))),
@@ -1537,7 +1668,7 @@ def load_key_maps():
         rows = _fetchall(
             conn,
             """
-            SELECT gs.server_name, cp.profession_name, mo.material_option_key, mf.family_code
+            SELECT gs.server_name, cp.profession_name, mo.material_option_key, mf.family_code, mo.material_option_hue
             FROM material_options mo
             JOIN crafting_contexts cc ON cc.context_id = mo.context_id
             JOIN game_servers gs ON gs.game_server_id = cc.game_server_id
@@ -1555,6 +1686,12 @@ def load_key_maps():
                 material = _norm_resource_name(str(material_key).split("_")[0])
             if not material:
                 material = "ingot"
+            hue = row[4]
+            if hue is not None:
+                try:
+                    hue = int(hue)
+                except Exception:
+                    hue = None
             if server not in out:
                 out[server] = {}
             if profession not in out[server]:
@@ -1563,6 +1700,7 @@ def load_key_maps():
             out[server][profession]["material_keys"][material_key] = {
                 "material": material,
                 "material_buttons": [int(x) for x in mk_btns if int(x) > 0][:2],
+                "hue": hue,
             }
 
         item_steps = {}
@@ -1744,13 +1882,6 @@ def save_key_maps(key_maps):
             )
             conn.execute("UPDATE saved_craft_recipes SET selected_material_option_id=NULL, craftable_item_id=NULL")
 
-            conn.execute("DELETE FROM craftable_item_resource_requirements")
-            conn.execute("DELETE FROM craftable_item_navigation_steps")
-            conn.execute("DELETE FROM craftable_items")
-            conn.execute("DELETE FROM material_option_navigation_steps")
-            conn.execute("DELETE FROM material_options")
-            conn.execute("DELETE FROM craft_categories")
-
             km = dict(key_maps or {}) if isinstance(key_maps, dict) else {}
             for server, srv_node in km.items():
                 if not isinstance(srv_node, dict):
@@ -1779,13 +1910,20 @@ def save_key_maps(key_maps):
                                 material_code = str(mk_text.split("_")[0] or "").strip().lower()
                             if not material_code:
                                 material_code = "ingot"
-                            _ensure_material_option_id(conn, int(ctx_id), mk_text, material_code)
+                            hue_value = ent.get("hue", None)
+                            try:
+                                hue_value = int(hue_value) if hue_value is not None else None
+                            except Exception:
+                                hue_value = None
+                            _ensure_material_option_id(conn, int(ctx_id), mk_text, material_code, hue=hue_value)
                             _write_material_key_buttons(
                                 conn,
                                 str(server or ""),
                                 str(profession or ""),
                                 mk_text,
                                 _as_int_list(ent.get("material_buttons", []), 2),
+                                material=material_code,
+                                hue=hue_value,
                             )
                     items = prof_node.get("item_keys", {})
                     if isinstance(items, dict):

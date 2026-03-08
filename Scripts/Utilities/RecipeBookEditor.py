@@ -16,16 +16,16 @@ Supports single or multi-material recipes.
 - material
 - material:item_id
 - material:item_id:min_in_pack:pull_amount
-- material:item_id:min_in_pack:pull_amount:hue
 
 Example:
 board;feather
-ingot:0x1BF2:60:400:0;gem:0x0F26:10:80;super_gem:0x1234:10:80
+ingot:0x1BF2:60:400;gem:0x0F26:10:80;super_gem:0x1234:10:80
 """
 
 REQUEST_KEY = "recipe_editor_request"
 RESULT_KEY = "recipe_editor_result"
 DEBUG_LOG_FILE = "RecipeBookEditor.debug.log"
+LOGS_DIR = r"F:\Games\Ultima_Online\Clients\TazUO\TazUO\LegionScripts\Logs"
 
 SERVER_OPTIONS = ["OSI", "UOAlive", "Sosaria Reforged", "InsaneUO"]
 DEFAULT_SERVER = "UOAlive"
@@ -172,13 +172,7 @@ def _write_debug_log(msg):
     try:
         from datetime import datetime
         ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        try:
-            base = os.path.dirname(__file__)
-        except Exception:
-            base = os.getcwd()
-        if os.path.basename(base).lower() in ("resources", "utilities", "skills"):
-            base = os.path.dirname(base)
-        logs_dir = os.path.join(base, "Logs")
+        logs_dir = LOGS_DIR
         os.makedirs(logs_dir, exist_ok=True)
         path = os.path.join(logs_dir, DEBUG_LOG_FILE)
         with open(path, "a", encoding="utf-8") as f:
@@ -1401,15 +1395,7 @@ def _parse_materials_text(text):
             "item_id": _parse_item_id(parts[1]) if len(parts) > 1 else 0,
             "min_in_pack": int(parts[2]) if len(parts) > 2 and str(parts[2]).isdigit() else 0,
             "pull_amount": int(parts[3]) if len(parts) > 3 and str(parts[3]).isdigit() else 0,
-            "hue": None,
         }
-        if len(parts) > 4:
-            hue_text = str(parts[4] or "").strip()
-            if hue_text:
-                try:
-                    ent["hue"] = int(hue_text, 16) if hue_text.lower().startswith("0x") else int(hue_text)
-                except Exception:
-                    ent["hue"] = None
         out.append(ent)
     return out
 
@@ -1427,19 +1413,13 @@ def _materials_to_text(materials):
         item_id = int(m.get("item_id", 0) or 0)
         min_in_pack = int(m.get("min_in_pack", 0) or 0)
         pull_amount = int(m.get("pull_amount", 0) or 0)
-        hue = m.get("hue", None)
         seg = [base]
-        if item_id > 0 or min_in_pack > 0 or pull_amount > 0 or hue is not None:
+        if item_id > 0 or min_in_pack > 0 or pull_amount > 0:
             seg.append(f"0x{int(item_id):X}" if item_id > 0 else "0")
-        if min_in_pack > 0 or pull_amount > 0 or hue is not None:
+        if min_in_pack > 0 or pull_amount > 0:
             seg.append(str(min_in_pack))
-        if pull_amount > 0 or hue is not None:
+        if pull_amount > 0:
             seg.append(str(pull_amount))
-        if hue is not None:
-            try:
-                seg.append(str(int(hue)))
-            except Exception:
-                seg.append(str(hue))
         parts.append(":".join(seg))
     return ";".join(parts)
 
@@ -1874,7 +1854,7 @@ def _save_and_exit():
     materials_text = str((f.get("materials").Text if f.get("materials") else "") or "").strip()
     materials = _parse_materials_text(materials_text)
     if not materials:
-        materials = [{"material": material, "item_id": 0, "min_in_pack": 0, "pull_amount": 0, "hue": None}]
+        materials = [{"material": material, "item_id": 0, "min_in_pack": 0, "pull_amount": 0}]
     resources = _collect_resource_rows_from_controls(f)
     if not resources:
         resources = _parse_resources_text(str((f.get("resources_text").Text if f.get("resources_text") else "") or ""))

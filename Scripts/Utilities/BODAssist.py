@@ -117,6 +117,7 @@ Phase 5
 # Persisted data key.
 DATA_KEY = "auto_bod_config"
 DEBUG_LOG_FILE = "BODAssist.debug.log"
+LOGS_DIR = r"F:\Games\Ultima_Online\Clients\TazUO\TazUO\LegionScripts\Logs"
 DEBUG_LOG_ENABLED = True
 DEBUG_LOG_MAX_CHARS = 80000
 LOG_DATA_KEY = "auto_bod_log_config"
@@ -324,25 +325,8 @@ MATERIAL_OPTIONS_BY_PROFESSION = {
     ],
 }
 
-# Ingot hue map by material key.
-# Set these to your shard's ingot hues. Use `None` for unknown.
-# Example: "ingot_iron": 0, "ingot_dull_copper": 2419
-INGOT_HUE_BY_KEY = {
-    "ingot_iron": 0,
-    "ingot_dull_copper": 2419,
-    "ingot_shadow_iron": 2406,
-    "ingot_copper": 2413,
-    "ingot_bronze": 2418,
-    "ingot_gold": 2213,
-    "ingot_agapite": 2425,
-    "ingot_verite": 2207,
-    "ingot_valorite": 2219,
-}
-NON_IRON_INGOT_HUES = set(
-    int(v) for k, v in INGOT_HUE_BY_KEY.items()
-    if str(k) != "ingot_iron"
-)
 MATERIAL_COLOR_BY_KEY = {
+    "ingot": "iron",
     "ingot_iron": "iron",
     "ingot_dull_copper": "dull copper",
     "ingot_shadow_iron": "shadow iron",
@@ -432,16 +416,7 @@ LOG_EXPORT_BASE = ""
 
 
 def _debug_log_path():
-    base = str(_project_root_dir or "").strip()
-    if not base:
-        try:
-            base = os.path.dirname(__file__)
-        except Exception:
-            base = os.getcwd()
-        while os.path.basename(str(base or "")).lower() in ("resources", "utilities", "skills", "scripts"):
-            base = os.path.dirname(base)
-    logs_dir = os.path.join(base, "Logs")
-    return os.path.join(logs_dir, DEBUG_LOG_FILE)
+    return os.path.join(LOGS_DIR, DEBUG_LOG_FILE)
 
 
 def _write_debug_log(line):
@@ -471,49 +446,22 @@ def _append_log(msg):
 
 def _get_log_export_dir():
     global LOG_EXPORT_BASE
-    if LOG_EXPORT_BASE:
-        return LOG_EXPORT_BASE
-    base = str(_project_root_dir or "").strip()
-    if not base:
-        try:
-            base = os.path.dirname(__file__)
-        except Exception:
-            base = os.getcwd()
-        while os.path.basename(str(base or "")).lower() in ("resources", "utilities", "skills", "scripts"):
-            base = os.path.dirname(base)
-    LOG_EXPORT_BASE = os.path.join(base, "Logs")
+    LOG_EXPORT_BASE = LOGS_DIR
     return LOG_EXPORT_BASE
 
 
 def _load_log_config():
     global LOG_EXPORT_BASE
-    raw = API.GetPersistentVar(LOG_DATA_KEY, "", API.PersistentVar.Char)
-    if not raw:
-        return
-    try:
-        data = json.loads(raw)
-    except Exception:
-        try:
-            data = ast.literal_eval(raw)
-        except Exception:
-            return
-    path = str(data.get("export_path", "") or "").strip()
-    if path:
-        LOG_EXPORT_BASE = path
+    LOG_EXPORT_BASE = LOGS_DIR
 
 
 def _save_log_config():
-    data = {"export_path": LOG_EXPORT_BASE or ""}
+    data = {"export_path": LOGS_DIR}
     API.SavePersistentVar(LOG_DATA_KEY, json.dumps(data), API.PersistentVar.Char)
 
 
 def _export_log_to_file():
     export_dir = _get_log_export_dir()
-    if LOG_PATH_TEXTBOX and LOG_PATH_TEXTBOX.Text.strip():
-        export_dir = LOG_PATH_TEXTBOX.Text.strip()
-        global LOG_EXPORT_BASE
-        LOG_EXPORT_BASE = export_dir
-        _save_log_config()
     path = ""
     try:
         os.makedirs(export_dir, exist_ok=True)
@@ -545,7 +493,7 @@ def _update_log_gump():
     title.SetPos(0, 6)
     g.Add(title)
 
-    path_label = API.CreateGumpTTFLabel("Save Path:", 12, "#FFFFFF", "alagard", "left", 120)
+    path_label = API.CreateGumpTTFLabel("Log Folder:", 12, "#FFFFFF", "alagard", "left", 120)
     path_label.SetPos(10, 32)
     g.Add(path_label)
     path_box = API.CreateGumpTextBox(_get_log_export_dir() or "", 230, 18, False)
@@ -1014,6 +962,86 @@ def _key_map_item_entry(recipe):
         return None
 
 
+def _material_option_hue_by_key(material_key, profession="", server=""):
+    srv = _normalize_server_name(server or SELECTED_SERVER)
+    prof = str(profession or "")
+    mk = str(material_key or "").strip().lower()
+    if not (srv and mk):
+        return None
+    srv_node = KEY_MAPS.get(srv, {}) if isinstance(KEY_MAPS, dict) else {}
+    if not isinstance(srv_node, dict):
+        return None
+    prof_candidates = [prof] if prof else []
+    for p in srv_node.keys():
+        pp = str(p or "")
+        if pp and pp not in prof_candidates:
+            prof_candidates.append(pp)
+    for p in prof_candidates:
+        node = srv_node.get(p, {})
+        if not isinstance(node, dict):
+            continue
+        mats = node.get("material_keys", {})
+        if not isinstance(mats, dict):
+            continue
+        ent = mats.get(mk, {})
+        if not isinstance(ent, dict):
+            continue
+        hue = ent.get("hue", None)
+        if hue is None:
+            continue
+        try:
+            return int(hue)
+        except Exception:
+            return None
+    return None
+
+
+def _resolved_ingot_hue(material_key, profession="", server=""):
+    mk = str(material_key or "").strip().lower()
+    if not mk:
+        return None
+    keys = [mk]
+    if mk == "ingot":
+        keys.append("ingot_iron")
+    elif mk == "ingot_iron":
+        keys.append("ingot")
+    for key in keys:
+        hue = _material_option_hue_by_key(key, profession, server)
+        if hue is not None:
+            return int(hue)
+    return None
+
+
+def _non_iron_ingot_hues():
+    srv = _normalize_server_name(SELECTED_SERVER or DEFAULT_SERVER)
+    srv_node = KEY_MAPS.get(srv, {}) if isinstance(KEY_MAPS, dict) else {}
+    out = set()
+    if not isinstance(srv_node, dict):
+        return out
+    for prof_node in srv_node.values():
+        if not isinstance(prof_node, dict):
+            continue
+        mats = prof_node.get("material_keys", {})
+        if not isinstance(mats, dict):
+            continue
+        for mk, ent in mats.items():
+            key = str(mk or "").strip().lower()
+            if not key.startswith("ingot"):
+                continue
+            if key in ("ingot", "ingot_iron"):
+                continue
+            if not isinstance(ent, dict):
+                continue
+            hue = ent.get("hue", None)
+            if hue is None:
+                continue
+            try:
+                out.add(int(hue))
+            except Exception:
+                continue
+    return out
+
+
 def _merge_item_key_map_into_recipe(recipe):
     if not isinstance(recipe, dict):
         return recipe
@@ -1169,10 +1197,12 @@ def _wanted_hue_for_item(recipe, item_id):
     # Currently only ingots need hue filtering on this shard.
     if int(item_id) != int(INGOT_ID):
         return None
-    key = str(recipe.get("material_key", "") or "")
+    key = str(_recipe_material_key(recipe) or "").strip().lower()
     if not key:
         return None
-    hue = INGOT_HUE_BY_KEY.get(key, None)
+    prof = str(recipe.get("profession", "") or "")
+    srv = _normalize_server_name(recipe.get("server", SELECTED_SERVER) or SELECTED_SERVER)
+    hue = _resolved_ingot_hue(key, prof, srv)
     if hue is None and STRICT_INGOT_HUE_MATCH:
         return "__MISSING__"
     return hue
@@ -3045,6 +3075,7 @@ def _find_first_in_container_hued(container_serial, item_id, hue=None):
     if hue is None:
         return _find_first_in_container(container_serial, item_id)
     wanted_hue = int(hue)
+    non_iron_hues = _non_iron_ingot_hues()
     for _ in range(2):
         for it in _items_in(container_serial, True):
             if int(getattr(it, "Graphic", 0) or 0) != int(item_id):
@@ -3052,7 +3083,7 @@ def _find_first_in_container_hued(container_serial, item_id, hue=None):
             item_hue = int(getattr(it, "Hue", 0) or 0)
             if int(item_id) == int(INGOT_ID) and int(wanted_hue) == 0:
                 # Base iron matching: accept any non-colored ingot hue.
-                if item_hue in NON_IRON_INGOT_HUES:
+                if item_hue in non_iron_hues:
                     continue
             else:
                 if item_hue != wanted_hue:
@@ -3119,6 +3150,7 @@ def _count_in_hued(container_serial, item_id, hue=None):
     if hue is None:
         return _count_in(container_serial, item_id)
     wanted_hue = int(hue)
+    non_iron_hues = _non_iron_ingot_hues()
     total = 0
     for attempt in range(2):
         total = 0
@@ -3128,7 +3160,7 @@ def _count_in_hued(container_serial, item_id, hue=None):
             item_hue = int(getattr(it, "Hue", 0) or 0)
             if int(item_id) == int(INGOT_ID) and int(wanted_hue) == 0:
                 # Base iron matching: accept any non-colored ingot hue.
-                if item_hue in NON_IRON_INGOT_HUES:
+                if item_hue in non_iron_hues:
                     continue
             else:
                 if item_hue != wanted_hue:
@@ -3223,15 +3255,16 @@ def _restock_resource(item_id, min_in_pack=40, pull_amount=400, hue=None, materi
     _wait_and_pump(max(0.30, float(MOVE_ITEM_PAUSE_S)), 0.05)
     items = API.ItemsInContainer(int(RESOURCE_CONTAINER_SERIAL), True) or []
     _say(f"Resource scan items: {len(items)}")
+    non_iron_hues = _non_iron_ingot_hues()
 
     source = None
     for item in items:
         if int(getattr(item, "Graphic", 0) or 0) != int(item_id):
             continue
         if mk:
-            if int(item_id) == int(INGOT_ID) and mk == "ingot_iron":
+            if int(item_id) == int(INGOT_ID) and mk in ("ingot", "ingot_iron"):
                 ih = int(getattr(item, "Hue", 0) or 0)
-                if ih in NON_IRON_INGOT_HUES:
+                if ih in non_iron_hues:
                     continue
             elif not _item_matches_material_key(item, mk):
                 continue
@@ -3259,9 +3292,13 @@ def _restock_resource(item_id, min_in_pack=40, pull_amount=400, hue=None, materi
     safety = 0
     while safety < 120 and remaining_to_move > 0:
         safety += 1
-        if mk == "ingot_iron" and int(item_id) == int(INGOT_ID):
-            iron_hue = int(INGOT_HUE_BY_KEY.get("ingot_iron", 0) or 0)
-            have_now = int(_count_in_raw(API.Backpack, item_id, iron_hue) or 0)
+        if mk in ("ingot", "ingot_iron") and int(item_id) == int(INGOT_ID):
+            iron_hue = hue
+            if iron_hue is None:
+                iron_hue = _resolved_ingot_hue(mk, "Blacksmith", SELECTED_SERVER)
+            if iron_hue is None:
+                iron_hue = 0
+            have_now = int(_count_in_raw(API.Backpack, item_id, int(iron_hue)) or 0)
         elif mk:
             have_now = int(_count_in_by_material_key(API.Backpack, item_id, mk) or 0)
         else:
@@ -3308,9 +3345,13 @@ def _restock_resource(item_id, min_in_pack=40, pull_amount=400, hue=None, materi
         _say(f"Restock moved-item trace: source serial 0x{int(source.Serial):08X} not found after move.")
     RESTOCK_BLOCK_UNTIL[key] = _now_s() + 0.25
 
-    if mk == "ingot_iron" and int(item_id) == int(INGOT_ID):
-        iron_hue = int(INGOT_HUE_BY_KEY.get("ingot_iron", 0) or 0)
-        result = _count_in_raw(API.Backpack, item_id, iron_hue)
+    if mk in ("ingot", "ingot_iron") and int(item_id) == int(INGOT_ID):
+        iron_hue = hue
+        if iron_hue is None:
+            iron_hue = _resolved_ingot_hue(mk, "Blacksmith", SELECTED_SERVER)
+        if iron_hue is None:
+            iron_hue = 0
+        result = _count_in_raw(API.Backpack, item_id, int(iron_hue))
     elif mk:
         result = _count_in_by_material_key(API.Backpack, item_id, mk)
     else:
@@ -3328,9 +3369,13 @@ def _restock_resource(item_id, min_in_pack=40, pull_amount=400, hue=None, materi
         # Do not treat delta-only movement as success for fill.
         # We must verify materials are actually usable from backpack.
         _wait_and_pump(0.5, 0.05)
-        if mk == "ingot_iron" and int(item_id) == int(INGOT_ID):
-            iron_hue = int(INGOT_HUE_BY_KEY.get("ingot_iron", 0) or 0)
-            result = _count_in_raw(API.Backpack, item_id, iron_hue)
+        if mk in ("ingot", "ingot_iron") and int(item_id) == int(INGOT_ID):
+            iron_hue = hue
+            if iron_hue is None:
+                iron_hue = _resolved_ingot_hue(mk, "Blacksmith", SELECTED_SERVER)
+            if iron_hue is None:
+                iron_hue = 0
+            result = _count_in_raw(API.Backpack, item_id, int(iron_hue))
         elif mk:
             result = _count_in_by_material_key(API.Backpack, item_id, mk)
         else:
@@ -3424,7 +3469,7 @@ def _item_matches_material_key(item, material_key):
         return True
     txt = _normalize_text(_get_item_text(item))
     # Base type guard (lets granite reuse this path later).
-    if mk.startswith("ingot_") and "ingot" not in txt:
+    if (mk.startswith("ingot_") or mk == "ingot") and "ingot" not in txt:
         return False
     if mk.startswith("granite_") and "granite" not in txt:
         return False
@@ -3443,6 +3488,7 @@ def _item_matches_material_key(item, material_key):
 
 def _find_first_in_container_by_material_key(container_serial, item_id, material_key):
     mk = str(material_key or "").strip().lower()
+    non_iron_hues = _non_iron_ingot_hues()
     for _ in range(2):
         for it in _items_in(container_serial, True):
             if int(getattr(it, "Graphic", 0) or 0) != int(item_id):
@@ -3451,11 +3497,11 @@ def _find_first_in_container_by_material_key(container_serial, item_id, material
                 return it
         # Fallback for shards where iron subtype text is omitted/variant.
         # Only accept base/non-colored ingot hues for iron.
-        if mk == "ingot_iron" and int(item_id) == int(INGOT_ID):
+        if mk in ("ingot", "ingot_iron") and int(item_id) == int(INGOT_ID):
             for it in _items_in(container_serial, True):
                 if int(getattr(it, "Graphic", 0) or 0) == int(INGOT_ID):
                     ih = int(getattr(it, "Hue", 0) or 0)
-                    if ih in NON_IRON_INGOT_HUES:
+                    if ih in non_iron_hues:
                         continue
                     return it
         _ensure_container_open(container_serial, force=True)
@@ -3465,6 +3511,7 @@ def _find_first_in_container_by_material_key(container_serial, item_id, material
 
 def _count_in_by_material_key(container_serial, item_id, material_key):
     mk = str(material_key or "").strip().lower()
+    non_iron_hues = _non_iron_ingot_hues()
     total = 0
     for attempt in range(2):
         total = 0
@@ -3476,12 +3523,12 @@ def _count_in_by_material_key(container_serial, item_id, material_key):
             total += int(getattr(it, "Amount", 1) or 1)
         # Fallback for shards where iron subtype text is omitted/variant.
         # Only count base/non-colored ingot hues for iron.
-        if total <= 0 and mk == "ingot_iron" and int(item_id) == int(INGOT_ID):
+        if total <= 0 and mk in ("ingot", "ingot_iron") and int(item_id) == int(INGOT_ID):
             for it in _items_in(container_serial, True):
                 if int(getattr(it, "Graphic", 0) or 0) != int(INGOT_ID):
                     continue
                 ih = int(getattr(it, "Hue", 0) or 0)
-                if ih in NON_IRON_INGOT_HUES:
+                if ih in non_iron_hues:
                     continue
                 total += int(getattr(it, "Amount", 1) or 1)
         if total > 0 or attempt > 0:
@@ -4503,8 +4550,11 @@ def _ensure_tool_ids(tool_ids, craft_buttons=None):
     if tool_ids != TINKER_TOOL_IDS:
         if not _ensure_tool_ids(TINKER_TOOL_IDS, TINKER_BTN_TINKER_TOOL):
             return False
-    iron_hue = INGOT_HUE_BY_KEY.get("ingot_iron", 0)
-    if _restock_resource(INGOT_ID, min_in_pack=30, pull_amount=120, hue=iron_hue) < 5:
+    iron_hue = _resolved_ingot_hue("ingot", "Tinker", SELECTED_SERVER)
+    if iron_hue is None and STRICT_INGOT_HUE_MATCH:
+        _say("Missing ingot hue mapping for ingot in craftables.db material_options.", 33)
+        return False
+    if _restock_resource(INGOT_ID, min_in_pack=30, pull_amount=120, hue=iron_hue, material_key="ingot") < 5:
         return False
     gid = _open_craft_gump_for_profession("Tinker")
     if not gid:
@@ -4614,7 +4664,7 @@ def _ensure_material_for_recipe(recipe, required_items=1):
             mk = str(recipe.get("material_key", "") or "").strip().lower()
             if hue == "__MISSING__":
                 mk = mk or "unknown"
-                _say(f"Missing ingot hue mapping for {mk}. Set INGOT_HUE_BY_KEY.", 33)
+                _say(f"Missing ingot hue mapping for {mk}. Set material_options.material_option_hue.", 33)
                 return False
             iid = int(r.get("item_id", 0) or INGOT_ID)
             minimum = int(r.get("min_in_pack", 0) or 60)
@@ -4640,8 +4690,8 @@ def _ensure_material_for_recipe(recipe, required_items=1):
                     f"(pack {int(have)}, resource any {res_any}, resource key {res_key}, resource hue {res_hue}, wanted hue {hue}, key {mk}).",
                     33
                 )
-                if mk == "ingot_iron" and int(res_any) > 0 and int(res_key) == 0:
-                    _say("Iron subtype text match failed; fallback-to-any-ingot path will be used.", 33)
+                if mk in ("ingot", "ingot_iron") and int(res_any) > 0 and int(res_key) == 0:
+                    _say("Base ingot subtype text match failed; fallback-to-any-ingot path will be used.", 33)
                 return False
             continue
         if mat == "cloth":
