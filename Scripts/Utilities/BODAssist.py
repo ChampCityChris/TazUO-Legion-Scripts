@@ -48,7 +48,6 @@ Setup:
 - Recipes are stored in `Databases/craftables.db` for shared editing across scripts.
 
 Not implemented yet:
-- Turn-In automation.
 - Full loop orchestration.
 - Advanced Prep/Sort deed organization (large/small deed routing).
 
@@ -104,9 +103,9 @@ Phase 3
 - [x] Fill helper pipeline stabilization and context handoff hardening
 
 Phase 4
-- [ ] Run Turn-In implementation
+- [x] Run Turn-In implementation
 - [ ] Reward handling/logging
-- [ ] New-deed re-collect at turn-in stops
+- [x] New-deed re-collect at turn-in stops
 
 Phase 5
 - [ ] Run Full Loop implementation
@@ -147,8 +146,16 @@ HOME_BUTTON_CHIV = 75
 FIXED_BOD_CONTEXT_INDEX = 1
 
 # BOD request behavior.
-BOD_REQUEST_PAUSE_S = 0.9
+BOD_DEED_ITEM_ID = 0x2258
+BOD_REQUEST_PAUSE_S = 2.0
+BOD_REQUEST_BETWEEN_ATTEMPTS_S = 2.0
 BOD_REQUEST_ATTEMPTS = 3
+BOD_TURN_IN_REQUEST_ATTEMPTS = 1
+BOD_TURN_IN_HANDIN_SETTLE_S = 0.8
+BOD_TURN_IN_HANDIN_ATTEMPTS = 3
+BOD_TURN_IN_PATH_RETRIES = 2
+BOD_TURN_IN_RANGE = 2
+BOD_TURN_IN_PATH_TIMEOUT_S = 4
 BOD_SCAN_SETTLE_S = 1.0
 BOD_PARSE_DEBUG = False
 BOD_OFFER_GUMP_ID = 0xBAE793EA
@@ -268,7 +275,10 @@ BOD_HUE_TO_PROFESSION = {
     1155: "Tailor",
     1512: "Carpentry",
     1109: "Tinker",
+    2505: "Alchemy",
+    2598: "Inscription",
     1425: "Bowcraft",
+    1169: "Cooking",
 }
 
 # UI order is left-to-right, top-to-bottom in a 4x2 grid.
@@ -2574,8 +2584,8 @@ def _run_fill_move_phase():
         _set_running(False)
 
 
-def _request_bod_from_giver(giver_serial):
-    if not giver_serial:
+def _request_bod_from_giver(giver_serial, attempts_override=None):
+    if not giver_serial or _should_stop():
         return False
     mobile = API.FindMobile(int(giver_serial))
     if not mobile:
@@ -2599,11 +2609,32 @@ def _request_bod_from_giver(giver_serial):
         return False
 
     success_any = False
-    for _ in range(BOD_REQUEST_ATTEMPTS):
+    if attempts_override is None:
+        attempts = int(BOD_REQUEST_ATTEMPTS)
+    else:
+        attempts = int(attempts_override)
+    attempts = max(1, attempts)
+    for attempt_index in range(attempts):
+        if _should_stop():
+            break
+        _write_debug_log(
+            f"BOD request attempt {attempt_index + 1}/{attempts} giver=0x{int(giver_serial):08X}"
+        )
         API.ContextMenu(int(giver_serial), int(FIXED_BOD_CONTEXT_INDEX))
-        _sleep(BOD_REQUEST_PAUSE_S)
+        if not _wait_and_pump(BOD_REQUEST_PAUSE_S, 0.1):
+            break
         if _accept_bod_offer_if_present():
             success_any = True
+            _write_debug_log(
+                f"BOD request accepted attempt {attempt_index + 1}/{attempts} giver=0x{int(giver_serial):08X}"
+            )
+        else:
+            _write_debug_log(
+                f"BOD request no-offer attempt {attempt_index + 1}/{attempts} giver=0x{int(giver_serial):08X}"
+            )
+        if attempt_index < (attempts - 1):
+            if not _wait_and_pump(BOD_REQUEST_BETWEEN_ATTEMPTS_S, 0.1):
+                break
     return success_any
 
 
@@ -5647,6 +5678,135 @@ def _not_implemented(name):
     _say(f"{name} is not implemented yet.", 33)
 
 
+def _deed_profession_from_hue(item):
+    try:
+        hue = int(getattr(item, "Hue", 0) or 0)
+    except Exception:
+        hue = 0
+    return str(BOD_HUE_TO_PROFESSION.get(hue, "") or "").strip()
+
+
+def _mobile_distance(serial):
+    sid = int(serial or 0)
+    if sid <= 0:
+        return 999
+    try:
+        mob = API.FindMobile(sid)
+    except Exception:
+        mob = None
+    if not mob:
+        return 999
+    try:
+        dist = int(getattr(mob, "Distance", 999) or 999)
+    except Exception:
+        dist = 999
+    if dist < 999:
+        return max(0, int(dist))
+    try:
+        mx = int(getattr(mob, "X", 0) or 0)
+        my = int(getattr(mob, "Y", 0) or 0)
+        return int(_tile_distance_to_xy(mx, my))
+    except Exception:
+        return 999
+
+
+def _move_to_giver_for_turn_in(giver_serial):
+    gid = int(giver_serial or 0)
+    if gid <= 0:
+        return False
+    for _ in range(max(1, int(BOD_TURN_IN_PATH_RETRIES))):
+        if _should_stop():
+            return False
+        if _mobile_distance(gid) <= int(BOD_TURN_IN_RANGE):
+            return True
+        try:
+            API.PathfindEntity(
+                gid,
+                int(BOD_TURN_IN_RANGE),
+                True,
+                int(BOD_TURN_IN_PATH_TIMEOUT_S)
+            )
+        except Exception:
+            pass
+        if not _wait_and_pump(0.2, 0.05):
+            return False
+    ok = _mobile_distance(gid) <= int(BOD_TURN_IN_RANGE)
+    if not ok:
+        _write_debug_log(
+            f"Turn-In move failed giver=0x{gid:08X} dist={int(_mobile_distance(gid))} "
+            f"range={int(BOD_TURN_IN_RANGE)}"
+        )
+    return ok
+
+
+def _collect_completed_turn_in_deeds(selected_types):
+    out = {str(t): [] for t in (selected_types or [])}
+    for it in _items_in(API.Backpack, False):
+        if _should_stop():
+            break
+        try:
+            graphic = int(getattr(it, "Graphic", 0) or 0)
+        except Exception:
+            graphic = 0
+        if graphic != int(BOD_DEED_ITEM_ID):
+            continue
+        if not _is_bod_deed(it):
+            continue
+        profession = _deed_profession_from_hue(it)
+        if not profession:
+            _say(
+                f"Turn-In skip: unknown deed hue {int(getattr(it, 'Hue', 0) or 0)} "
+                f"for 0x{int(getattr(it, 'Serial', 0) or 0):08X}.",
+                33
+            )
+            continue
+        if profession not in out:
+            continue
+        parsed = _parse_bod_deed(it)
+        if not parsed:
+            _say(f"Turn-In skip: parse failed for 0x{int(getattr(it, 'Serial', 0) or 0):08X}.", 33)
+            continue
+        ready, req, made = _deed_progress_ready(parsed)
+        if not ready:
+            continue
+        out[profession].append({
+            "serial": int(getattr(it, "Serial", 0) or 0),
+            "name": str(parsed.get("item_name", "") or "").strip(),
+            "made": int(made),
+            "required": int(req),
+        })
+    return out
+
+
+def _turn_in_single_deed(giver_serial, deed_serial):
+    gid = int(giver_serial or 0)
+    sid = int(deed_serial or 0)
+    if gid <= 0 or sid <= 0 or _should_stop():
+        return False
+    attempts = max(1, int(BOD_TURN_IN_HANDIN_ATTEMPTS))
+    for attempt_index in range(attempts):
+        if _should_stop():
+            return False
+        live = _find_backpack_item_by_serial(sid)
+        if not live:
+            return True
+        if not _move_to_giver_for_turn_in(gid):
+            continue
+        try:
+            API.MoveItem(sid, gid, 1)
+        except Exception:
+            continue
+        if not _wait_and_pump(BOD_TURN_IN_HANDIN_SETTLE_S, 0.1):
+            return False
+        if _find_backpack_item_by_serial(sid) is None:
+            return True
+        _write_debug_log(
+            f"Turn-In handin retry {attempt_index + 1}/{attempts} "
+            f"deed=0x{sid:08X} giver=0x{gid:08X} dist={int(_mobile_distance(gid))}"
+        )
+    return False
+
+
 def _run_prep_sort():
     if not RUNBOOK_SERIAL:
         _say("Runebook is not set.", 33)
@@ -5823,7 +5983,112 @@ def _run_fill():
 
 
 def _run_turn_in():
-    _not_implemented("Turn-In")
+    if not RUNBOOK_SERIAL:
+        _say("Runebook is not set.", 33)
+        return
+    selected_types = [t for t in BOD_TYPE_ORDER if bool(ENABLED_BOD_TYPES.get(t, True))]
+    if not selected_types:
+        _say("No BOD types selected. Enable at least one in Collect BODs.", 33)
+        return
+
+    turn_in_work = _collect_completed_turn_in_deeds(selected_types)
+    total_deeds = sum(len(v) for v in turn_in_work.values())
+    if total_deeds <= 0:
+        _say("Turn-In: no completed deeds found in backpack.", 33)
+        return
+
+    _set_running(True)
+    turned_in = 0
+    replacement_requests = 0
+    stopped = False
+    try:
+        _say(f"Turn-In: queued {total_deeds} completed deed(s).")
+        for bod_type in selected_types:
+            if stopped or _should_stop():
+                break
+            if not _pause_if_needed() or not _process_callbacks_safe():
+                _say("Turn-In interrupted.", 33)
+                stopped = True
+                break
+
+            deeds = list(turn_in_work.get(str(bod_type), []) or [])
+            if not deeds:
+                continue
+
+            slot = int(BOD_SLOT_BY_TYPE.get(bod_type, 0) or 0)
+            if slot <= 1:
+                _say(f"Turn-In skip: invalid runebook slot for {bod_type}.", 33)
+                continue
+            button = _slot_to_button(slot)
+            _say(f"Turn-In: recalling to slot {slot} ({bod_type}) for {len(deeds)} deed(s).")
+            if not _recall_to_button(button):
+                _say(f"Turn-In: recall failed for {bod_type}.", 33)
+                continue
+            if not _wait_and_pump(BOD_SCAN_SETTLE_S, 0.1):
+                stopped = True
+                break
+
+            title_filters = BOD_GIVER_TITLE_HINTS.get(bod_type, [])
+            matched_serials = _find_givers_by_titles(title_filters)
+            if not matched_serials:
+                _say(f"Turn-In: no {bod_type} giver found at slot {slot}.", 33)
+                continue
+            giver_serials = [int(s or 0) for s in matched_serials if int(s or 0) > 0]
+            giver_serials.sort(key=_mobile_distance)
+            shown = ", ".join([f"0x{int(s):08X}" for s in giver_serials[:4]])
+            _say(f"Turn-In: matched giver(s) for {bod_type}: {shown}")
+
+            for deed_index, deed in enumerate(deeds):
+                if _should_stop():
+                    stopped = True
+                    break
+                if not _pause_if_needed() or not _process_callbacks_safe():
+                    _say("Turn-In interrupted.", 33)
+                    stopped = True
+                    break
+                deed_serial = int(deed.get("serial", 0) or 0)
+                if deed_serial <= 0:
+                    continue
+                deed_name = str(deed.get("name", "") or "").strip() or "unknown deed"
+                handin_giver = 0
+                for giver_serial in giver_serials:
+                    if _turn_in_single_deed(giver_serial, deed_serial):
+                        handin_giver = int(giver_serial)
+                        break
+                if handin_giver <= 0:
+                    _say(
+                        f"Turn-In failed: could not hand in 0x{deed_serial:08X} "
+                        f"({deed_name}).",
+                        33
+                    )
+                    continue
+                turned_in += 1
+                _say(
+                    f"Turn-In handed in: 0x{deed_serial:08X} ({deed_name}) "
+                    f"{int(deed.get('made', 0) or 0)}/{int(deed.get('required', 0) or 0)}."
+                )
+                if _request_bod_from_giver(handin_giver, attempts_override=BOD_TURN_IN_REQUEST_ATTEMPTS):
+                    replacement_requests += 1
+                else:
+                    _say(
+                        f"Turn-In: no replacement BOD accepted after 0x{deed_serial:08X}.",
+                        33
+                    )
+                if deed_index < (len(deeds) - 1):
+                    if not _wait_and_pump(BOD_REQUEST_BETWEEN_ATTEMPTS_S, 0.1):
+                        stopped = True
+                        break
+            if stopped:
+                break
+            if not _wait_and_pump(BETWEEN_GIVERS_S, 0.1):
+                break
+        _say(
+            f"Turn-In complete: turned_in={turned_in}/{total_deeds}, "
+            f"replacement_requests={replacement_requests}. Recalling home."
+        )
+        _recall_home()
+    finally:
+        _set_running(False)
 
 
 def _run_full_loop():
